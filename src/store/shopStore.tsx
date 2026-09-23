@@ -191,7 +191,7 @@ interface ShopContextType {
 
   // Google User / 3-dotted Options
   googleUser: GoogleUser | null;
-  signInWithGoogle: (customName?: string) => void;
+  signInWithGoogle: (customNameOrUser?: string | Partial<GoogleUser>, customEmail?: string, customAvatar?: string) => void;
   signOutGoogle: () => void;
   setGoogleUserName: (name: string) => void;
 
@@ -871,11 +871,29 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.warn('Notice loading user cloud cart (using local cart):', err);
           }
         } else {
-          setGoogleUser(null);
+          // IMPORTANT: Do NOT automatically clear googleUser if the user has an active
+          // local/fallback session saved in localStorage (such as 1-click Store Owner or custom customer login
+          // when running on Cloudflare / dawosti.com without Firebase native session).
+          // Only clear if localStorage has no saved user (i.e. explicitly signed out).
+          try {
+            const saved = localStorage.getItem('dawosti_google_user_v2');
+            if (!saved) {
+              setGoogleUser(null);
+            }
+          } catch {
+            setGoogleUser(null);
+          }
         }
       },
       () => {
-        setGoogleUser(null);
+        try {
+          const saved = localStorage.getItem('dawosti_google_user_v2');
+          if (!saved) {
+            setGoogleUser(null);
+          }
+        } catch {
+          setGoogleUser(null);
+        }
       }
     );
 
@@ -1034,13 +1052,32 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTimeout(() => setAgentSyncNotification(null), 4000);
   };
 
-  const signInWithGoogle = (customName?: string) => {
-    const userDisplayName = customName?.trim() || 'Sagar Dawadi';
+  const signInWithGoogle = (
+    customNameOrUser?: string | Partial<GoogleUser>,
+    customEmail?: string,
+    customAvatar?: string
+  ) => {
+    let name = 'Sagar Dawadi';
+    let email = 'sagardawadi10@gmail.com';
+    let avatar = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
+    let id = googleUser?.id || `google_user_${Date.now()}`;
+
+    if (typeof customNameOrUser === 'object' && customNameOrUser !== null) {
+      name = customNameOrUser.name || name;
+      email = customNameOrUser.email || email;
+      avatar = customNameOrUser.avatar || avatar;
+      id = customNameOrUser.id || id;
+    } else if (typeof customNameOrUser === 'string') {
+      name = customNameOrUser.trim() || name;
+      if (customEmail) email = customEmail.trim();
+      if (customAvatar) avatar = customAvatar.trim();
+    }
+
     const updated: GoogleUser = {
-      id: googleUser?.id || `google_user_${Date.now()}`,
-      name: userDisplayName,
-      email: googleUser?.email || 'sagardawadi10@gmail.com',
-      avatar: googleUser?.avatar || 'https://lh3.googleusercontent.com/a/default-user=s96-c',
+      id,
+      name,
+      email,
+      avatar,
       isLoggedIn: true,
     };
     setGoogleUser(updated);
