@@ -10,6 +10,7 @@ import {
   Truck,
   Check,
   Settings,
+  ShieldCheck,
 } from 'lucide-react';
 import { useShopStore } from '../../store/shopStore';
 
@@ -27,6 +28,7 @@ export const MobileNavOverlay: React.FC = () => {
     cartCount,
     setIsCartOpen,
     setIsAdminOpen,
+    unacknowledgedOrdersCount,
   } = useShopStore();
 
   if (!isMobileMenuOpen) return null;
@@ -223,21 +225,33 @@ export const MobileNavOverlay: React.FC = () => {
               <ChevronRight className="w-4 h-4 text-[#8B3A3A]" />
             </button>
 
-            {/* Store Admin Atelier shortcut */}
+            {/* Dedicated Permanent Store Admin Atelier Button */}
             <button
               id="mobile-drawer-admin-btn"
               onClick={handleOpenAdmin}
-              className="w-full min-h-[46px] flex items-center justify-between p-2.5 px-3 rounded-xl bg-[#8B3A3A]/10 border border-[#8B3A3A]/30 text-[#8B3A3A] hover:bg-[#8B3A3A] hover:text-white transition-all active:scale-[0.97]"
+              className="w-full min-h-[50px] flex items-center justify-between p-3 px-4 rounded-xl bg-[#8B3A3A] hover:bg-[#722E2E] text-white shadow-md transition-all active:scale-[0.97] cursor-pointer"
             >
-              <div className="flex items-center gap-2">
-                <Settings className="w-4 h-4" />
-                <span className="text-xs font-bold">
-                  {language === 'np' ? 'व्यवस्थापक प्यानल (Admin Atelier)' : 'Admin Atelier (Store Management)'}
+              <div className="flex items-center gap-2.5">
+                <ShieldCheck className="w-5 h-5 text-[#D4AF37]" />
+                <div className="text-left">
+                  <span className="text-xs font-bold tracking-wide block">
+                    {language === 'np' ? 'व्यवस्थापक प्यानल (Admin Atelier)' : 'Admin Atelier'}
+                  </span>
+                  <span className="text-[10px] text-white/80 block">
+                    {language === 'np' ? 'उत्पादन, अर्डर र QR व्यवस्थापन' : 'Live Catalog, Orders & QR'}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {unacknowledgedOrdersCount > 0 && (
+                  <span className="w-5 h-5 rounded-full bg-white text-red-600 text-[10px] flex items-center justify-center font-extrabold animate-pulse">
+                    {unacknowledgedOrdersCount}
+                  </span>
+                )}
+                <span className="text-[10px] bg-white text-[#8B3A3A] px-2.5 py-1 rounded-full font-extrabold shadow-2xs">
+                  Atelier
                 </span>
               </div>
-              <span className="text-[10px] bg-[#8B3A3A] text-white px-2 py-0.5 rounded-full font-bold">
-                Admin
-              </span>
             </button>
           </div>
         </div>

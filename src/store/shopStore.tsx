@@ -43,6 +43,15 @@ import {
   getUserCartFromFirestore,
   saveSubscriberToFirestore,
   saveCampaignToFirestore,
+  listenToProductsFromFirestore,
+  saveProductToFirestore,
+  deleteProductFromFirestore,
+  listenToOrdersFromFirestore,
+  saveOrderToFirestore,
+  updateOrderStatusInFirestore,
+  deleteOrderFromFirestore,
+  listenToGlobalStoreSync,
+  publishGlobalStoreSync,
 } from '../services/firestoreService';
 import {
   subscribeToCrossAgentSync,
@@ -334,6 +343,55 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Live Firestore Real-Time Subscriptions for Products, Orders, and Global Store Settings
+  useEffect(() => {
+    // 1. Synchronize live products from Firestore (Admin changes reflect live across all devices)
+    const unsubProducts = listenToProductsFromFirestore((remoteProducts) => {
+      if (Array.isArray(remoteProducts) && remoteProducts.length > 0) {
+        setProducts(remoteProducts);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('dawosti_custom_products_v2', JSON.stringify(remoteProducts));
+          } catch (e) {}
+        }
+      }
+    });
+
+    // 2. Synchronize live orders from Firestore (customer checkouts instantly pop up in Admin)
+    const unsubOrders = listenToOrdersFromFirestore((remoteOrders) => {
+      if (Array.isArray(remoteOrders)) {
+        setOrdersLog(remoteOrders);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('dawosti_orders_log_v2', JSON.stringify(remoteOrders));
+          } catch (e) {}
+        }
+      }
+    });
+
+    // 3. Synchronize global store settings (theme banner, Fonepay QR, and maintenance)
+    const unsubSettings = listenToGlobalStoreSync((remoteSettings) => {
+      if (remoteSettings.themeSettings) {
+        setThemeSettings((prev) => ({ ...prev, ...remoteSettings.themeSettings }));
+      }
+      if (remoteSettings.merchantSettings) {
+        setMerchantSettings((prev) => ({ ...prev, ...remoteSettings.merchantSettings }));
+      }
+      if (remoteSettings.siteContent) {
+        setSiteContent((prev) => ({ ...prev, ...remoteSettings.siteContent }));
+      }
+      if (remoteSettings.maintenance) {
+        setMaintenanceSettings((prev) => ({ ...prev, ...remoteSettings.maintenance }));
+      }
+    });
+
+    return () => {
+      if (typeof unsubProducts === 'function') unsubProducts();
+      if (typeof unsubOrders === 'function') unsubOrders();
+      if (typeof unsubSettings === 'function') unsubSettings();
+    };
+  }, []);
+
   // VIP Email Subscribers & Drop Notification Campaigns
   const [emailSubscribers, setEmailSubscribers] = useState<EmailSubscriber[]>(() => {
     if (typeof window !== 'undefined') {
@@ -490,6 +548,7 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addProduct = (newProduct: Product, autoNotifySubscribers: boolean = true) => {
     const updated = [newProduct, ...products];
     saveProductsToStorage(updated);
+    saveProductToFirestore(newProduct);
     if (autoNotifySubscribers) {
       sendNewProductEmailCampaign(newProduct);
     }
@@ -498,11 +557,16 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateProduct = (productId: string, updated: Partial<Product>) => {
     const updatedList = products.map((p) => (p.id === productId ? { ...p, ...updated } : p));
     saveProductsToStorage(updatedList);
+    const targetProduct = updatedList.find((p) => p.id === productId);
+    if (targetProduct) {
+      saveProductToFirestore(targetProduct);
+    }
   };
 
   const deleteProduct = (productId: string) => {
     const updatedList = products.filter((p) => p.id !== productId);
     saveProductsToStorage(updatedList);
+    deleteProductFromFirestore(productId);
   };
 
   const resetProductsToDefault = () => {
@@ -613,24 +677,30 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     status: OrderStatus,
     trackingInfo?: { courierName?: string; trackingNumber?: string; logisticsNotes?: string } | string
   ) => {
+    const infoObj = typeof trackingInfo === 'string' ? { logisticsNotes: trackingInfo } : (trackingInfo || {});
+    const updates: Partial<Order> = {
+      status,
+      ...infoObj,
+      ...(status === 'shipped' ? { dispatchDate: new Date().toISOString() } : {}),
+    };
     const updatedList = ordersLog.map((ord) => {
       if (ord.id === orderId || ord.orderNumber === orderId) {
-        const infoObj = typeof trackingInfo === 'string' ? { logisticsNotes: trackingInfo } : (trackingInfo || {});
         return {
           ...ord,
-          status,
-          ...infoObj,
+          ...updates,
           ...(status === 'shipped' && !ord.dispatchDate ? { dispatchDate: new Date().toISOString() } : {}),
         };
       }
       return ord;
     });
     saveOrdersLogToStorage(updatedList);
+    updateOrderStatusInFirestore(orderId, updates);
   };
 
   const deleteOrderFromLog = (orderId: string) => {
     const updatedList = ordersLog.filter((ord) => ord.id !== orderId && ord.orderNumber !== orderId);
     saveOrdersLogToStorage(updatedList);
+    deleteOrderFromFirestore(orderId);
   };
 
   const clearOrdersLog = () => {
@@ -688,6 +758,7 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error('Failed to save merchant settings', e);
         }
       }
+      publishGlobalStoreSync({ merchantSettings: updated });
       return updated;
     });
   };
@@ -722,6 +793,7 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error('Failed to save site content', e);
         }
       }
+      publishGlobalStoreSync({ siteContent: updated });
       return updated;
     });
   };
@@ -756,6 +828,7 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error('Failed to save theme settings', e);
         }
       }
+      publishGlobalStoreSync({ themeSettings: updated });
       return updated;
     });
   };
@@ -1188,11 +1261,24 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
-    // If passcode is not required, start authenticated
+    // If passcode is not required or user is owner, start authenticated
     return !defaultAdminSecuritySettings.requirePasscode;
   });
 
+  // Owner Bypass: When signed in as sagardawadi10@gmail.com, automatically grant 'Head Admin' role
+  useEffect(() => {
+    if (googleUser?.email?.toLowerCase() === 'sagardawadi10@gmail.com') {
+      setIsAdminAuthenticated(true);
+      setCurrentAgentRole('head_admin');
+    }
+  }, [googleUser]);
+
   const unlockAdmin = (enteredPin: string): boolean => {
+    if (googleUser?.email?.toLowerCase() === 'sagardawadi10@gmail.com') {
+      setIsAdminAuthenticated(true);
+      setCurrentAgentRole('head_admin');
+      return true;
+    }
     if (!adminSecuritySettings.requirePasscode) {
       setIsAdminAuthenticated(true);
       return true;
@@ -1335,8 +1421,9 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logisticsNotes: fakePackagingNote,
     };
 
-    // Save to Logistics Log
+    // Save to Logistics Log & Live Firestore
     addManualOrderToLog(newOrder);
+    saveOrderToFirestore(newOrder);
 
     // Sync to functioning backend server API
     try {

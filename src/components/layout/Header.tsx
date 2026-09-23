@@ -364,17 +364,19 @@ export const Header: React.FC = () => {
               </button>
             </div>
 
-            {/* Direct Admin Access Button */}
+            {/* Permanent Dedicated Admin Atelier Button */}
             <button
               id="header-direct-admin-btn"
               onClick={() => setIsAdminOpen(true)}
-              title={language === 'np' ? 'व्यवस्थापक प्यानल (Admin Store Management)' : 'Open Admin Store Management'}
-              className="relative min-h-[38px] px-2.5 sm:px-3 py-1 bg-[#FAF2E9] hover:bg-[#F2E5D5] border border-[#EADCCE] rounded-full text-xs font-bold text-[#8B3A3A] flex items-center gap-1.5 transition-all shadow-2xs hover:scale-105 active:scale-95 cursor-pointer"
+              title={language === 'np' ? 'व्यवस्थापक प्यानल (Admin Atelier Store Management)' : 'Open Admin Atelier Store Management'}
+              className="relative min-h-[38px] px-3 sm:px-3.5 py-1.5 bg-[#8B3A3A] hover:bg-[#722E2E] text-white rounded-full text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs hover:scale-105 active:scale-95 cursor-pointer"
             >
-              <ShieldCheck className="w-4 h-4 text-[#8B3A3A]" />
-              <span className="hidden sm:inline">{language === 'np' ? 'व्यवस्थापक' : 'Admin'}</span>
+              <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
+              <span className="inline text-xs font-bold tracking-wide">
+                {language === 'np' ? 'Admin Atelier' : 'Admin Atelier'}
+              </span>
               {unacknowledgedOrdersCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-red-600 text-white text-[10px] flex items-center justify-center font-bold animate-pulse">
+                <span className="w-4 h-4 rounded-full bg-white text-red-600 text-[10px] flex items-center justify-center font-extrabold animate-pulse">
                   {unacknowledgedOrdersCount}
                 </span>
               )}
@@ -512,6 +514,14 @@ export const Header: React.FC = () => {
                             </svg>
                           )}
                           <span>{isSigningIn ? 'Connecting to Google...' : 'Sign in via Google'}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleQuickOwnerLogin}
+                          className="w-full py-2 px-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>1-Click Owner Login (Sagar Dawadi)</span>
                         </button>
                         <button
                           type="button"

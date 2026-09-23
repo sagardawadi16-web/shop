@@ -69,9 +69,51 @@ export const OrderConfirmationView: React.FC<OrderConfirmationViewProps> = ({ or
     window.print();
   };
 
-  const whatsappSupportUrl = `https://wa.me/9779708251494?text=${encodeURIComponent(
-    `🙏 Namaste Dawosti Boutique! I have placed order #${order.orderNumber}. Could you please update me on delivery dispatch?`
-  )}`;
+  const itemsSummary = (order.items || [])
+    .map(
+      (item, i) =>
+        `${i + 1}. ${item.product.title.en} (${item.selectedSize}) x${item.quantity} = NPR ${(
+          item.product.price * item.quantity
+        ).toLocaleString()}`
+    )
+    .join('\n');
+
+  const paymentMethodText =
+    order.paymentMethod === 'cod'
+      ? 'Cash on Delivery (COD)'
+      : order.paymentMethod === 'fonepay'
+      ? `Fonepay QR (Ref: ${
+          order.paymentDetails?.transactionId ||
+          order.paymentDetails?.fonepayProof?.referenceId ||
+          'Verified'
+        })`
+      : order.paymentMethod === 'esewa'
+      ? `eSewa (Tx: ${order.paymentDetails?.transactionId || 'Verified'})`
+      : `Khalti (Tx: ${order.paymentDetails?.transactionId || 'Verified'})`;
+
+  const whatsappMessage = `🛍️ *DAWOSTI BOUTIQUE - NEW ORDER CONFIRMATION*
+━━━━━━━━━━━━━━━━━━━━━━━━
+*Order Number:* #${order.orderNumber}
+*Date:* ${new Date(order.createdAt).toLocaleDateString()}
+
+👤 *CUSTOMER & DELIVERY ADDRESS:*
+• Name: ${order.shippingAddress.fullName}
+• Phone: +977 ${order.shippingAddress.phone}
+${order.shippingAddress.alternatePhone ? `• Alt Phone: +977 ${order.shippingAddress.alternatePhone}\n` : ''}• City/District: ${order.shippingAddress.city}, ${order.shippingAddress.province}
+• Street / Landmark: ${order.shippingAddress.addressLine}
+${order.notes ? `• Special Notes: "${order.notes}"\n` : ''}
+👗 *ORDERED ITEMS:*
+${itemsSummary}
+
+💳 *PAYMENT & BILLING:*
+• Payment Method: ${paymentMethodText}
+• Subtotal: NPR ${order.subtotalAmount.toLocaleString()}
+• Delivery: ${order.deliveryFee === 0 ? 'FREE' : `NPR ${order.deliveryFee}`}
+${order.discountAmount > 0 ? `• Discount: -NPR ${order.discountAmount.toLocaleString()}\n` : ''}• *Total Payable:* NPR ${order.totalAmount.toLocaleString()}
+━━━━━━━━━━━━━━━━━━━━━━━━
+🙏 Namaste Dawosti Boutique Team! I have placed this order on dawosti.com. Please confirm my order and share the dispatch update.`;
+
+  const whatsappSupportUrl = `https://wa.me/9779708251494?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
     <div id="order-confirmation-container" className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
@@ -375,10 +417,14 @@ export const OrderConfirmationView: React.FC<OrderConfirmationViewProps> = ({ or
           href={whatsappSupportUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full sm:w-auto px-6 py-3.5 bg-[#25D366] hover:bg-[#1EBE5B] text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-98"
+          className="w-full sm:w-auto px-7 py-3.5 bg-[#25D366] hover:bg-[#1EBE5B] text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 shadow-lg transition-all active:scale-98"
         >
-          <MessageCircle className="w-4 h-4 fill-white" />
-          <span>{language === 'np' ? 'व्हाट्सएपमा बुझ्न' : 'WhatsApp Atelier Support'}</span>
+          <MessageCircle className="w-5 h-5 fill-white shrink-0" />
+          <span>
+            {language === 'np'
+              ? 'ह्वाट्सएपमा अर्डर पठाउनुहोस् (+९७७ ९७०८२५१४९४)'
+              : 'Confirm on WhatsApp Hotline (+977 9708251494)'}
+          </span>
         </a>
       </div>
 

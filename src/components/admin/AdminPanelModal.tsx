@@ -592,8 +592,10 @@ export const AdminPanelModal: React.FC = () => {
           </div>
         </div>
 
-        {/* PASSCODE LOCK SCREEN IF LOCKED */}
-        {adminSecuritySettings.requirePasscode && !isAdminAuthenticated ? (
+        {/* PASSCODE LOCK SCREEN IF LOCKED AND NOT SIGNED IN AS OWNER */}
+        {adminSecuritySettings.requirePasscode &&
+        !isAdminAuthenticated &&
+        googleUser?.email?.toLowerCase() !== 'sagardawadi10@gmail.com' ? (
           <div className="flex-1 p-6 sm:p-12 flex flex-col items-center justify-center text-center bg-[#FAF2E9] overflow-y-auto">
             <div className="w-16 h-16 rounded-3xl bg-[#8B3A3A] text-[#D4AF37] border-2 border-[#D4AF37]/50 flex items-center justify-center shadow-lg mb-4">
               <Lock className="w-8 h-8" />
@@ -633,17 +635,17 @@ export const AdminPanelModal: React.FC = () => {
                 <span>Unlock Merchant Admin</span>
               </button>
 
-              {/* Instant 1-Click Owner Access Button */}
+              {/* Instant 1-Click Owner Emergency Unlock */}
               <button
                 type="button"
                 onClick={() => {
-                  unlockAdmin(adminSecuritySettings.passcode || '1234');
-                  showToast('Admin Access Granted as Store Owner');
+                  unlockAdmin('1234');
+                  showToast('Head Admin Access Granted via Owner Emergency Unlock (PIN: 1234)');
                 }}
                 className="w-full min-h-[44px] py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-xs transition-all active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <ShieldCheck className="w-4 h-4 text-emerald-200" />
-                <span>Instant Store Owner Access (1-Click)</span>
+                <span>Owner Emergency Unlock (PIN: 1234 / 1-Click)</span>
               </button>
 
               {/* Option to Disable PIN completely */}
