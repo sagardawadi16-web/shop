@@ -52,6 +52,7 @@ import {
   deleteOrderFromFirestore,
   listenToGlobalStoreSync,
   publishGlobalStoreSync,
+  seedInitialProductsIfEmpty,
 } from '../services/firestoreService';
 import {
   subscribeToCrossAgentSync,
@@ -348,18 +349,25 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // 1. Synchronize live products from Firestore (Admin changes reflect live across all devices)
     const unsubProducts = listenToProductsFromFirestore((remoteProducts) => {
       if (Array.isArray(remoteProducts) && remoteProducts.length > 0) {
+        // Firestore has products — use them as source of truth
         setProducts(remoteProducts);
         if (typeof window !== 'undefined') {
           try {
             localStorage.setItem('dawosti_custom_products_v2', JSON.stringify(remoteProducts));
           } catch (e) {}
         }
+      } else {
+        // Firestore returned empty — auto-seed it with mock products so the catalog is never blank
+        seedInitialProductsIfEmpty(mockProducts).catch(() => {});
+        // Keep using whatever is in local state (mock/localStorage) until Firestore seeds
       }
     });
 
     // 2. Synchronize live orders from Firestore (customer checkouts instantly pop up in Admin)
     const unsubOrders = listenToOrdersFromFirestore((remoteOrders) => {
-      if (Array.isArray(remoteOrders)) {
+      // Only update from Firestore if it returns data
+      // This prevents clearing a legitimate localStorage order history on first load
+      if (Array.isArray(remoteOrders) && remoteOrders.length > 0) {
         setOrdersLog(remoteOrders);
         if (typeof window !== 'undefined') {
           try {
@@ -1426,19 +1434,6 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Save to Logistics Log & Live Firestore
     addManualOrderToLog(newOrder);
     saveOrderToFirestore(newOrder);
-
-    // Sync to functioning backend server API
-    try {
-      fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newOrder),
-      }).catch((err) => {
-        console.warn('Backend order sync notification:', err);
-      });
-    } catch (e) {
-      // ignore
-    }
 
     // Auto-update to Google Sheet as PENDING with packaging note if sheet is active
     appendPendingOrderToSheet(newOrder).catch((err) => {

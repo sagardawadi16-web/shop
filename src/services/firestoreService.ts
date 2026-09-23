@@ -5,9 +5,11 @@ import {
   getDoc,
   deleteDoc,
   collection,
+  getDocs,
   onSnapshot,
   query,
   orderBy,
+  writeBatch,
   Unsubscribe,
 } from 'firebase/firestore';
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -52,16 +54,12 @@ export const listenToProductsFromFirestore = (
     return onSnapshot(
       productsColRef,
       (snapshot) => {
-        if (!snapshot.empty) {
-          const productsList = snapshot.docs.map((docSnap) => {
-            const data = docSnap.data();
-            return {
-              id: docSnap.id,
-              ...data,
-            } as Product;
-          });
-          onUpdate(productsList);
-        }
+        // Always call onUpdate — even when empty — so UI can switch away from mock data
+        const productsList = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        } as Product));
+        onUpdate(productsList);
       },
       (error) => {
         console.warn('Firestore products sync listener warning (fallback to cached/mock data):', error);
@@ -102,14 +100,26 @@ export const deleteProductFromFirestore = async (productId: string): Promise<boo
 };
 
 /**
- * Seed initial mock products to Firestore if collection is empty
+ * Seed initial mock products to Firestore if collection is empty.
+ * This ensures first-time visitors see real products, not a blank catalog.
  */
 export const seedInitialProductsIfEmpty = async (initialProducts: Product[]): Promise<boolean> => {
   try {
     const productsColRef = collection(db, PRODUCTS_COLLECTION);
-    const snap = await onSnapshot(productsColRef, () => {});
+    const snap = await getDocs(productsColRef);
+    if (!snap.empty) return true; // Already has products, skip seeding
+
+    // Collection is empty — write all initial products in one batch
+    const batch = writeBatch(db);
+    initialProducts.forEach((product) => {
+      const prodRef = doc(db, PRODUCTS_COLLECTION, product.id);
+      batch.set(prodRef, product);
+    });
+    await batch.commit();
+    console.info(`[Firestore] Seeded ${initialProducts.length} initial products to Firestore.`);
     return true;
-  } catch {
+  } catch (err) {
+    console.warn('Could not seed initial products to Firestore:', err);
     return false;
   }
 };
@@ -131,20 +141,16 @@ export const listenToOrdersFromFirestore = (
     return onSnapshot(
       ordersColRef,
       (snapshot) => {
-        if (!snapshot.empty) {
-          const ordersList = snapshot.docs.map((docSnap) => {
-            const data = docSnap.data();
-            return {
-              id: docSnap.id,
-              ...data,
-            } as Order;
-          });
-          // Sort newest first
-          ordersList.sort(
-            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-          onUpdate(ordersList);
-        }
+        // Always call onUpdate — even with empty array — so Admin Orders tab stays in sync
+        const ordersList = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        } as Order));
+        // Sort newest first
+        ordersList.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        onUpdate(ordersList);
       },
       (error) => {
         console.warn('Firestore orders sync listener warning (fallback to cached orders):', error);
