@@ -1265,16 +1265,18 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return !defaultAdminSecuritySettings.requirePasscode;
   });
 
-  // Owner Bypass: When signed in as sagardawadi10@gmail.com, automatically grant 'Head Admin' role
+  // Owner Bypass: When signed in as sagardawadi10@gmail.com or sagardawadi16@gmail.com, automatically grant 'Head Admin' role
   useEffect(() => {
-    if (googleUser?.email?.toLowerCase() === 'sagardawadi10@gmail.com') {
+    const email = googleUser?.email?.toLowerCase();
+    if (email === 'sagardawadi10@gmail.com' || email === 'sagardawadi16@gmail.com') {
       setIsAdminAuthenticated(true);
       setCurrentAgentRole('head_admin');
     }
   }, [googleUser]);
 
   const unlockAdmin = (enteredPin: string): boolean => {
-    if (googleUser?.email?.toLowerCase() === 'sagardawadi10@gmail.com') {
+    const email = googleUser?.email?.toLowerCase();
+    if (email === 'sagardawadi10@gmail.com' || email === 'sagardawadi16@gmail.com') {
       setIsAdminAuthenticated(true);
       setCurrentAgentRole('head_admin');
       return true;

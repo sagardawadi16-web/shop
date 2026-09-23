@@ -595,7 +595,8 @@ export const AdminPanelModal: React.FC = () => {
         {/* PASSCODE LOCK SCREEN IF LOCKED AND NOT SIGNED IN AS OWNER */}
         {adminSecuritySettings.requirePasscode &&
         !isAdminAuthenticated &&
-        googleUser?.email?.toLowerCase() !== 'sagardawadi10@gmail.com' ? (
+        googleUser?.email?.toLowerCase() !== 'sagardawadi10@gmail.com' &&
+        googleUser?.email?.toLowerCase() !== 'sagardawadi16@gmail.com' ? (
           <div className="flex-1 p-6 sm:p-12 flex flex-col items-center justify-center text-center bg-[#FAF2E9] overflow-y-auto">
             <div className="w-16 h-16 rounded-3xl bg-[#8B3A3A] text-[#D4AF37] border-2 border-[#D4AF37]/50 flex items-center justify-center shadow-lg mb-4">
               <Lock className="w-8 h-8" />

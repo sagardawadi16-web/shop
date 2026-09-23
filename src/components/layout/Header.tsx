@@ -124,7 +124,7 @@ export const Header: React.FC = () => {
         signInWithGoogle({
           id: 'dawosti_owner_sagardawadi',
           name: 'Sagar Dawadi',
-          email: 'sagardawadi10@gmail.com',
+          email: 'sagardawadi16@gmail.com',
           avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
         });
         setShowMoreMenu(false);
@@ -138,7 +138,7 @@ export const Header: React.FC = () => {
     signInWithGoogle({
       id: 'dawosti_owner_sagardawadi',
       name: 'Sagar Dawadi',
-      email: 'sagardawadi10@gmail.com',
+      email: 'sagardawadi16@gmail.com',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
     });
     setIsDomainNoticeModalOpen(false);
@@ -521,7 +521,7 @@ export const Header: React.FC = () => {
                           className="w-full py-2 px-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
                         >
                           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>1-Click Owner Login (Sagar Dawadi)</span>
+                          <span>1-Click Owner Login (sagardawadi16@gmail.com)</span>
                         </button>
                         <button
                           type="button"
