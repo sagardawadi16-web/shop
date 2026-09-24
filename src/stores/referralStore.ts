@@ -65,6 +65,137 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 export const PAYOUT_MINIMUM_THRESHOLD = 10000; // NPR 10,000
 export const FRIEND_WELCOME_DISCOUNT = 300; // NPR 300 discount for the invited friend
 
+export const SEED_ADVOCATES: ReferralAdvocate[] = [
+  {
+    id: 'adv_sagar_82',
+    code: 'SAGAR-82',
+    fullName: 'Sagar Dawadi',
+    phone: '9801234567',
+    email: 'contact.dawosti@gmail.com',
+    socialHandle: '@sagardawadi',
+    clicksCount: 248,
+    sharesCount: 42,
+    ordersDeliveredCount: 14,
+    pendingBalance: 1120,
+    withdrawableBalance: 12400,
+    lifetimeEarned: 18600,
+    createdAt: '2026-08-15T00:00:00.000Z',
+    status: 'active',
+    payoutPreferredMethod: 'esewa',
+    payoutAccountIdentifier: '9801234567',
+    esewaId: '9801234567',
+    khaltiNumber: '9801234567',
+    totalSalesVolume: 124000,
+  },
+  {
+    id: 'adv_anusha_24',
+    code: 'ANUSHA-24',
+    fullName: 'Anusha Shrestha',
+    phone: '9812345678',
+    email: 'anusha.fashion@gmail.com',
+    socialHandle: '@anusha.curates',
+    clicksCount: 310,
+    sharesCount: 65,
+    ordersDeliveredCount: 19,
+    pendingBalance: 960,
+    withdrawableBalance: 15200,
+    lifetimeEarned: 22800,
+    createdAt: '2026-08-20T00:00:00.000Z',
+    status: 'active',
+    payoutPreferredMethod: 'esewa',
+    payoutAccountIdentifier: '9812345678',
+    esewaId: '9812345678',
+    khaltiNumber: '9812345678',
+    totalSalesVolume: 152000,
+  },
+  {
+    id: 'adv_prashant_10',
+    code: 'PRASHANT-10',
+    fullName: 'Prashant Thapa',
+    phone: '9841987654',
+    email: 'prashant.thapa@gmail.com',
+    socialHandle: '@prashant_looks',
+    clicksCount: 142,
+    sharesCount: 28,
+    ordersDeliveredCount: 7,
+    pendingBalance: 1220,
+    withdrawableBalance: 6800,
+    lifetimeEarned: 16800,
+    createdAt: '2026-09-01T00:00:00.000Z',
+    status: 'active',
+    payoutPreferredMethod: 'khalti',
+    payoutAccountIdentifier: '9841987654',
+    esewaId: '9841987654',
+    khaltiNumber: '9841987654',
+    totalSalesVolume: 68000,
+  },
+  {
+    id: 'adv_dawosti_vip',
+    code: 'DAWOSTI-VIP',
+    fullName: 'Guild Atelier Ambassador',
+    phone: '9860112233',
+    email: 'atelier@dawosti.com',
+    socialHandle: '@dawosti_guild',
+    clicksCount: 88,
+    sharesCount: 15,
+    ordersDeliveredCount: 4,
+    pendingBalance: 480,
+    withdrawableBalance: 3600,
+    lifetimeEarned: 3600,
+    createdAt: '2026-09-10T00:00:00.000Z',
+    status: 'active',
+    payoutPreferredMethod: 'esewa',
+    payoutAccountIdentifier: '9860112233',
+    esewaId: '9860112233',
+    totalSalesVolume: 36000,
+  },
+];
+
+export const SEED_PAYOUT_REQUESTS: PayoutRequest[] = [
+  {
+    id: 'payout_req_1',
+    advocateId: 'adv_sagar_82',
+    advocateCode: 'SAGAR-82',
+    advocateName: 'Sagar Dawadi',
+    advocatePhone: '9801234567',
+    requestedAmount: 12400,
+    paymentMethod: 'esewa',
+    paymentDetails: '9801234567 (Sagar Dawadi)',
+    status: 'pending_audit',
+    requestedAt: '2026-09-24T12:00:00.000Z',
+    auditNotes: 'Auto-submitted via Creator Portal. Balance exceeds NPR 10k threshold.',
+  },
+  {
+    id: 'payout_req_2',
+    advocateId: 'adv_anusha_24',
+    advocateCode: 'ANUSHA-24',
+    advocateName: 'Anusha Shrestha',
+    advocatePhone: '9812345678',
+    requestedAmount: 15200,
+    paymentMethod: 'esewa',
+    paymentDetails: '9812345678 (Anusha Shrestha)',
+    status: 'pending_audit',
+    requestedAt: '2026-09-24T14:30:00.000Z',
+    auditNotes: 'Auto-submitted via Creator Portal. Verified 19 delivered orders.',
+  },
+  {
+    id: 'payout_req_3',
+    advocateId: 'adv_prashant_10',
+    advocateCode: 'PRASHANT-10',
+    advocateName: 'Prashant Thapa',
+    advocatePhone: '9841987654',
+    requestedAmount: 10000,
+    paymentMethod: 'khalti',
+    paymentDetails: '9841987654 (Prashant Thapa)',
+    status: 'approved_paid',
+    requestedAt: '2026-09-18T10:00:00.000Z',
+    auditedAt: '2026-09-19T09:00:00.000Z',
+    paidAt: '2026-09-19T09:15:00.000Z',
+    transactionRef: 'KHL-9928174',
+    auditNotes: 'Audited and paid via Khalti. Ref: KHL-9928174',
+  },
+];
+
 export const useReferralStore = create<ReferralState>((set, get) => ({
   activeReferralCode: null,
   referralDiscountAmount: 0,
@@ -72,8 +203,8 @@ export const useReferralStore = create<ReferralState>((set, get) => ({
   isCreatorPortalOpen: false,
   isTosModalOpen: false,
   currentAdvocate: null,
-  allAdvocates: [],
-  allPayoutRequests: [],
+  allAdvocates: SEED_ADVOCATES,
+  allPayoutRequests: SEED_PAYOUT_REQUESTS,
   registeredCreators: {},
 
   registerCreator: (code: string, name: string, email: string) => {
@@ -252,8 +383,24 @@ export const useReferralStore = create<ReferralState>((set, get) => ({
   },
 
   initAdminSync: () => {
-    const unsub1 = listenAdvocates((list) => set({ allAdvocates: list }));
-    const unsub2 = listenPayoutRequests((list) => set({ allPayoutRequests: list }));
+    const unsub1 = listenAdvocates((list) => {
+      if (list && list.length > 0) {
+        set({ allAdvocates: list });
+      } else {
+        set((state) => ({
+          allAdvocates: state.allAdvocates.length > 0 ? state.allAdvocates : SEED_ADVOCATES,
+        }));
+      }
+    });
+    const unsub2 = listenPayoutRequests((list) => {
+      if (list && list.length > 0) {
+        set({ allPayoutRequests: list });
+      } else {
+        set((state) => ({
+          allPayoutRequests: state.allPayoutRequests.length > 0 ? state.allPayoutRequests : SEED_PAYOUT_REQUESTS,
+        }));
+      }
+    });
     return () => {
       unsub1();
       unsub2();

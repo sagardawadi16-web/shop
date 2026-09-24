@@ -213,6 +213,9 @@ export interface ReferralAdvocate {
   status: 'active' | 'suspended';
   payoutPreferredMethod: 'esewa' | 'khalti' | 'bank';
   payoutAccountIdentifier: string;
+  esewaId?: string;
+  khaltiNumber?: string;
+  totalSalesVolume?: number;
 }
 
 export type PayoutStatus = 'pending_audit' | 'approved_paid' | 'rejected';

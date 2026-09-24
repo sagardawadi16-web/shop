@@ -57,20 +57,34 @@ export const getAdvocateByCode = async (code: string): Promise<ReferralAdvocate 
 /** Increment advocate shares counter */
 export const recordAdvocateShare = async (code: string): Promise<void> => {
   try {
-    const ref = doc(db, ADVOCATES_COL, code.toUpperCase());
-    await updateDoc(ref, {
-      sharesCount: increment(1),
-    });
+    const cleanCode = code.toUpperCase().trim();
+    const ref = doc(db, ADVOCATES_COL, cleanCode);
+    await setDoc(
+      ref,
+      {
+        code: cleanCode,
+        sharesCount: increment(1),
+        lastShareAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
   } catch {}
 };
 
 /** Increment advocate link clicks counter */
 export const recordAdvocateClick = async (code: string): Promise<void> => {
   try {
-    const ref = doc(db, ADVOCATES_COL, code.toUpperCase());
-    await updateDoc(ref, {
-      clicksCount: increment(1),
-    });
+    const cleanCode = code.toUpperCase().trim();
+    const ref = doc(db, ADVOCATES_COL, cleanCode);
+    await setDoc(
+      ref,
+      {
+        code: cleanCode,
+        clicksCount: increment(1),
+        lastClickAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
   } catch {}
 };
 
@@ -118,11 +132,17 @@ export const creditAdvocateOrder = async (code: string, commissionAmount: number
   try {
     const cleanCode = code.toUpperCase().trim();
     const ref = doc(db, ADVOCATES_COL, cleanCode);
-    await updateDoc(ref, {
-      ordersDeliveredCount: increment(1),
-      withdrawableBalance: increment(commissionAmount),
-      lifetimeEarned: increment(commissionAmount),
-    });
+    await setDoc(
+      ref,
+      {
+        code: cleanCode,
+        ordersDeliveredCount: increment(1),
+        withdrawableBalance: increment(commissionAmount),
+        lifetimeEarned: increment(commissionAmount),
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
   } catch (err) {
     console.warn('[Firestore] creditAdvocateOrder error:', err);
   }

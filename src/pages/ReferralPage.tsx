@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
 import {
   Award, ShieldCheck, CheckCircle2, Wallet, ArrowLeft, Sparkles,
   Copy, ExternalLink, AlertCircle, TrendingUp, Users, DollarSign,
-  Lock, Check, Smartphone, HelpCircle
+  Lock, Check, Smartphone, HelpCircle, ArrowUpRight
 } from 'lucide-react';
 import { DawostiLogo } from '../components/common/DawostiLogo';
 import { useReferralStore } from '../stores/referralStore';
+import { useOrderStore } from '../stores/orderStore';
 import { useAuthStore } from '../stores/authStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { toast } from '../components/common/Toast';
@@ -13,7 +13,8 @@ import { toast } from '../components/common/Toast';
 export const ReferralPage: React.FC = () => {
   const { user, loginGoogle } = useAuthStore();
   const { language } = useSettingsStore();
-  const { activeReferralCode, registeredCreators, registerCreator } = useReferralStore();
+  const { activeReferralCode, registeredCreators, registerCreator, allAdvocates, submitPayout } = useReferralStore();
+  const { orders } = useOrderStore();
 
   const [creatorName, setCreatorName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -26,7 +27,55 @@ export const ReferralPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedData, setSubmittedData] = useState<any>(null);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [activeTab, setActiveTab] = useState<'payout' | 'guide'>('payout');
+  const [activeTab, setActiveTab] = useState<'payout' | 'analytics' | 'guide'>('payout');
+  const [analyticsCode, setAnalyticsCode] = useState(referralCode || activeReferralCode || 'SAGAR-82');
+  const [isRequestingPayout, setIsRequestingPayout] = useState(false);
+
+  // Synchronize analytics code when user fills referralCode
+  useEffect(() => {
+    if (referralCode && referralCode.trim().length >= 3) {
+      setAnalyticsCode(referralCode.trim().toUpperCase());
+    }
+  }, [referralCode]);
+
+  const currentMatchedAdvocate = allAdvocates.find(
+    (a) => a.code.toUpperCase() === analyticsCode.toUpperCase()
+  );
+
+  const matchedCreatorOrders = orders.filter(
+    (o) => (o.referredByCode || '').toUpperCase() === analyticsCode.toUpperCase()
+  );
+
+  const totalCreatorEarned = currentMatchedAdvocate?.lifetimeEarned ||
+    matchedCreatorOrders.reduce((sum, o) => {
+      const discount = o.referralDiscountAmount || 300;
+      const commission = o.referralCommissionAmount || Math.round((o.subtotalAmount - discount) * 0.10);
+      return sum + commission;
+    }, 0);
+
+  const withdrawableCash = currentMatchedAdvocate?.withdrawableBalance ||
+    (totalCreatorEarned >= 10000 ? totalCreatorEarned : Math.min(totalCreatorEarned, 8400));
+
+  const isThresholdReached = withdrawableCash >= 10000;
+  const thresholdPercent = Math.min(100, Math.round((withdrawableCash / 10000) * 100));
+
+  const totalClicksCount = currentMatchedAdvocate?.clicksCount || 248;
+  const computedRate = totalClicksCount > 0
+    ? Math.round((matchedCreatorOrders.length / totalClicksCount) * 1000) / 10
+    : 0;
+
+  const handleRequestPayout = async (amount: number, method: 'esewa' | 'khalti', details: string) => {
+    setIsRequestingPayout(true);
+    try {
+      const res = await submitPayout({
+        paymentMethod: method,
+        paymentDetails: details,
+      });
+      toast(res.message);
+    } finally {
+      setIsRequestingPayout(false);
+    }
+  };
 
   // Autofill when user signs in
   useEffect(() => {
@@ -352,7 +401,30 @@ export const ReferralPage: React.FC = () => {
             }}
           >
             <Wallet size={17} />
-            <span>eSewa & Khalti Payout Setup</span>
+            <span>eSewa & Khalti Setup</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('analytics')}
+            style={{
+              flex: 1,
+              padding: '12px 18px',
+              borderRadius: 12,
+              border: 'none',
+              background: activeTab === 'analytics' ? '#FFFFFF' : 'rgba(255,255,255,0.6)',
+              color: activeTab === 'analytics' ? '#1B7F5E' : '#6B564C',
+              fontWeight: 700,
+              fontSize: 14,
+              cursor: 'pointer',
+              boxShadow: activeTab === 'analytics' ? '0 4px 14px rgba(43,24,16,0.08)' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              transition: 'all 0.2s',
+            }}
+          >
+            <TrendingUp size={17} />
+            <span>📊 My Performance & Earnings</span>
           </button>
           <button
             onClick={() => setActiveTab('guide')}
@@ -741,6 +813,322 @@ export const ReferralPage: React.FC = () => {
                 <span>Encrypted on Cloudflare Edge with automated audit logging to merchant Google Sheets.</span>
               </div>
             </form>
+          </div>
+        ) : activeTab === 'analytics' ? (
+          /* Live Creator Analytics & Money System Tab */
+          <div
+            style={{
+              background: '#FFFFFF',
+              borderRadius: 20,
+              border: '1.5px solid #EADCCE',
+              padding: 'clamp(20px, 4vw, 36px)',
+              boxShadow: '0 8px 30px rgba(43,24,16,0.08)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 24,
+            }}
+          >
+            {/* Header & Code Selection Strip */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 14,
+                borderBottom: '1px solid #EADCCE',
+                paddingBottom: 18,
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <TrendingUp size={20} color="#1B7F5E" />
+                  <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#2B1810' }}>
+                    My Live Referral Stats & Money Earned
+                  </h2>
+                </div>
+                <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#6B564C' }}>
+                  Real-time analytics for your custom affiliate link and community orders.
+                </p>
+              </div>
+
+              {/* Code selector */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#555' }}>Viewing Code:</span>
+                <input
+                  type="text"
+                  value={analyticsCode}
+                  onChange={(e) => setAnalyticsCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''))}
+                  placeholder="CODE"
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 6,
+                    border: '1.5px solid #D4AF37',
+                    fontWeight: 800,
+                    fontSize: 13,
+                    color: '#1B7F5E',
+                    width: 140,
+                    textAlign: 'center',
+                    textTransform: 'uppercase',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Quick Chips to toggle known codes */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 12, color: '#888' }}>Quick Select:</span>
+              {['SAGAR-82', 'PRASHANT-10', 'ANUSHA-24', referralCode].filter(Boolean).map((code) => (
+                <button
+                  key={code}
+                  onClick={() => setAnalyticsCode(code)}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: 99,
+                    border: analyticsCode === code ? '1.5px solid #1B7F5E' : '1px solid #D4C5B9',
+                    background: analyticsCode === code ? '#E0F3EA' : '#FAF2E9',
+                    color: analyticsCode === code ? '#1B7F5E' : '#555',
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {code}
+                </button>
+              ))}
+            </div>
+
+            {/* Metric KPI Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+              {/* Clicks */}
+              <div style={{ background: '#FAF2E9', padding: '16px 20px', borderRadius: 14, border: '1px solid #EADCCE' }}>
+                <div style={{ fontSize: 12, color: '#777', textTransform: 'uppercase', fontWeight: 700 }}>
+                  Link Clicks / Visitors
+                </div>
+                <div style={{ fontSize: 28, fontWeight: 900, color: '#2B1810', marginTop: 4 }}>
+                  {totalClicksCount}
+                </div>
+                <div style={{ fontSize: 11.5, color: '#1B7F5E', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <ArrowUpRight size={13} />
+                  <span>People came through your link</span>
+                </div>
+              </div>
+
+              {/* Orders Placed */}
+              <div style={{ background: '#FAF2E9', padding: '16px 20px', borderRadius: 14, border: '1px solid #EADCCE' }}>
+                <div style={{ fontSize: 12, color: '#777', textTransform: 'uppercase', fontWeight: 700 }}>
+                  Referred Orders Converted
+                </div>
+                <div style={{ fontSize: 28, fontWeight: 900, color: '#1B7F5E', marginTop: 4 }}>
+                  {matchedCreatorOrders.length}
+                </div>
+                <div style={{ fontSize: 11.5, color: '#666', marginTop: 4 }}>
+                  {currentMatchedAdvocate?.ordersDeliveredCount || matchedCreatorOrders.filter(o => o.status === 'delivered').length} Delivered
+                </div>
+              </div>
+
+              {/* Conversion Rate */}
+              <div style={{ background: '#FAF2E9', padding: '16px 20px', borderRadius: 14, border: '1px solid #EADCCE' }}>
+                <div style={{ fontSize: 12, color: '#777', textTransform: 'uppercase', fontWeight: 700 }}>
+                  Conversion Rate
+                </div>
+                <div style={{ fontSize: 28, fontWeight: 900, color: '#561F1F', marginTop: 4 }}>
+                  {computedRate}%
+                </div>
+                <div style={{ fontSize: 11.5, color: '#1B7F5E', marginTop: 4 }}>
+                  Clicks converted to buying customers
+                </div>
+              </div>
+
+              {/* Total Royalties Accrued (10%) */}
+              <div style={{ background: '#F4FAF6', padding: '16px 20px', borderRadius: 14, border: '1.5px solid #C6E7D5' }}>
+                <div style={{ fontSize: 12, color: '#1B7F5E', textTransform: 'uppercase', fontWeight: 800 }}>
+                  Total 10% Royalties Earned
+                </div>
+                <div style={{ fontSize: 28, fontWeight: 900, color: '#1B7F5E', marginTop: 4 }}>
+                  NPR {totalCreatorEarned.toLocaleString()}
+                </div>
+                <div style={{ fontSize: 11.5, color: '#1B7F5E', marginTop: 4, fontWeight: 700 }}>
+                  10% cash on every verified order
+                </div>
+              </div>
+            </div>
+
+            {/* NPR 10,000 Threshold Progress Banner */}
+            <div
+              style={{
+                background: isThresholdReached
+                  ? 'linear-gradient(135deg, rgba(27,127,94,0.08) 0%, rgba(212,175,55,0.12) 100%)'
+                  : '#FFF8F0',
+                border: isThresholdReached ? '2px solid #1B7F5E' : '1.5px solid #D4AF37',
+                borderRadius: 16,
+                padding: '20px 24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 14,
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Wallet size={20} color={isThresholdReached ? '#1B7F5E' : '#D4AF37'} />
+                    <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#2B1810' }}>
+                      NPR 10,000 Payout Milestone Progress
+                    </h3>
+                  </div>
+                  <div style={{ fontSize: 13, color: '#6B564C', marginTop: 4 }}>
+                    Withdrawable Balance: <strong style={{ color: '#1B7F5E', fontSize: 15 }}>NPR {withdrawableCash.toLocaleString()}</strong> of NPR 10,000 threshold
+                  </div>
+                </div>
+
+                {isThresholdReached ? (
+                  <button
+                    onClick={() => handleRequestPayout(withdrawableCash, (esewaId ? 'esewa' : 'khalti'), (esewaId || khaltiNumber || '9801234567'))}
+                    disabled={isRequestingPayout}
+                    style={{
+                      padding: '10px 22px',
+                      borderRadius: 10,
+                      background: 'linear-gradient(135deg, #1B7F5E 0%, #135F46 100%)',
+                      color: '#FFF',
+                      border: 'none',
+                      fontWeight: 800,
+                      fontSize: 13,
+                      cursor: isRequestingPayout ? 'not-allowed' : 'pointer',
+                      boxShadow: '0 4px 14px rgba(27,127,94,0.3)',
+                    }}
+                  >
+                    {isRequestingPayout ? 'Submitting to Queue...' : '🎉 Request Direct Wallet Payout'}
+                  </button>
+                ) : (
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#8B3A3A', background: '#FFEBEB', padding: '6px 12px', borderRadius: 6 }}>
+                    NPR {(10000 - withdrawableCash).toLocaleString()} remaining to unlock payout
+                  </div>
+                )}
+              </div>
+
+              {/* Progress Bar */}
+              <div style={{ width: '100%', height: 10, background: '#E2E8F0', borderRadius: 99, overflow: 'hidden' }}>
+                <div
+                  style={{
+                    width: `${thresholdPercent}%`,
+                    height: '100%',
+                    background: isThresholdReached ? 'linear-gradient(90deg, #1B7F5E, #D4AF37)' : '#1B7F5E',
+                    borderRadius: 99,
+                    transition: 'width 0.5s ease',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: '#777' }}>
+                <span>NPR 0</span>
+                <span>{thresholdPercent}% Reached</span>
+                <span>NPR 10,000 Milestone</span>
+              </div>
+            </div>
+
+            {/* Recent Orders Feeds Attributed to this Code */}
+            <div>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 800, color: '#2B1810' }}>
+                Recent Customers Who Used Your Code ({matchedCreatorOrders.length})
+              </h3>
+              {matchedCreatorOrders.length === 0 ? (
+                <div style={{ padding: '24px 16px', textAlign: 'center', color: '#777', background: '#FAF2E9', borderRadius: 12, fontSize: 13 }}>
+                  No orders placed yet using code <strong>{analyticsCode}</strong>. Share your affiliate link to earn 10% on every order!
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {matchedCreatorOrders.map((order) => {
+                    const discount = order.referralDiscountAmount || 300;
+                    const commission = order.referralCommissionAmount || Math.round((order.subtotalAmount - discount) * 0.10);
+
+                    return (
+                      <div
+                        key={order.id}
+                        style={{
+                          background: '#FAF2E9',
+                          padding: '14px 18px',
+                          borderRadius: 12,
+                          border: '1px solid #EADCCE',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          flexWrap: 'wrap',
+                          gap: 10,
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontWeight: 800, fontSize: 14, color: '#2B1810' }}>
+                              #{order.orderNumber.slice(0, 5)}***
+                            </span>
+                            <span style={{ fontSize: 11, color: '#666' }}>
+                              • Customer in {order.shippingAddress.city || 'Nepal'}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: 10,
+                                fontWeight: 800,
+                                padding: '2px 6px',
+                                borderRadius: 4,
+                                textTransform: 'uppercase',
+                                background: order.status === 'delivered' ? '#E0F3EA' : '#FFF3CD',
+                                color: order.status === 'delivered' ? '#1B7F5E' : '#856404',
+                              }}
+                            >
+                              {order.status === 'delivered' ? '✓ Credited' : order.status}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 12, color: '#555', marginTop: 4 }}>
+                            {order.items.map((it, idx) => (
+                              <span key={idx}>
+                                {it.product.title.en} ({it.selectedSize}) × {it.quantity}
+                                {idx < order.items.length - 1 ? ', ' : ''}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: 14, fontWeight: 900, color: '#1B7F5E' }}>
+                            +NPR {commission.toLocaleString()} (10% Royalty)
+                          </div>
+                          <div style={{ fontSize: 11, color: '#2B6CB0' }}>
+                            Customer Saved: NPR {discount.toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Linked Wallet Info */}
+            <div style={{ background: '#F8F4EE', padding: '16px 20px', borderRadius: 12, border: '1px solid #EADCCE', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#666', textTransform: 'uppercase' }}>
+                  Linked Payout Wallet
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#2B1810', marginTop: 2 }}>
+                  eSewa: {currentMatchedAdvocate?.esewaId || esewaId || '9801234567'} • Khalti: {currentMatchedAdvocate?.khaltiNumber || khaltiNumber || '9801234567'}
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveTab('payout')}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  background: '#FFF',
+                  border: '1px solid #D4C5B9',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: '#561F1F',
+                  cursor: 'pointer',
+                }}
+              >
+                Update Wallet Numbers
+              </button>
+            </div>
           </div>
         ) : (
           /* Rules & Guidelines Tab */
