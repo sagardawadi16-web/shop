@@ -15,8 +15,10 @@ import { useProductStore } from './stores/productStore';
 import { useOrderStore } from './stores/orderStore';
 import { useSettingsStore } from './stores/settingsStore';
 import { useAdminStore } from './stores/adminStore';
+import { useMobileHistory } from './hooks/useMobileHistory';
 
 export default function App() {
+  useMobileHistory();
   const { pageView, theme } = useSettingsStore();
   const { initFirestoreSync: initProducts } = useProductStore();
   const { initFirestoreSync: initOrders, latestOrder } = useOrderStore();
