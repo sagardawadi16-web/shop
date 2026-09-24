@@ -21,6 +21,8 @@ export interface Product {
   description: BilingualText;
   price: number;
   originalPrice?: number;
+  costPrice?: number; // Buying price (cost to produce/acquire) — Admin only
+  referralFee?: number; // Target referral commission allocated to promoter
   categoryId: string;
   categoryName: BilingualText;
   images: string[];
@@ -95,6 +97,13 @@ export interface Order {
   verification?: OrderVerification;
   isWholesaleLead?: boolean;
   wholesaleReason?: string;
+  // Referral & Margin Accounting
+  referredByCode?: string;
+  referralDiscountAmount?: number;
+  referralCommissionAmount?: number;
+  costPriceTotal?: number;
+  shippingCostActual?: number;
+  netProfitCalculated?: number;
 }
 
 export interface GoogleUser {
@@ -181,4 +190,74 @@ export interface RetailerInquiry {
   createdAt: string;
   message?: string;
   adminNotes?: string;
+}
+
+// ============================================================
+// Referral, Profit Formula & Admin Whitelist Data Models
+// ============================================================
+
+export interface ReferralAdvocate {
+  id: string;
+  code: string; // e.g. 'SAGAR-82'
+  fullName: string;
+  phone: string;
+  email?: string;
+  socialHandle?: string; // Instagram / TikTok handle
+  clicksCount: number;
+  sharesCount: number;
+  ordersDeliveredCount: number;
+  pendingBalance: number; // In delivery
+  withdrawableBalance: number; // Delivered & verified cash
+  lifetimeEarned: number;
+  createdAt: string;
+  status: 'active' | 'suspended';
+  payoutPreferredMethod: 'esewa' | 'khalti' | 'bank';
+  payoutAccountIdentifier: string;
+}
+
+export type PayoutStatus = 'pending_audit' | 'approved_paid' | 'rejected';
+
+export interface PayoutRequest {
+  id: string;
+  advocateId: string;
+  advocateCode: string;
+  advocateName: string;
+  advocatePhone: string;
+  requestedAmount: number; // >= 10000
+  paymentMethod: 'esewa' | 'khalti' | 'bank';
+  paymentDetails: string;
+  status: PayoutStatus;
+  requestedAt: string;
+  auditedAt?: string;
+  paidAt?: string;
+  transactionRef?: string;
+  auditNotes?: string;
+}
+
+export interface AdminWhitelistEntry {
+  id: string;
+  email: string;
+  role: 'super_admin' | 'manager' | 'staff';
+  addedBy: string;
+  addedAt: string;
+  notes?: string;
+}
+
+export interface ProfitFormulaParams {
+  sellingPrice: number;
+  buyingPrice: number; // Cost Price
+  discount: number;
+  shippingCharge: number;
+  referralFee: number;
+}
+
+export interface ProfitFormulaResult {
+  sellingPrice: number;
+  buyingPrice: number;
+  discount: number;
+  shippingCharge: number;
+  referralFee: number;
+  netProfit: number;
+  marginPercent: number;
+  isViable: boolean;
 }

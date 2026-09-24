@@ -1,14 +1,18 @@
 import React from 'react';
-import { Sparkles, MapPin, Phone, Mail, MessageCircle, Building2 } from 'lucide-react';
+import { Sparkles, MapPin, Phone, Mail, MessageCircle, Building2, Award } from 'lucide-react';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useProductStore } from '../../stores/productStore';
 import { useRetailerStore } from '../../stores/retailerStore';
+import { useReferralStore } from '../../stores/referralStore';
+import { useAdminStore } from '../../stores/adminStore';
 import { CATEGORIES } from '../../mockData';
 
 export const Footer: React.FC = () => {
   const { language, siteContent, merchant } = useSettingsStore();
   const { setSelectedCategory } = useProductStore();
   const { openWholesaleModal } = useRetailerStore();
+  const { openCreatorPortal } = useReferralStore();
+  const { openAdmin } = useAdminStore();
 
   const handleCategoryClick = (catId: string) => {
     setSelectedCategory(catId);
@@ -149,6 +153,28 @@ export const Footer: React.FC = () => {
                 <span>{language === 'np' ? 'थोक तथा खुद्रा साझेदार (B2B)' : 'B2B Wholesale & Stockists'}</span>
               </button>
 
+              {/* Creator Affiliate & Earn Trigger */}
+              <button
+                onClick={openCreatorPortal}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#1B7F5E',
+                  fontSize: 13,
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  transition: 'opacity 0.2s',
+                }}
+              >
+                <Award size={14} color="#1B7F5E" />
+                <span>{language === 'np' ? 'इन्फ्लुएन्सर पार्टनर (कमाउनुहोस्)' : 'Creator Affiliate (Earn 10k)'}</span>
+              </button>
+
               <a
                 href="https://discord.gg/9Z7CzTraET"
                 target="_blank"
@@ -255,7 +281,14 @@ export const Footer: React.FC = () => {
         >
           <p>© {new Date().getFullYear()} DAWOSTI Nepal. {language === 'np' ? 'सर्वाधिकार सुरक्षित।' : 'All rights reserved.'}</p>
           <p style={{ fontSize: 11, color: 'rgba(255, 248, 240, 0.5)' }}>
-            Kathmandu, Nepal • dawosti.com
+            Kathmandu, Nepal •{' '}
+            <span
+              onClick={openAdmin}
+              style={{ cursor: 'pointer', textDecoration: 'none' }}
+              title="Dawosti Management Console"
+            >
+              dawosti.com
+            </span>
           </p>
         </div>
       </div>

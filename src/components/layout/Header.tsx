@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Search, ShoppingBag, Menu, X, Globe, PackageCheck, Sparkles, Building2
+  Search, ShoppingBag, Menu, X, Globe, PackageCheck, Sparkles, Building2, Award
 } from 'lucide-react';
 import { DawostiLogo } from '../common/DawostiLogo';
+import { UserAuthButton } from './UserAuthButton';
 import { useCartStore } from '../../stores/cartStore';
 import { useProductStore } from '../../stores/productStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useRetailerStore } from '../../stores/retailerStore';
+import { useReferralStore } from '../../stores/referralStore';
 import { CATEGORIES } from '../../mockData';
 
 export const Header: React.FC = () => {
@@ -14,9 +16,36 @@ export const Header: React.FC = () => {
   const { searchQuery, setSearchQuery, selectedCategory, setSelectedCategory } = useProductStore();
   const { language, toggleLanguage, pageView, setPageView, setIsOrderTrackingOpen } = useSettingsStore();
   const { openWholesaleModal } = useRetailerStore();
+  const { openCreatorPortal } = useReferralStore();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [hideCategory, setHideCategory] = useState(false);
+
+  // Remove category sub-nav when scrolling down
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      // Always show when near the very top of the page
+      if (currentScrollY <= 20) {
+        setHideCategory(false);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 40) {
+        // Scrolling down -> hide categories
+        setHideCategory(true);
+      } else if (currentScrollY < lastScrollY - 8) {
+        // Scrolling up -> reveal categories
+        setHideCategory(false);
+      }
+
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleCategoryClick = (catId: string) => {
     setSelectedCategory(catId);
@@ -228,6 +257,30 @@ export const Header: React.FC = () => {
             <span>{language === 'np' ? 'थोक साझेदार' : 'Wholesale / B2B'}</span>
           </button>
 
+          {/* Creator / Referral Hub */}
+          <button
+            onClick={openCreatorPortal}
+            className="hide-mobile"
+            title={language === 'np' ? 'इन्फ्लुएन्सर पार्टनर बन्नुहोस् र कमाउनुहोस्' : 'Earn With Dawosti (Creator Hub)'}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              padding: '6px 12px',
+              borderRadius: 99,
+              background: '#FAF2E9',
+              border: '1.5px solid #1B7F5E',
+              color: '#1B7F5E',
+              fontSize: 11.5,
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+          >
+            <Award size={13} color="#1B7F5E" />
+            <span>{language === 'np' ? 'कमाउनुहोस्' : 'Earn / Refer'}</span>
+          </button>
+
           {/* Track Order Button */}
           <button
             onClick={() => setIsOrderTrackingOpen(true)}
@@ -250,6 +303,9 @@ export const Header: React.FC = () => {
             <PackageCheck size={15} color="#8B3A3A" />
             <span>{language === 'np' ? 'अर्डर ट्र्याक' : 'Track Order'}</span>
           </button>
+
+          {/* Customer Google Auth Button */}
+          <UserAuthButton />
 
           {/* Cart Drawer Trigger */}
           <button
@@ -299,13 +355,18 @@ export const Header: React.FC = () => {
         </div>
       )}
 
-      {/* Bottom Sub-Nav: Categories Bar */}
+      {/* Bottom Sub-Nav: Categories Bar (Smoothly collapses when scrolling down) */}
       <nav
         style={{
-          borderTop: '1px solid #EADCCE',
+          borderTop: hideCategory ? 'none' : '1px solid #EADCCE',
           backgroundColor: '#FFFFFF',
-          overflowX: 'auto',
+          overflowX: hideCategory ? 'hidden' : 'auto',
           scrollbarWidth: 'none',
+          maxHeight: hideCategory ? 0 : 56,
+          opacity: hideCategory ? 0 : 1,
+          overflow: 'hidden',
+          transition: 'max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease, border-color 0.2s ease',
+          pointerEvents: hideCategory ? 'none' : 'auto',
         }}
       >
         <div
@@ -315,8 +376,9 @@ export const Header: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            padding: '8px 20px',
+            padding: hideCategory ? '0 20px' : '8px 20px',
             whiteSpace: 'nowrap',
+            transition: 'padding 0.25s ease',
           }}
         >
           {CATEGORIES.map((cat) => {
@@ -385,6 +447,9 @@ export const Header: React.FC = () => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Google Account Sign-In / Profile */}
+            <UserAuthButton isMobile />
+
             {/* Track Order CTA in mobile drawer */}
             <button
               onClick={() => {
@@ -434,6 +499,31 @@ export const Header: React.FC = () => {
             >
               <Building2 size={16} color="#8B3A3A" />
               <span>{language === 'np' ? 'थोक तथा खुद्रा साझेदार बन्नुहोस्' : 'Become a Retail Stockist (B2B)'}</span>
+            </button>
+
+            {/* Creator / Referral Hub in mobile drawer */}
+            <button
+              onClick={() => {
+                openCreatorPortal();
+                setMobileMenuOpen(false);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                padding: '11px 14px',
+                borderRadius: 12,
+                background: '#E0F3EA',
+                border: '1.5px solid #1B7F5E',
+                color: '#1B7F5E',
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: 'pointer',
+              }}
+            >
+              <Award size={16} color="#1B7F5E" />
+              <span>{language === 'np' ? 'इन्फ्लुएन्सर पार्टनर (कमाउनुहोस्)' : 'Creator Hub (Earn NPR 10k)'}</span>
             </button>
 
             <div style={{ fontWeight: 700, fontSize: 13, color: '#8B3A3A', textTransform: 'uppercase', letterSpacing: '0.1em' }}>

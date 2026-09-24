@@ -1,12 +1,13 @@
-import React from 'react';
-import { CheckCircle, MessageCircle, ArrowLeft, Package, Truck } from 'lucide-react';
+import { CheckCircle, MessageCircle, ArrowLeft, Package, Truck, Award, Sparkles } from 'lucide-react';
 import { Order } from '../types';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useReferralStore } from '../stores/referralStore';
 
 interface Props { order: Order; }
 
 export const OrderConfirmationPage: React.FC<Props> = ({ order }) => {
   const { language, formatPrice, merchant, setPageView } = useSettingsStore();
+  const { openCreatorPortal } = useReferralStore();
 
   const paymentLabels: Record<string, string> = {
     cod: 'Cash on Delivery', esewa: 'eSewa', khalti: 'Khalti', fonepay: 'Fonepay / QR'
@@ -23,6 +24,7 @@ export const OrderConfirmationPage: React.FC<Props> = ({ order }) => {
     `\n\n💰 Total: NPR ${order.totalAmount.toLocaleString()}\n` +
     `💳 Payment: ${paymentLabels[order.paymentMethod] || order.paymentMethod}\n` +
     `${order.paymentDetails ? `🧾 Ref: ${order.paymentDetails}\n` : ''}` +
+    `${order.referredByCode ? `🎁 Referral Attribution: *[REF: ${order.referredByCode}]*\n` : ''}` +
     `\nKindly confirm this order. Thank you! 🙏`
   );
 
@@ -156,6 +158,49 @@ export const OrderConfirmationPage: React.FC<Props> = ({ order }) => {
           <div style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255, 248, 240, 0.6)', marginTop: 8 }}>
             Type <code style={{ color: '#D4AF37' }}>/verify {order.orderNumber}</code> inside Discord to authenticate
           </div>
+        </div>
+
+        {/* Viral Referral & Cash Rewards Card */}
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #FFF8F0 0%, #FAF2E9 100%)',
+            border: '2px dashed #1B7F5E',
+            borderRadius: 16,
+            padding: '18px 20px',
+            marginBottom: 20,
+            textAlign: 'left',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#1B7F5E', fontWeight: 700, fontSize: 13, marginBottom: 4 }}>
+            <Award size={18} />
+            <span>{language === 'np' ? 'साथीलाई सेयर गर्नुहोस् र कमाउनुहोस्' : 'Share Dawosti & Earn Cash Commissions'}</span>
+          </div>
+          <p style={{ fontSize: 12.5, color: '#444', margin: '0 0 12px 0', lineHeight: 1.5 }}>
+            {language === 'np'
+              ? 'आफ्नो साथीहरूलाई रु ३०० छुट दिनुहोस्। हरेक डेलिभर भएको अर्डरमा तपाईले सिधै कमिसन पाउनुहुन्छ र रु १०,००० पुग्दा इसेवामा भुक्तानी लिन सक्नुहुन्छ।'
+              : 'Give your friends NPR 300 off their first order. Earn direct cash on every dress sold and withdraw NPR 10,000 straight to your eSewa.'}
+          </p>
+          <button
+            onClick={openCreatorPortal}
+            style={{
+              width: '100%',
+              padding: '10px 16px',
+              backgroundColor: '#1B7F5E',
+              color: '#FFF',
+              border: 'none',
+              borderRadius: 99,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+            }}
+          >
+            <Sparkles size={14} />
+            <span>{language === 'np' ? 'मेरो रेफरल लिंक लिनुहोस्' : 'Get My Referral Link & Track Earnings'}</span>
+          </button>
         </div>
 
         {/* Actions */}

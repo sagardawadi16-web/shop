@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Order, OrderStatus, CartItem, ShippingAddress, PaymentMethod, OrderVerificationStatus, OrderVerification } from '../types';
 import { listenOrders, saveOrder, updateOrder, deleteOrder } from '../services/firestoreOrders';
+import { creditAdvocateOrder } from '../services/firestoreReferrals';
 
 interface OrderState {
   orders: Order[];
@@ -20,6 +21,8 @@ interface OrderState {
     paymentDetails?: string;
     notes?: string;
     customerName?: string;
+    referredByCode?: string;
+    referralDiscountAmount?: number;
   }) => Order;
   updateOrderStatus: (orderId: string, status: OrderStatus, trackingInfo?: { courierName?: string; trackingNumber?: string; logisticsNotes?: string }) => void;
   acknowledgeOrder: (orderId: string) => void;
@@ -103,6 +106,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       courierPartner: 'Nepal Post EMS / Sundar Express',
       isWholesaleLead,
       wholesaleReason: isWholesaleLead ? wholesaleReason : undefined,
+      referredByCode: params.referredByCode,
+      referralDiscountAmount: params.referralDiscountAmount || 0,
       verification: {
         status: 'unverified',
         fraudScore,
@@ -122,6 +127,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   },
 
   updateOrderStatus: (orderId, status, trackingInfo = {}) => {
+    const target = get().orders.find((o) => o.id === orderId || o.orderNumber === orderId);
     const updates: Partial<Order> = {
       status,
       ...trackingInfo,
@@ -132,6 +138,11 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     );
     set({ orders: updated });
     updateOrder(orderId, updates);
+
+    // If order was delivered and was referred by an advocate, credit advocate NPR 500
+    if (status === 'delivered' && target && target.referredByCode) {
+      creditAdvocateOrder(target.referredByCode, 500).catch(() => {});
+    }
   },
 
   acknowledgeOrder: (orderId) => {
