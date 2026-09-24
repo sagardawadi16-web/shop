@@ -57,6 +57,33 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     if (params.paymentMethod === 'cod' && params.totalAmount > 20000) fraudScore += 25; // Large COD
     const fraudRisk: 'low' | 'medium' | 'high' = fraudScore >= 60 ? 'high' : fraudScore >= 35 ? 'medium' : 'low';
 
+    // Calculate Wholesale / Bulk Buyer Potential
+    const totalQty = params.items.reduce((acc, item) => acc + item.quantity, 0);
+    const wholesaleReasons: string[] = [];
+    if (totalQty >= 5) wholesaleReasons.push(`Bulk Quantity (${totalQty} pcs)`);
+    if (params.totalAmount >= 25000) wholesaleReasons.push(`High Basket (NPR ${params.totalAmount.toLocaleString()})`);
+
+    const productSizeMap: Record<string, Set<string>> = {};
+    for (const item of params.items) {
+      const pid = item.product.id;
+      if (!productSizeMap[pid]) productSizeMap[pid] = new Set();
+      productSizeMap[pid].add(item.selectedSize);
+    }
+    for (const sizes of Object.values(productSizeMap)) {
+      if (sizes.size >= 3) {
+        wholesaleReasons.push(`Multi-size SKU Pack (${sizes.size} sizes)`);
+        break;
+      }
+    }
+
+    const addrLower = `${params.shippingAddress.addressLine} ${params.shippingAddress.city}`.toLowerCase();
+    const commercialKeywords = ['new road', 'bishal bazar', 'labim', 'durbar marg', 'lakeside', 'narayangarh', 'boutique', 'collection', 'thamel', 'civil mall'];
+    const matchedKeyword = commercialKeywords.find((kw) => addrLower.includes(kw));
+    if (matchedKeyword) wholesaleReasons.push(`Commercial Hub (${matchedKeyword})`);
+
+    const isWholesaleLead = wholesaleReasons.length > 0;
+    const wholesaleReason = wholesaleReasons.join(' • ');
+
     const newOrder: Order = {
       id: orderId,
       orderNumber,
@@ -74,6 +101,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       acknowledgedByAdmin: false,
       customerLoginName: params.customerName || 'Guest',
       courierPartner: 'Nepal Post EMS / Sundar Express',
+      isWholesaleLead,
+      wholesaleReason: isWholesaleLead ? wholesaleReason : undefined,
       verification: {
         status: 'unverified',
         fraudScore,

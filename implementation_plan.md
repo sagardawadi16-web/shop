@@ -84,6 +84,9 @@ src/
         CatalogTab.tsx
         ThemeTab.tsx
         SettingsTab.tsx
+        RetailersTab.tsx
+    wholesale/
+      RetailerInquiryModal.tsx
     common/
       Logo.tsx
       Button.tsx
@@ -98,6 +101,71 @@ src/
   main.tsx
   index.css
 ```
+
+---
+
+## Wholesale & Retailer Partner System (B2B Engine)
+
+### 1. Objectives & Value Proposition
+- Turn passive traffic into contracted wholesale and retail stockist partners across Nepal and globally.
+- Provide a dedicated, frictionless gateway for physical boutique owners, concept stores, and diaspora retailers to partner with Dawosti.
+- Detect "hidden" commercial/bulk buyers directly from consumer order flows.
+- Arm Sagar with instant WhatsApp alerts and an in-admin CRM to review, qualify, and negotiate wholesale orders.
+
+### 2. Retailer Data Model (`RetailerInquiry`)
+```typescript
+export type RetailerStoreType = 'physical_boutique' | 'online_store' | 'diaspora_store' | 'departmental' | 'distributor';
+export type RetailerInquiryStatus = 'new' | 'contacted' | 'approved_wholesale' | 'declined';
+
+export interface RetailerInquiry {
+  id: string;
+  storeName: string;
+  contactPerson: string;
+  phone: string;
+  whatsappNumber?: string;
+  email: string;
+  city: string;
+  country: string;
+  panVatNumber?: string;
+  storeType: RetailerStoreType;
+  estimatedMonthlyBudgetNpr?: number;
+  categoriesOfInterest: string[]; // e.g. ['dhaka_fusion', 'pashmina', 'kurthas', 'bridals']
+  status: RetailerInquiryStatus;
+  createdAt: string;
+  adminNotes?: string;
+}
+```
+
+### 3. Key Components & Implementation
+1. **On-Site Inbound Funnel (`RetailerInquiryModal.tsx`)**:
+   - Access points in Header ("B2B Wholesale / खुद्रा तथा थोक") and Footer ("Retailer & Stockist Network").
+   - 60-second boutique application form: Store name, Location, Phone/WhatsApp, Type, and Target Categories.
+   - Dual dispatch upon submission:
+     - Saves document into Firestore collection `retailer_inquiries`.
+     - Direct WhatsApp deep-link generation to Sagar (`+977 9708251494`) pre-filled with inquiry details.
+2. **Automated Commercial Buyer Detector (Order Stream)**:
+   - In `orderStore.ts` / `OrdersTab.tsx`, automatically tag consumer orders as `🏷️ Potential Retailer / Bulk Buyer` if:
+     - Order contains >= 3 identical items in different sizes.
+     - Total basket value exceeds NPR 25,000.
+     - Shipping address matches known commercial shopping complexes (New Road, Bishal Bazar, Labim Mall, Lakeside Pokhara, etc.).
+3. **Admin Retailer CRM (`RetailersTab.tsx`)**:
+   - Integrated into `AdminModal.tsx`.
+   - Table of pending, contacted, and active stockist partners.
+   - One-click buttons: "Open in WhatsApp", "Copy Line Sheet Link", "Approve Partner", "Update Notes".
+4. **Digital Wholesale Line Sheet**:
+   - Direct shareable lookbook PDF/link featuring MOQs (Minimum Order Quantities: 10–15 pcs) and standard wholesale margins (35%–45% off retail).
+
+### 4. Sourcing & Acquisition Strategy (Outside The Site)
+1. **Kathmandu & Pokhara Boutiques**:
+   - Multi-brand concept stores in Jhamsikhel, Sanepa, Durbar Marg, Labim Mall, Thamel (Chhaya Center), Lakeside Pokhara.
+   - Pitch: Low MOQ starter pack + 30-day size exchange guarantee.
+2. **Nepali Diaspora Retailers**:
+   - Target diaspora boutiques in Australia (Sydney: Rockdale, Granville, Auburn; Melbourne), UK (Aldershot, Harrow), USA (Dallas, NY, Bay Area).
+   - Outreach: Instagram search (`#nepaliboutiqueaustralia`, `#nepalifashionuk`), targeted WhatsApp outreach with export rates via DHL.
+3. **Global B2B Platforms**:
+   - List Dawosti on **Faire.com** and **Ankorstore** for independent global concept boutique reach.
+4. **Discord Guild Synergy**:
+   - Engage with stylists and showroom designers in the Dawosti Autonomous Fashion Guild (`#heritage-and-textile`).
 
 ---
 
@@ -131,6 +199,13 @@ service cloud.firestore {
     }
     // Orders: anyone can create (place order), admin can read/update/delete
     match /orders/{id} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null &&
+        (request.auth.token.email == 'sagardawadi10@gmail.com' ||
+         request.auth.token.email == 'sagardawadi16@gmail.com');
+    }
+    // Retailer inquiries: anyone can create (apply), admin can read/update/delete
+    match /retailer_inquiries/{id} {
       allow create: if true;
       allow read, update, delete: if request.auth != null &&
         (request.auth.token.email == 'sagardawadi10@gmail.com' ||
@@ -174,3 +249,5 @@ service cloud.firestore {
 4. Order status update in Admin → customer-facing tracking shows updated status
 5. Google Sign-In works (after adding dawosti.com to Firebase Authorized Domains)
 6. Admin panel accessible to sagardawadi16@gmail.com automatically
+7. Submit test Retailer Inquiry → persists to Firestore `retailer_inquiries` & displays in Admin Retailers Tab
+8. High-volume / multi-size orders automatically highlighted with Wholesale badge in Admin Orders

@@ -93,6 +93,8 @@ export interface Order {
   acknowledgedByAdmin: boolean;
   customerLoginName?: string;
   verification?: OrderVerification;
+  isWholesaleLead?: boolean;
+  wholesaleReason?: string;
 }
 
 export interface GoogleUser {
@@ -147,4 +149,36 @@ export interface AdminSettings {
 export interface PriceRange {
   min: number;
   max: number;
+}
+
+export type RetailerStoreType =
+  | 'physical_boutique'
+  | 'online_store'
+  | 'diaspora_store'
+  | 'departmental'
+  | 'distributor';
+
+export type RetailerInquiryStatus =
+  | 'new'
+  | 'contacted'
+  | 'approved_wholesale'
+  | 'declined';
+
+export interface RetailerInquiry {
+  id?: string;
+  storeName: string;
+  contactPerson: string;
+  phone: string;
+  whatsappNumber?: string;
+  email: string;
+  city: string;
+  country: string;
+  panVatNumber?: string;
+  storeType: RetailerStoreType;
+  estimatedMonthlyBudgetNpr?: number;
+  categoriesOfInterest: string[];
+  status: RetailerInquiryStatus;
+  createdAt: string;
+  message?: string;
+  adminNotes?: string;
 }

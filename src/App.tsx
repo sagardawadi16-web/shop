@@ -6,6 +6,7 @@ import React, { useEffect } from 'react';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
+import { RetailerInquiryModal } from './components/wholesale/RetailerInquiryModal';
 import { ToastContainer } from './components/common/Toast';
 import { HomePage } from './pages/HomePage';
 import { CheckoutPage } from './pages/CheckoutPage';
@@ -13,6 +14,7 @@ import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
 import { useProductStore } from './stores/productStore';
 import { useOrderStore } from './stores/orderStore';
 import { useSettingsStore } from './stores/settingsStore';
+import { useRetailerStore } from './stores/retailerStore';
 import { useMobileHistory } from './hooks/useMobileHistory';
 import { recordVisit } from './services/visitorTracker';
 
@@ -22,6 +24,7 @@ export default function App() {
   const { initFirestoreSync: initProducts } = useProductStore();
   const { initFirestoreSync: initOrders, latestOrder } = useOrderStore();
   const { initFirestoreSync: initSettings } = useSettingsStore();
+  const { initFirestoreSync: initRetailers } = useRetailerStore();
 
   // Initialize all Firestore listeners and visitor tracking on mount
   useEffect(() => {
@@ -29,10 +32,12 @@ export default function App() {
     const unsub1 = initProducts();
     const unsub2 = initOrders();
     const unsub3 = initSettings();
+    const unsub4 = initRetailers();
     return () => {
       if (typeof unsub1 === 'function') unsub1();
       if (typeof unsub2 === 'function') unsub2();
       if (typeof unsub3 === 'function') unsub3();
+      if (typeof unsub4 === 'function') unsub4();
     };
   }, []);
 
@@ -58,7 +63,9 @@ export default function App() {
 
       {/* Global overlays */}
       <CartDrawer />
+      <RetailerInquiryModal />
       <ToastContainer />
     </>
   );
 }
+

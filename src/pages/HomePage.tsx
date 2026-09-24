@@ -1,13 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Filter, Grid3X3, LayoutList, SlidersHorizontal, X } from 'lucide-react';
+import { Filter, Grid3X3, LayoutList, SlidersHorizontal, X, Building2, Sparkles, ArrowRight } from 'lucide-react';
 import { ProductCard } from '../components/products/ProductCard';
 import { ProductDetailModal } from '../components/products/ProductDetailModal';
 import { useProductStore } from '../stores/productStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useRetailerStore } from '../stores/retailerStore';
 import { CATEGORIES } from '../mockData';
 
 export const HomePage: React.FC = () => {
   const { language, theme, merchant, siteContent } = useSettingsStore();
+  const { openWholesaleModal } = useRetailerStore();
   const {
     filteredProducts, selectedCategory, setSelectedCategory,
     searchQuery, sortBy, setSortBy, inStockOnly, setInStockOnly,
@@ -153,6 +155,96 @@ export const HomePage: React.FC = () => {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Editorial B2B Stockist & Guild Spotlight Section */}
+      <section
+        style={{
+          background: 'linear-gradient(135deg, #2B1810 0%, #561F1F 50%, #2B1810 100%)',
+          borderTop: '2px solid #D4AF37',
+          borderBottom: '2px solid #D4AF37',
+          color: '#FFF8F0',
+          padding: 'clamp(48px, 6vw, 72px) 20px',
+          position: 'relative',
+          overflow: 'hidden',
+          marginTop: 20,
+        }}
+      >
+        <div style={{ position: 'absolute', top: -100, right: -100, width: 350, height: 350, borderRadius: '50%', background: 'rgba(212,175,55,0.06)' }} />
+        <div style={{ position: 'absolute', bottom: -80, left: -80, width: 300, height: 300, borderRadius: '50%', background: 'rgba(212,175,55,0.04)' }} />
+
+        <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 14px', borderRadius: 99, background: 'rgba(212,175,55,0.15)', border: '1px solid rgba(212,175,55,0.4)', marginBottom: 16 }}>
+            <Sparkles size={14} color="#D4AF37" />
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#D4AF37' }}>
+              {language === 'np' ? 'बुटिक तथा खुद्रा साझेदारी' : 'Atelier Stockist & Retail Guild'}
+            </span>
+          </div>
+
+          <h2
+            style={{
+              fontFamily: "'Cormorant Garamond', Georgia, serif",
+              fontSize: 'clamp(28px, 4.5vw, 46px)',
+              fontWeight: 700,
+              color: '#FFF8F0',
+              lineHeight: 1.2,
+              marginBottom: 16,
+              letterSpacing: '0.02em',
+            }}
+          >
+            {language === 'np'
+              ? 'तपाईंको बुटिकमा डावोस्तीका विशिष्ट फेसन संग्रह प्रदर्शन गर्नुहोस्'
+              : 'Bring Kathmandu’s Finest Heritage & Contemporary Couture to Your Store'}
+          </h2>
+
+          <p
+            style={{
+              fontSize: 'clamp(14px, 2vw, 16px)',
+              color: 'rgba(255, 248, 240, 0.82)',
+              maxWidth: 680,
+              margin: '0 auto 28px',
+              lineHeight: 1.7,
+            }}
+          >
+            {language === 'np'
+              ? 'नेपाल, अष्ट्रेलिया, बेलायत तथा अमेरिकाका बहु-ब्रान्ड बुटिकहरूका लागि विशेष थोक दर (३५%–४५% छुट), १५ थानको सुरुवाती MOQ र डिजिटल लाइन सिट उपलब्ध छ।'
+              : 'Partner with Dawosti Boutique. Curated wholesale access for concept stores, multi-brand boutiques, and diaspora stockists with low 15-piece MOQs, generous wholesale margins, and reliable worldwide express shipping.'}
+          </p>
+
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={openWholesaleModal}
+              className="btn btn-gold"
+              style={{
+                fontSize: 14,
+                padding: '12px 28px',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                boxShadow: '0 4px 18px rgba(212,175,55,0.35)',
+              }}
+            >
+              <Building2 size={16} />
+              <span>{language === 'np' ? 'थोक साझेदार बन्न आवेदन दिनुहोस्' : 'Apply as Retail Stockist'}</span>
+            </button>
+
+            <a
+              href="https://discord.gg/9Z7CzTraET"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline"
+              style={{
+                borderColor: '#D4AF37',
+                color: '#FFF8F0',
+                fontSize: 14,
+                padding: '12px 24px',
+                textDecoration: 'none',
+              }}
+            >
+              <span>🏛️ {language === 'np' ? 'फेसन गिल्ड हेर्नुहोस्' : 'Explore Fashion Guild'}</span>
+              <ArrowRight size={15} color="#D4AF37" />
+            </a>
+          </div>
+        </div>
       </section>
 
       {/* Product detail modal */}

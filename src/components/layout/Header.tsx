@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import {
-  Search, ShoppingBag, Menu, X, Globe, PackageCheck, Sparkles
+  Search, ShoppingBag, Menu, X, Globe, PackageCheck, Sparkles, Building2
 } from 'lucide-react';
 import { DawostiLogo } from '../common/DawostiLogo';
 import { useCartStore } from '../../stores/cartStore';
 import { useProductStore } from '../../stores/productStore';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { useRetailerStore } from '../../stores/retailerStore';
 import { CATEGORIES } from '../../mockData';
 
 export const Header: React.FC = () => {
   const { count, toggleCart } = useCartStore();
   const { searchQuery, setSearchQuery, selectedCategory, setSelectedCategory } = useProductStore();
   const { language, toggleLanguage, pageView, setPageView, setIsOrderTrackingOpen } = useSettingsStore();
+  const { openWholesaleModal } = useRetailerStore();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -43,10 +45,10 @@ export const Header: React.FC = () => {
         boxShadow: '0 2px 10px rgba(43, 24, 16, 0.05)',
       }}
     >
-      {/* Top Main Navigation Bar */}
-      <div className="main-header-nav">
-        {/* Left: Mobile hamburger & Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+      {/* Top Main Navigation Bar (Luxury Centered Brand Architecture) */}
+      <div className="main-header-nav" style={{ position: 'relative' }}>
+        {/* Left Column: Menu & Search */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="mobile-only-btn"
@@ -64,75 +66,68 @@ export const Header: React.FC = () => {
             {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
 
-          <div onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
-            <DawostiLogo size={36} />
-          </div>
-        </div>
-
-        {/* Center: Search input */}
-        <div
-          style={{
-            flex: 1,
-            maxWidth: 460,
-            display: 'flex',
-            alignItems: 'center',
-            position: 'relative',
-          }}
-          className="desktop-search-container"
-        >
-          <Search
-            size={18}
-            style={{
-              position: 'absolute',
-              left: 14,
-              color: '#6B564C',
-              pointerEvents: 'none',
-            }}
-          />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={
-              language === 'np'
-                ? 'कुर्था, पश्मिना, ढाका वा लेहेंगा खोज्नुहोस्...'
-                : 'Search Kurthas, Pashmina, Dhaka, Lehengas...'
-            }
+          {/* Desktop Search Bar */}
+          <div
             style={{
               width: '100%',
-              padding: '9px 16px 9px 40px',
-              borderRadius: 99,
-              border: '1.5px solid #EADCCE',
-              background: '#FFFFFF',
-              fontSize: 13,
-              fontFamily: 'Inter, sans-serif',
-              color: '#2B1810',
-              outline: 'none',
-              transition: 'border-color 0.2s',
+              maxWidth: 300,
+              display: 'flex',
+              alignItems: 'center',
+              position: 'relative',
             }}
-            onFocus={(e) => (e.target.style.borderColor = '#8B3A3A')}
-            onBlur={(e) => (e.target.style.borderColor = '#EADCCE')}
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
+            className="desktop-search-container"
+          >
+            <Search
+              size={16}
               style={{
                 position: 'absolute',
-                right: 12,
-                background: 'none',
-                border: 'none',
+                left: 12,
                 color: '#6B564C',
-                cursor: 'pointer',
-                fontSize: 12,
+                pointerEvents: 'none',
               }}
-            >
-              ✕
-            </button>
-          )}
-        </div>
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={
+                language === 'np'
+                  ? 'खोज्नुहोस्...'
+                  : 'Search boutique...'
+              }
+              style={{
+                width: '100%',
+                padding: '7px 14px 7px 34px',
+                borderRadius: 99,
+                border: '1.5px solid #EADCCE',
+                background: '#FFFFFF',
+                fontSize: 12.5,
+                fontFamily: 'Inter, sans-serif',
+                color: '#2B1810',
+                outline: 'none',
+                transition: 'border-color 0.2s',
+              }}
+              onFocus={(e) => (e.target.style.borderColor = '#8B3A3A')}
+              onBlur={(e) => (e.target.style.borderColor = '#EADCCE')}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                style={{
+                  position: 'absolute',
+                  right: 10,
+                  background: 'none',
+                  border: 'none',
+                  color: '#6B564C',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
 
-        {/* Right Action Icons: Language, Tracking, Admin, User, Cart */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           {/* Mobile search toggle */}
           <button
             onClick={() => setSearchOpen(!searchOpen)}
@@ -149,6 +144,25 @@ export const Header: React.FC = () => {
           >
             <Search size={19} />
           </button>
+        </div>
+
+        {/* Center Column: Perfectly Centered Brand Logo */}
+        <div
+          onClick={handleLogoClick}
+          style={{
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            padding: '2px 8px',
+          }}
+        >
+          <DawostiLogo size={38} centered />
+        </div>
+
+        {/* Right Column: Actions (Language, Tracking, Cart) */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, flex: 1 }}>
 
           {/* Language Switcher */}
           <button
@@ -174,6 +188,45 @@ export const Header: React.FC = () => {
             <span>{language === 'en' ? 'नेपाली' : 'EN'}</span>
           </button>
 
+
+          {/* Wholesale / B2B Button */}
+          <button
+            onClick={openWholesaleModal}
+            className="hide-mobile"
+            title={language === 'np' ? 'थोक तथा खुद्रा साझेदार बन्नुहोस्' : 'Become a Dawosti Wholesale Stockist'}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 13px',
+              borderRadius: 99,
+              background: 'linear-gradient(135deg, rgba(212,175,55,0.18) 0%, rgba(139,58,58,0.08) 100%)',
+              border: '1.5px solid #D4AF37',
+              color: '#561F1F',
+              fontSize: 11.5,
+              fontWeight: 700,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(212,175,55,0.15)',
+              transition: 'all 0.25s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(212,175,55,0.3)';
+              e.currentTarget.style.background = 'linear-gradient(135deg, #D4AF37 0%, #E5A93C 100%)';
+              e.currentTarget.style.color = '#2B1810';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 6px rgba(212,175,55,0.15)';
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(212,175,55,0.18) 0%, rgba(139,58,58,0.08) 100%)';
+              e.currentTarget.style.color = '#561F1F';
+            }}
+          >
+            <Building2 size={13} color="currentColor" />
+            <span>{language === 'np' ? 'थोक साझेदार' : 'Wholesale / B2B'}</span>
+          </button>
 
           {/* Track Order Button */}
           <button
@@ -356,6 +409,31 @@ export const Header: React.FC = () => {
             >
               <PackageCheck size={16} color="#8B3A3A" />
               <span>{language === 'np' ? 'आफ्नो अर्डर ट्र्याक गर्नुहोस्' : 'Track Your Order'}</span>
+            </button>
+
+            {/* Wholesale B2B in mobile drawer */}
+            <button
+              onClick={() => {
+                openWholesaleModal();
+                setMobileMenuOpen(false);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                padding: '11px 14px',
+                borderRadius: 12,
+                background: 'rgba(212, 175, 55, 0.15)',
+                border: '1.5px solid rgba(212, 175, 55, 0.5)',
+                color: '#561F1F',
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: 'pointer',
+              }}
+            >
+              <Building2 size={16} color="#8B3A3A" />
+              <span>{language === 'np' ? 'थोक तथा खुद्रा साझेदार बन्नुहोस्' : 'Become a Retail Stockist (B2B)'}</span>
             </button>
 
             <div style={{ fontWeight: 700, fontSize: 13, color: '#8B3A3A', textTransform: 'uppercase', letterSpacing: '0.1em' }}>

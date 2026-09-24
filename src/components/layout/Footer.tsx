@@ -1,12 +1,14 @@
 import React from 'react';
-import { Sparkles, MapPin, Phone, Mail, MessageCircle } from 'lucide-react';
+import { Sparkles, MapPin, Phone, Mail, MessageCircle, Building2 } from 'lucide-react';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useProductStore } from '../../stores/productStore';
+import { useRetailerStore } from '../../stores/retailerStore';
 import { CATEGORIES } from '../../mockData';
 
 export const Footer: React.FC = () => {
   const { language, siteContent, merchant } = useSettingsStore();
   const { setSelectedCategory } = useProductStore();
+  const { openWholesaleModal } = useRetailerStore();
 
   const handleCategoryClick = (catId: string) => {
     setSelectedCategory(catId);
@@ -118,14 +120,58 @@ export const Footer: React.FC = () => {
                 color: '#D4AF37',
               }}
             >
-              {language === 'np' ? 'ग्राहक सेवा' : 'Customer Care'}
+              {language === 'np' ? 'ग्राहक सेवा तथा साझेदारी' : 'Customer Care & Guild'}
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, color: 'rgba(255, 248, 240, 0.8)' }}>
               <span>{language === 'np' ? 'साइज गाइड' : 'Boutique Size Guide'}</span>
               <span>{language === 'np' ? 'डेलिभरी र भुक्तानी' : 'Delivery & Payment Policy'}</span>
               <span>{language === 'np' ? 'पश्मिना तथा ढाका स्याहार' : 'Pashmina & Dhaka Care'}</span>
+              
+              {/* B2B Wholesale Stockist Modal Trigger */}
+              <button
+                onClick={openWholesaleModal}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#D4AF37',
+                  fontSize: 13,
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  transition: 'opacity 0.2s',
+                }}
+              >
+                <Building2 size={14} color="#D4AF37" />
+                <span>{language === 'np' ? 'थोक तथा खुद्रा साझेदार (B2B)' : 'B2B Wholesale & Stockists'}</span>
+              </button>
+
+              <a
+                href="https://discord.gg/9Z7CzTraET"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  color: '#D4AF37',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  marginTop: 2,
+                  fontSize: 12.5,
+                }}
+              >
+                <span>🏛️ {language === 'np' ? 'फेसन गिल्ड (Discord)' : 'Autonomous Fashion Guild'}</span>
+                <span style={{ fontSize: 9, padding: '2px 6px', background: 'rgba(212,175,55,0.2)', border: '1px solid rgba(212,175,55,0.4)', borderRadius: 4, color: '#FFF8F0', textTransform: 'uppercase' }}>
+                  Patrons
+                </span>
+              </a>
             </div>
           </div>
+
 
           {/* Col 4: Boutique Location & Contact */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

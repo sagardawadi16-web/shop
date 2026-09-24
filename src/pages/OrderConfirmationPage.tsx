@@ -87,6 +87,77 @@ export const OrderConfirmationPage: React.FC<Props> = ({ order }) => {
           </p>
         </div>
 
+        {/* Exclusive Patron Guild Invitation (Only for Real Customers) */}
+        <div
+          style={{
+            background: 'linear-gradient(145deg, #2B1810 0%, #4A1A24 100%)',
+            border: '2px solid #D4AF37',
+            borderRadius: 16,
+            padding: '20px 22px',
+            marginBottom: 20,
+            textAlign: 'left',
+            color: '#FFF8F0',
+            boxShadow: '0 8px 24px rgba(43, 24, 16, 0.25)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <img src="/logo.png" alt="Dawosti" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+              <div>
+                <div style={{ fontSize: 11, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 800 }}>
+                  VIP Patron Access
+                </div>
+                <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 17, fontWeight: 700, color: '#FFF8F0', lineHeight: 1.2 }}>
+                  Autonomous Fashion Guild
+                </div>
+              </div>
+            </div>
+            <span style={{ fontSize: 10, background: 'rgba(212, 175, 55, 0.2)', border: '1px solid #D4AF37', color: '#D4AF37', padding: '3px 8px', borderRadius: 99, fontWeight: 700 }}>
+              Customers Only
+            </span>
+          </div>
+
+          <p style={{ fontSize: 12.5, color: 'rgba(255, 248, 240, 0.85)', lineHeight: 1.5, marginBottom: 12 }}>
+            {language === 'np'
+              ? 'दावोस्तीको वास्तविक ग्राहकको रूपमा तपाईंले हाम्रो निजी फेसन गिल्डमा पहुँच प्राप्त गर्नुभएको छ। सीमित एडिसन ड्रप्स, विशेष अफरहरू र काठमाडौँका फेसन डिजाइनरहरूसँग सिधा संवाद गर्नुहोस्।'
+              : 'As a verified customer, you hold exclusive entry to our private Discord Guild. Access unreleased collections, private patron lounges, and direct bespoke tailoring concierge.'}
+          </p>
+
+          <div style={{ background: 'rgba(0, 0, 0, 0.35)', border: '1px dashed rgba(212, 175, 55, 0.5)', borderRadius: 10, padding: '10px 14px', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 12, color: 'rgba(255, 248, 240, 0.7)' }}>Your Patron Verification Code:</span>
+            <code style={{ fontSize: 14, fontWeight: 800, color: '#D4AF37', letterSpacing: '0.05em' }}>{order.orderNumber}</code>
+          </div>
+
+          <a
+            href="https://discord.gg/9Z7CzTraET"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              width: '100%',
+              padding: '12px 18px',
+              background: '#D4AF37',
+              color: '#2B1810',
+              borderRadius: 99,
+              textDecoration: 'none',
+              fontWeight: 800,
+              fontSize: 13.5,
+              transition: 'transform 0.15s ease',
+              boxShadow: '0 4px 14px rgba(212, 175, 55, 0.3)',
+            }}
+            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
+            onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+          >
+            <span>Claim Patron Access (Discord)</span>
+          </a>
+          <div style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255, 248, 240, 0.6)', marginTop: 8 }}>
+            Type <code style={{ color: '#D4AF37' }}>/verify {order.orderNumber}</code> inside Discord to authenticate
+          </div>
+        </div>
+
         {/* Actions */}
         <a
           href={`https://wa.me/${merchant.whatsappNumber}?text=${whatsappMsg}`}
