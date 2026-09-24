@@ -71,18 +71,6 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Category chips */}
-      <section style={{ padding: '20px 16px 0', maxWidth: 1280, margin: '0 auto' }}>
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-          {CATEGORIES.map((cat) => (
-            <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
-              className={`chip ${selectedCategory === cat.id ? 'active' : ''}`}
-              style={{ flexShrink: 0 }}>
-              {language === 'np' ? cat.name.np : cat.name.en}
-            </button>
-          ))}
-        </div>
-      </section>
 
       {/* Products section */}
       <section ref={productsRef} style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 16px 60px' }}>

@@ -192,6 +192,34 @@ h4,h5,h6 { font-family: 'Inter', sans-serif; font-weight: 600; }
   background: var(--burgundy); color: white; border-color: var(--burgundy);
 }
 
+/* ─── Badges ─────────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5px 7px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.badge-gold {
+  background: #D4AF37;
+  color: #2B1810;
+}
+.badge-burgundy {
+  background: #8B3A3A;
+  color: #FFFFFF;
+}
+.badge-red {
+  background: #DC2626;
+  color: #FFFFFF;
+}
+
 /* ─── Section headings ───────────────────────────────────────────────────────── */
 .section-title {
   font-family: 'Cormorant Garamond', serif;
@@ -223,12 +251,37 @@ h4,h5,h6 { font-family: 'Inter', sans-serif; font-weight: 600; }
 }
 
 /* ─── Responsive & Touch UX ─────────────────────────────────────────────────── */
+.main-header-nav {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  box-sizing: border-box;
+}
+
 .desktop-search-container {
   display: flex !important;
 }
 .mobile-only-btn,
 .mobile-search-btn {
   display: none !important;
+}
+
+@media (max-width: 640px) {
+  .main-header-nav {
+    padding: 10px 12px !important;
+    gap: 8px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .main-header-nav {
+    padding: 8px 6px !important;
+    gap: 4px !important;
+  }
 }
 
 /* Product Responsive Grid */

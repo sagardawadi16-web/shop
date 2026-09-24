@@ -48,26 +48,16 @@ export const Header: React.FC = () => {
       }}
     >
       {/* Top Main Navigation Bar */}
-      <div
-        style={{
-          maxWidth: 1280,
-          margin: '0 auto',
-          padding: '12px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 16,
-        }}
-      >
+      <div className="main-header-nav">
         {/* Left: Mobile hamburger & Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="mobile-only-btn"
             style={{
               background: 'none',
               border: 'none',
-              padding: 6,
+              padding: 4,
               cursor: 'pointer',
               color: '#2B1810',
               display: 'flex',
@@ -75,11 +65,11 @@ export const Header: React.FC = () => {
             }}
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
 
           <div onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
-            <DawostiLogo size={38} />
+            <DawostiLogo size={36} />
           </div>
         </div>
 
@@ -146,7 +136,7 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Right Action Icons: Language, Tracking, Admin, User, Cart */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           {/* Mobile search toggle */}
           <button
             onClick={() => setSearchOpen(!searchOpen)}
@@ -154,14 +144,14 @@ export const Header: React.FC = () => {
             style={{
               background: 'none',
               border: 'none',
-              padding: 8,
+              padding: 6,
               cursor: 'pointer',
               color: '#2B1810',
               borderRadius: '50%',
             }}
             aria-label="Search"
           >
-            <Search size={20} />
+            <Search size={19} />
           </button>
 
           {/* Language Switcher */}
@@ -171,8 +161,8 @@ export const Header: React.FC = () => {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 5,
-              padding: '6px 12px',
+              gap: 4,
+              padding: '5px 10px',
               borderRadius: 99,
               background: 'white',
               border: '1px solid #EADCCE',
@@ -181,9 +171,10 @@ export const Header: React.FC = () => {
               fontWeight: 700,
               cursor: 'pointer',
               transition: 'all 0.2s',
+              whiteSpace: 'nowrap',
             }}
           >
-            <Globe size={15} color="#8B3A3A" />
+            <Globe size={14} color="#8B3A3A" />
             <span>{language === 'en' ? 'नेपाली' : 'EN'}</span>
           </button>
 
@@ -214,7 +205,7 @@ export const Header: React.FC = () => {
           </button>
 
           {/* User Sign In / Profile */}
-          <div style={{ position: 'relative' }}>
+          <div className="hide-mobile" style={{ position: 'relative' }}>
             {user ? (
               <button
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
@@ -239,7 +230,6 @@ export const Header: React.FC = () => {
               <button
                 onClick={() => signIn()}
                 disabled={isSigningIn}
-                className="hide-mobile"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -355,7 +345,7 @@ export const Header: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '8px 12px',
+              padding: '7px 11px',
               borderRadius: 99,
               background: '#8B3A3A',
               color: 'white',
@@ -365,10 +355,11 @@ export const Header: React.FC = () => {
               fontSize: 13,
               boxShadow: '0 2px 8px rgba(139,58,58,0.3)',
               transition: 'all 0.2s',
+              flexShrink: 0,
             }}
           >
-            <ShoppingBag size={18} />
-            <span style={{ marginLeft: 6 }}>{count}</span>
+            <ShoppingBag size={17} />
+            <span style={{ marginLeft: 5 }}>{count}</span>
           </button>
         </div>
       </div>
@@ -479,7 +470,31 @@ export const Header: React.FC = () => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ fontWeight: 700, fontSize: 14, color: '#8B3A3A', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            {/* User Account Card */}
+            {user ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'white', borderRadius: 12, border: '1px solid #EADCCE' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden' }}>
+                  <img src={user.avatar} alt={user.name} style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: '#2B1810', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{user.name}</div>
+                    <div style={{ fontSize: 10, color: '#8B3A3A', fontWeight: 600 }}>{isOwner ? 'Store Owner' : 'Customer'}</div>
+                  </div>
+                </div>
+                <button onClick={() => { signOut(); setMobileMenuOpen(false); }} title="Sign Out" style={{ background: 'none', border: 'none', color: '#8B3A3A', cursor: 'pointer', padding: 4 }}>
+                  <LogOut size={16} />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => { signIn(); setMobileMenuOpen(false); }}
+                className="btn btn-primary"
+                style={{ width: '100%', fontSize: 13 }}
+              >
+                <UserIcon size={16} /> Sign In with Google
+              </button>
+            )}
+
+            <div style={{ fontWeight: 700, fontSize: 13, color: '#8B3A3A', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               {language === 'np' ? 'फेसन संग्रह' : 'Collections'}
             </div>
 
