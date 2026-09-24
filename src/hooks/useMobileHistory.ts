@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useProductStore } from '../stores/productStore';
 import { useCartStore } from '../stores/cartStore';
-import { useAdminStore } from '../stores/adminStore';
 import { toast } from '../components/common/Toast';
 
 /**
@@ -14,16 +13,14 @@ import { toast } from '../components/common/Toast';
  * Automatically captures back events and handles:
  * 1. Product Detail Modal -> closes modal, stays on home
  * 2. Cart Drawer -> closes cart, stays on home
- * 3. Admin Atelier -> closes admin, stays on home
- * 4. Checkout Page -> returns to home
- * 5. Order Confirmation Page -> returns to home
- * 6. Root Exit Guard -> protects against accidental exit with "Press back again to exit"
+ * 3. Checkout Page -> returns to home
+ * 4. Order Confirmation Page -> returns to home
+ * 5. Root Exit Guard -> protects against accidental exit with "Press back again to exit"
  */
 export const useMobileHistory = () => {
   const { pageView, setPageView } = useSettingsStore();
   const { activeDetailProduct, setActiveDetailProduct } = useProductStore();
   const { isOpen: isCartOpen, setIsOpen: setCartOpen } = useCartStore();
-  const { isAdminOpen, closeAdmin } = useAdminStore();
 
   const isInternalNavigation = useRef(false);
   const lastBackPressTime = useRef<number>(0);
@@ -77,23 +74,6 @@ export const useMobileHistory = () => {
     }
   }, [isCartOpen]);
 
-  // Sync Admin Modal with history
-  useEffect(() => {
-    if (isAdminOpen) {
-      if (window.location.hash !== '#admin') {
-        window.history.pushState({ __dawosti: true, type: 'admin' }, '', '#admin');
-      }
-    } else {
-      if (window.location.hash === '#admin') {
-        if (!isInternalNavigation.current) {
-          isInternalNavigation.current = true;
-          window.history.back();
-          setTimeout(() => { isInternalNavigation.current = false; }, 120);
-        }
-      }
-    }
-  }, [isAdminOpen]);
-
   // Sync PageView (checkout / order-confirmation) with history
   useEffect(() => {
     if (pageView === 'checkout') {
@@ -104,12 +84,8 @@ export const useMobileHistory = () => {
       if (window.location.hash !== '#order-confirmed') {
         window.history.pushState({ __dawosti: true, page: 'order-confirmation' }, '', '#order-confirmed');
       }
-    } else if (pageView === 'admin') {
-      if (window.location.hash !== '#admin') {
-        window.history.pushState({ __dawosti: true, page: 'admin' }, '', '#admin');
-      }
     } else if (pageView === 'home') {
-      if (window.location.hash === '#checkout' || window.location.hash === '#order-confirmed' || window.location.hash === '#admin') {
+      if (window.location.hash === '#checkout' || window.location.hash === '#order-confirmed') {
         if (!isInternalNavigation.current) {
           isInternalNavigation.current = true;
           window.history.back();
@@ -121,11 +97,6 @@ export const useMobileHistory = () => {
 
   // Listen for the native phone back button / swipe back gesture / browser back
   useEffect(() => {
-    // Check initial hash on mount
-    if (window.location.hash === '#admin') {
-      setPageView('admin');
-    }
-
     const handlePopState = (e: PopStateEvent) => {
       // 1. If product detail modal is open, close it
       if (useProductStore.getState().activeDetailProduct) {
@@ -139,15 +110,9 @@ export const useMobileHistory = () => {
         return;
       }
 
-      // 3. If admin modal is open, close it
-      if (useAdminStore.getState().isAdminOpen) {
-        closeAdmin();
-        return;
-      }
-
-      // 4. If on checkout, order confirmation, or admin dashboard, return smoothly to home view
+      // 3. If on checkout or order confirmation, return smoothly to home view
       const currentView = useSettingsStore.getState().pageView;
-      if (currentView === 'checkout' || currentView === 'order-confirmation' || currentView === 'admin') {
+      if (currentView === 'checkout' || currentView === 'order-confirmation') {
         setPageView('home');
         return;
       }
@@ -171,5 +136,5 @@ export const useMobileHistory = () => {
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [setActiveDetailProduct, setCartOpen, closeAdmin, setPageView]);
+  }, [setActiveDetailProduct, setCartOpen, setPageView]);
 };

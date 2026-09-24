@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { Order, OrderStatus, CartItem, ShippingAddress, PaymentMethod, OrderVerificationStatus, OrderVerification } from '../types';
 import { listenOrders, saveOrder, updateOrder, deleteOrder } from '../services/firestoreOrders';
-import { useAdminStore } from './adminStore';
 
 interface OrderState {
   orders: Order[];
@@ -125,7 +124,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         ...(target.verification || { fraudScore: 10, fraudRisk: 'low' }),
         status: verificationStatus,
         verifiedAt: new Date().toISOString(),
-        verifiedBy: useAdminStore.getState().user?.name || 'Verified Store Owner',
+        verifiedBy: 'Dawosti Merchant',
         verificationNotes: notes || (verificationStatus === 'verified_genuine' ? 'Verified as Genuine Customer Order' : 'Flagged as Fake / Suspicious Order'),
         method,
       },

@@ -3,7 +3,6 @@ import { ArrowLeft, CheckCircle, Truck, CreditCard, Smartphone, QrCode, ShieldCh
 import { useCartStore } from '../stores/cartStore';
 import { useOrderStore } from '../stores/orderStore';
 import { useSettingsStore } from '../stores/settingsStore';
-import { useAdminStore } from '../stores/adminStore';
 import { ShippingAddress, PaymentMethod } from '../types';
 import { verifyHumanOrAgent } from '../services/botProtection';
 
@@ -11,7 +10,6 @@ export const CheckoutPage: React.FC = () => {
   const { items, subtotal, clearCart } = useCartStore();
   const { placeOrder, setLatestOrder } = useOrderStore();
   const { language, formatPrice, merchant, setPageView } = useSettingsStore();
-  const { user } = useAdminStore();
 
   const deliveryFee = subtotal >= merchant.freeDeliveryThreshold ? 0 : merchant.deliveryFee;
   const total = subtotal + deliveryFee;
@@ -26,7 +24,7 @@ export const CheckoutPage: React.FC = () => {
   const [isPlacing, setIsPlacing] = useState(false);
 
   const [form, setForm] = useState<ShippingAddress>({
-    fullName: user?.name || '',
+    fullName: '',
     phone: '',
     addressLine: '',
     city: 'Kathmandu',
@@ -71,8 +69,25 @@ export const CheckoutPage: React.FC = () => {
         shippingAddress: form,
         paymentMethod,
         paymentDetails: txnRef || undefined,
-        customerName: user?.name,
+        customerName: form.fullName,
       });
+
+      // Edge API logging
+      try {
+        fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderNumber: order.orderNumber,
+            items: order.items,
+            totalAmount: order.totalAmount,
+            shippingAddress: order.shippingAddress,
+            paymentMethod: order.paymentMethod,
+            renderTimestamp: renderTimestamp.current,
+            honeypot,
+          }),
+        }).catch(() => {});
+      } catch {}
 
       clearCart();
       setLatestOrder(order);

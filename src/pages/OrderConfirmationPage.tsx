@@ -75,12 +75,44 @@ export const OrderConfirmationPage: React.FC<Props> = ({ order }) => {
           ))}
         </div>
 
+        {/* Genuine Verification Notice */}
+        <div style={{ background: '#ECFDF5', border: '1.5px solid #A7F3D0', borderRadius: 14, padding: '14px 18px', marginBottom: 20, textAlign: 'left' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#065F46', fontWeight: 700, fontSize: 13, marginBottom: 4 }}>
+            <span>⚡ {language === 'np' ? 'छिटो प्रमाणीकरण र डेलिभरी' : 'Fast Genuine Verification & Priority Dispatch'}</span>
+          </div>
+          <p style={{ fontSize: 12, color: '#047857', margin: 0, lineHeight: 1.5 }}>
+            {language === 'np'
+              ? 'तपाईंको अर्डर तुरुन्तै दर्ता र डेलिभरी गर्नका लागि तलको हरियो बटन थिचेर हाम्रो आधिकारिक ह्वाट्सएप (+९७७ ९७०८२५१४९४) मा अर्डर विवरण पठाउनुहोस्।'
+              : 'To verify your order immediately and guarantee priority express dispatch, tap the button below to send your order details directly to our Kathmandu boutique.'}
+          </p>
+        </div>
+
         {/* Actions */}
         <a
           href={`https://wa.me/${merchant.whatsappNumber}?text=${whatsappMsg}`}
           target="_blank" rel="noopener noreferrer"
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '13px 24px', background: '#25D366', color: 'white', borderRadius: 99, textDecoration: 'none', fontWeight: 700, fontSize: 15, marginBottom: 12 }}>
-          <MessageCircle size={18} /> Send Order via WhatsApp
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            width: '100%',
+            padding: '15px 24px',
+            background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+            color: 'white',
+            borderRadius: 99,
+            textDecoration: 'none',
+            fontWeight: 700,
+            fontSize: 15,
+            marginBottom: 12,
+            boxShadow: '0 4px 15px rgba(37,211,102,0.35)',
+            transition: 'transform 0.15s ease',
+          }}
+          onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
+          onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+        >
+          <MessageCircle size={20} />
+          <span>{language === 'np' ? 'ह्वाट्सएपमा अर्डर पठाउनुहोस् (+९७७ ९७०८२५१४९४)' : 'Confirm & Send to WhatsApp (+977 9708251494)'}</span>
         </a>
 
         <button onClick={() => setPageView('home')} className="btn btn-outline" style={{ width: '100%' }}>

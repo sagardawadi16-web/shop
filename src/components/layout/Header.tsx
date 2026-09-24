@@ -1,23 +1,19 @@
 import React, { useState } from 'react';
 import {
-  Search, ShoppingBag, Menu, X, Globe, User as UserIcon,
-  ShieldCheck, LogOut, PackageCheck, Sparkles
+  Search, ShoppingBag, Menu, X, Globe, PackageCheck, Sparkles
 } from 'lucide-react';
 import { DawostiLogo } from '../common/DawostiLogo';
 import { useCartStore } from '../../stores/cartStore';
 import { useProductStore } from '../../stores/productStore';
 import { useSettingsStore } from '../../stores/settingsStore';
-import { useAdminStore } from '../../stores/adminStore';
 import { CATEGORIES } from '../../mockData';
 
 export const Header: React.FC = () => {
   const { count, toggleCart } = useCartStore();
   const { searchQuery, setSearchQuery, selectedCategory, setSelectedCategory } = useProductStore();
   const { language, toggleLanguage, pageView, setPageView, setIsOrderTrackingOpen } = useSettingsStore();
-  const { user, isOwner, isSigningIn, signIn, signOut, openAdmin } = useAdminStore();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
   const handleCategoryClick = (catId: string) => {
@@ -178,163 +174,29 @@ export const Header: React.FC = () => {
             <span>{language === 'en' ? 'नेपाली' : 'EN'}</span>
           </button>
 
-          {/* Admin Atelier Button */}
+
+          {/* Track Order Button */}
           <button
-            onClick={openAdmin}
-            title="Merchant Admin Atelier"
+            onClick={() => setIsOrderTrackingOpen(true)}
             className="hide-mobile"
             style={{
-              display: 'inline-flex',
+              display: 'flex',
               alignItems: 'center',
               gap: 6,
               padding: '6px 12px',
               borderRadius: 99,
-              background: isOwner ? 'rgba(139, 58, 58, 0.1)' : 'white',
-              border: isOwner ? '1px solid #8B3A3A' : '1px solid #EADCCE',
-              color: isOwner ? '#8B3A3A' : '#6B564C',
+              background: 'white',
+              border: '1px solid #EADCCE',
+              color: '#2B1810',
               fontSize: 12,
               fontWeight: 600,
               cursor: 'pointer',
               transition: 'all 0.2s',
             }}
           >
-            <ShieldCheck size={16} color={isOwner ? '#8B3A3A' : '#D4AF37'} />
-            <span className="hidden sm:inline">
-              {isOwner ? 'Admin Atelier' : 'Admin'}
-            </span>
+            <PackageCheck size={15} color="#8B3A3A" />
+            <span>{language === 'np' ? 'अर्डर ट्र्याक' : 'Track Order'}</span>
           </button>
-
-          {/* User Sign In / Profile */}
-          <div className="hide-mobile" style={{ position: 'relative' }}>
-            {user ? (
-              <button
-                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: 3,
-                  borderRadius: 99,
-                  border: '1.5px solid #D4AF37',
-                  background: 'white',
-                  cursor: 'pointer',
-                }}
-              >
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }}
-                />
-              </button>
-            ) : (
-              <button
-                onClick={() => signIn()}
-                disabled={isSigningIn}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 12px',
-                  borderRadius: 99,
-                  background: 'white',
-                  border: '1px solid #EADCCE',
-                  color: '#2B1810',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                <UserIcon size={16} color="#8B3A3A" />
-                <span className="hidden sm:inline">Sign In</span>
-              </button>
-            )}
-
-            {/* User Dropdown */}
-            {userDropdownOpen && user && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  marginTop: 8,
-                  width: 220,
-                  background: 'white',
-                  borderRadius: 14,
-                  boxShadow: '0 8px 30px rgba(43,24,16,0.15)',
-                  border: '1px solid #EADCCE',
-                  padding: '12px 14px',
-                  zIndex: 50,
-                }}
-              >
-                <div style={{ borderBottom: '1px solid #FAF2E9', paddingBottom: 8, marginBottom: 8 }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, color: '#2B1810' }}>{user.name}</div>
-                  <div style={{ fontSize: 11, color: '#6B564C', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {user.email}
-                  </div>
-                  {isOwner && (
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        marginTop: 4,
-                        fontSize: 10,
-                        fontWeight: 800,
-                        background: '#8B3A3A',
-                        color: 'white',
-                        padding: '2px 8px',
-                        borderRadius: 99,
-                      }}
-                    >
-                      Store Owner
-                    </span>
-                  )}
-                </div>
-
-                <button
-                  onClick={() => {
-                    openAdmin();
-                    setUserDropdownOpen(false);
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    width: '100%',
-                    padding: '8px 6px',
-                    border: 'none',
-                    background: 'none',
-                    color: '#2B1810',
-                    fontSize: 13,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <ShieldCheck size={16} color="#8B3A3A" /> Admin Atelier
-                </button>
-
-                <button
-                  onClick={() => {
-                    signOut();
-                    setUserDropdownOpen(false);
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    width: '100%',
-                    padding: '8px 6px',
-                    border: 'none',
-                    background: 'none',
-                    color: '#8B3A3A',
-                    fontSize: 13,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <LogOut size={16} /> Sign Out
-                </button>
-              </div>
-            )}
-          </div>
 
           {/* Cart Drawer Trigger */}
           <button
@@ -470,29 +332,31 @@ export const Header: React.FC = () => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* User Account Card */}
-            {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'white', borderRadius: 12, border: '1px solid #EADCCE' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, overflow: 'hidden' }}>
-                  <img src={user.avatar} alt={user.name} style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                  <div style={{ overflow: 'hidden' }}>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: '#2B1810', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{user.name}</div>
-                    <div style={{ fontSize: 10, color: '#8B3A3A', fontWeight: 600 }}>{isOwner ? 'Store Owner' : 'Customer'}</div>
-                  </div>
-                </div>
-                <button onClick={() => { signOut(); setMobileMenuOpen(false); }} title="Sign Out" style={{ background: 'none', border: 'none', color: '#8B3A3A', cursor: 'pointer', padding: 4 }}>
-                  <LogOut size={16} />
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => { signIn(); setMobileMenuOpen(false); }}
-                className="btn btn-primary"
-                style={{ width: '100%', fontSize: 13 }}
-              >
-                <UserIcon size={16} /> Sign In with Google
-              </button>
-            )}
+            {/* Track Order CTA in mobile drawer */}
+            <button
+              onClick={() => {
+                setIsOrderTrackingOpen(true);
+                setMobileMenuOpen(false);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                padding: '11px 14px',
+                borderRadius: 12,
+                background: 'white',
+                border: '1px solid #EADCCE',
+                color: '#2B1810',
+                fontWeight: 600,
+                fontSize: 13,
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(43,24,16,0.05)',
+              }}
+            >
+              <PackageCheck size={16} color="#8B3A3A" />
+              <span>{language === 'np' ? 'आफ्नो अर्डर ट्र्याक गर्नुहोस्' : 'Track Your Order'}</span>
+            </button>
 
             <div style={{ fontWeight: 700, fontSize: 13, color: '#8B3A3A', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               {language === 'np' ? 'फेसन संग्रह' : 'Collections'}
@@ -521,16 +385,6 @@ export const Header: React.FC = () => {
             </div>
 
             <div style={{ borderTop: '1px solid #EADCCE', paddingTop: 16, marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <button
-                onClick={() => {
-                  openAdmin();
-                  setMobileMenuOpen(false);
-                }}
-                className="btn btn-outline"
-                style={{ width: '100%', fontSize: 13 }}
-              >
-                <ShieldCheck size={16} /> Admin Atelier
-              </button>
 
               <button
                 onClick={toggleLanguage}

@@ -1,14 +1,12 @@
 import React from 'react';
-import { Sparkles, MapPin, Phone, Mail, Settings, MessageCircle } from 'lucide-react';
+import { Sparkles, MapPin, Phone, Mail, MessageCircle } from 'lucide-react';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useProductStore } from '../../stores/productStore';
-import { useAdminStore } from '../../stores/adminStore';
 import { CATEGORIES } from '../../mockData';
 
 export const Footer: React.FC = () => {
   const { language, siteContent, merchant } = useSettingsStore();
   const { setSelectedCategory } = useProductStore();
-  const { openAdmin } = useAdminStore();
 
   const handleCategoryClick = (catId: string) => {
     setSelectedCategory(catId);
@@ -126,27 +124,6 @@ export const Footer: React.FC = () => {
               <span>{language === 'np' ? 'साइज गाइड' : 'Boutique Size Guide'}</span>
               <span>{language === 'np' ? 'डेलिभरी र भुक्तानी' : 'Delivery & Payment Policy'}</span>
               <span>{language === 'np' ? 'पश्मिना तथा ढाका स्याहार' : 'Pashmina & Dhaka Care'}</span>
-              <button
-                id="footer-open-admin-btn"
-                onClick={openAdmin}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#D4AF37',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  cursor: 'pointer',
-                  padding: 0,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  textAlign: 'left',
-                  marginTop: 4,
-                }}
-              >
-                <Settings size={15} />
-                <span>{language === 'np' ? 'मर्चेन्ट व्यवस्थापन (Admin)' : 'Merchant Admin Atelier'}</span>
-              </button>
             </div>
           </div>
 
