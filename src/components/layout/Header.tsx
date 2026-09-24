@@ -22,25 +22,33 @@ export const Header: React.FC = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [hideCategory, setHideCategory] = useState(false);
 
-  // Remove category sub-nav when scrolling down
+  // Remove category sub-nav when scrolling down smoothly
   useEffect(() => {
     let lastScrollY = window.scrollY;
+    let ticking = false;
 
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = Math.max(0, window.scrollY);
+          const scrollDiff = currentScrollY - lastScrollY;
 
-      // Always show when near the very top of the page
-      if (currentScrollY <= 20) {
-        setHideCategory(false);
-      } else if (currentScrollY > lastScrollY && currentScrollY > 40) {
-        // Scrolling down -> hide categories
-        setHideCategory(true);
-      } else if (currentScrollY < lastScrollY - 8) {
-        // Scrolling up -> reveal categories
-        setHideCategory(false);
+          // Always show when near the very top of the page
+          if (currentScrollY <= 40) {
+            setHideCategory(false);
+          } else if (scrollDiff > 10 && currentScrollY > 60) {
+            // Scrolling down with clear momentum -> hide categories
+            setHideCategory(true);
+          } else if (scrollDiff < -8) {
+            // Scrolling up -> reveal categories
+            setHideCategory(false);
+          }
+
+          lastScrollY = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
       }
-
-      lastScrollY = currentScrollY;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -196,6 +204,7 @@ export const Header: React.FC = () => {
           {/* Language Switcher */}
           <button
             onClick={toggleLanguage}
+            className="hide-mobile"
             title={language === 'en' ? 'Switch to Nepali' : 'Switch to English'}
             style={{
               display: 'flex',
@@ -211,6 +220,7 @@ export const Header: React.FC = () => {
               cursor: 'pointer',
               transition: 'all 0.2s',
               whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
             <Globe size={14} color="#8B3A3A" />
@@ -360,11 +370,12 @@ export const Header: React.FC = () => {
         style={{
           borderTop: hideCategory ? 'none' : '1px solid #EADCCE',
           backgroundColor: '#FFFFFF',
-          overflowX: hideCategory ? 'hidden' : 'auto',
-          scrollbarWidth: 'none',
-          maxHeight: hideCategory ? 0 : 56,
+          maxHeight: hideCategory ? 0 : 52,
           opacity: hideCategory ? 0 : 1,
-          overflow: 'hidden',
+          overflowY: 'hidden',
+          overflowX: hideCategory ? 'hidden' : 'auto',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
           transition: 'max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease, border-color 0.2s ease',
           pointerEvents: hideCategory ? 'none' : 'auto',
         }}
@@ -376,8 +387,11 @@ export const Header: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            padding: hideCategory ? '0 20px' : '8px 20px',
+            padding: hideCategory ? '0 16px' : '8px 16px',
             whiteSpace: 'nowrap',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
             transition: 'padding 0.25s ease',
           }}
         >

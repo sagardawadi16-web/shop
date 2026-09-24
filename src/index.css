@@ -2,23 +2,47 @@
 
 /* ─── Design Tokens ─────────────────────────────────────────────────────────── */
 :root {
-  --ivory:       #FAF2E9;
-  --ivory-dark:  #F0E4D4;
-  --cream:       #EADCCE;
-  --brown-light: #6B564C;
-  --brown:       #2B1810;
-  --burgundy:    #8B3A3A;
-  --burgundy-dk: #722E2E;
-  --gold:        #D4AF37;
-  --gold-light:  #F0D060;
-  --shadow-sm:   0 1px 4px rgba(43,24,16,0.08);
-  --shadow-md:   0 4px 24px rgba(43,24,16,0.12);
-  --shadow-lg:   0 12px 48px rgba(43,24,16,0.18);
-  --radius-sm:   8px;
-  --radius-md:   16px;
-  --radius-lg:   24px;
-  --radius-xl:   32px;
-  --transition:  all 0.22s cubic-bezier(0.4,0,0.2,1);
+  --ivory:          #FAF2E9;
+  --ivory-silk:     #FFF8F0;
+  --ivory-dark:     #F0E4D4;
+  --cream:          #EADCCE;
+  --brown-light:    #6B564C;
+  --brown:          #2B1810;
+  --burgundy:       #8B3A3A;
+  --burgundy-dk:    #722E2E;
+  --burgundy-royal: #8A1C2E;
+  --burgundy-deep:  #561F1F;
+  --gold:           #D4AF37;
+  --gold-light:     #F0D060;
+  --gold-sheen:     #F7E7B4;
+  --emerald-jade:   #1B7F5E;
+  --shadow-sm:      0 1px 4px rgba(43,24,16,0.08);
+  --shadow-md:      0 4px 24px rgba(43,24,16,0.12);
+  --shadow-lg:      0 12px 48px rgba(43,24,16,0.18);
+  --shadow-gold:    0 8px 25px rgba(212,175,55,0.22);
+  --radius-sm:      8px;
+  --radius-md:      16px;
+  --radius-lg:      24px;
+  --radius-xl:      32px;
+  --transition:     all 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ─── Luxury Surface & Glass Tokens ─────────────────────────────────────────── */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(234, 220, 206, 0.75);
+}
+.glass-panel-dark {
+  background: rgba(43, 24, 16, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  color: #FFF;
+}
+.gold-glow {
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
 }
 
 /* ─── Reset & Base ───────────────────────────────────────────────────────────── */
@@ -272,15 +296,23 @@ h4,h5,h6 { font-family: 'Inter', sans-serif; font-weight: 600; }
 
 @media (max-width: 640px) {
   .main-header-nav {
-    padding: 10px 12px !important;
-    gap: 8px !important;
+    padding: 8px 12px !important;
+    gap: 6px !important;
   }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 420px) {
   .main-header-nav {
-    padding: 8px 6px !important;
+    padding: 6px 8px !important;
     gap: 4px !important;
+  }
+  .dawosti-brand-title {
+    font-size: 15px !important;
+    letter-spacing: 0.08em !important;
+  }
+  .dawosti-brand-subtitle {
+    font-size: 8px !important;
+    letter-spacing: 0.16em !important;
   }
 }
 

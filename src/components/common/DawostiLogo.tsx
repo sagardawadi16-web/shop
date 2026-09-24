@@ -41,6 +41,7 @@ export const DawostiLogo: React.FC<Props> = ({
     />
     <div style={{ textAlign: centered || stacked ? 'center' : 'left' }}>
       <div
+        className="dawosti-brand-title"
         style={{
           fontFamily: "'Cormorant Garamond', Georgia, serif",
           fontWeight: 700,
@@ -53,6 +54,7 @@ export const DawostiLogo: React.FC<Props> = ({
         DAWOSTI
       </div>
       <div
+        className="dawosti-brand-subtitle"
         style={{
           fontFamily: "'Inter', sans-serif",
           fontSize: Math.max(9, size * 0.25),

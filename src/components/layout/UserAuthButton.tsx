@@ -126,6 +126,7 @@ export const UserAuthButton: React.FC<{ isMobile?: boolean }> = ({ isMobile = fa
       <button
         onClick={loginGoogle}
         disabled={isLoading}
+        className="hide-mobile"
         title="Sign in with Google"
         style={{
           display: 'flex',
@@ -142,6 +143,7 @@ export const UserAuthButton: React.FC<{ isMobile?: boolean }> = ({ isMobile = fa
           boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
           transition: 'all 0.2s',
           whiteSpace: 'nowrap',
+          flexShrink: 0,
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.borderColor = '#8B3A3A';
@@ -163,16 +165,17 @@ export const UserAuthButton: React.FC<{ isMobile?: boolean }> = ({ isMobile = fa
     );
   }
 
-  // Desktop Signed-In View with Dropdown
+  // Desktop / Mobile Compact Signed-In View with Dropdown
   return (
-    <div ref={menuRef} style={{ position: 'relative' }}>
+    <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }}>
       <button
         onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+        title={user.name}
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: 6,
-          padding: '4px 10px 4px 5px',
+          padding: '3px 8px 3px 3px',
           borderRadius: 99,
           background: '#FFFFFF',
           border: '1.5px solid #D4AF37',
@@ -181,6 +184,7 @@ export const UserAuthButton: React.FC<{ isMobile?: boolean }> = ({ isMobile = fa
           fontSize: 12,
           fontWeight: 700,
           boxShadow: '0 2px 6px rgba(212,175,55,0.15)',
+          flexShrink: 0,
         }}
       >
         <img
@@ -188,10 +192,10 @@ export const UserAuthButton: React.FC<{ isMobile?: boolean }> = ({ isMobile = fa
           alt={user.name}
           style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }}
         />
-        <span style={{ maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span className="hide-mobile" style={{ maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {user.name.split(' ')[0]}
         </span>
-        <ChevronDown size={13} color="#666" />
+        <ChevronDown size={13} color="#666" className="hide-mobile" />
       </button>
 
       {/* Luxury User Dropdown */}

@@ -109,14 +109,16 @@ export default function App() {
             zIndex: 80,
             background: 'linear-gradient(135deg, #1B7F5E 0%, #135F46 100%)',
             color: '#FFF',
-            padding: '10px 18px',
+            padding: '10px 16px',
             borderRadius: 99,
             display: 'flex',
             alignItems: 'center',
             gap: 10,
             boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
-            fontSize: 13,
+            fontSize: 12.5,
             fontWeight: 600,
+            maxWidth: 'calc(100vw - 24px)',
+            boxSizing: 'border-box',
           }}
         >
           <Sparkles size={16} color="#D4AF37" />
