@@ -25,7 +25,7 @@ export const listenSettings = (onUpdate: (data: GlobalSettings) => void): Unsubs
     );
   } catch (err) {
     console.warn('[Firestore] Failed to attach settings listener:', err);
-    return () => {};
+    return () => { };
   }
 };
 

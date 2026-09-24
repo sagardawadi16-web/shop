@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Filter, Grid3X3, LayoutList, SlidersHorizontal, X } from 'lucide-react';
-import { ProductCard } from '../products/ProductCard';
-import { ProductDetailModal } from '../products/ProductDetailModal';
-import { useProductStore } from '../../stores/productStore';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { CATEGORIES } from '../../mockData';
+import { ProductCard } from '../components/products/ProductCard';
+import { ProductDetailModal } from '../components/products/ProductDetailModal';
+import { useProductStore } from '../stores/productStore';
+import { useSettingsStore } from '../stores/settingsStore';
+import { CATEGORIES } from '../mockData';
 
 export const HomePage: React.FC = () => {
   const { language, theme, merchant, siteContent } = useSettingsStore();
