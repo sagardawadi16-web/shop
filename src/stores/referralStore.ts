@@ -54,6 +54,9 @@ interface ReferralState {
 
   // Admin Sync
   initAdminSync: () => () => void;
+
+  registeredCreators: Record<string, { code: string; name: string; email: string }>;
+  registerCreator: (code: string, name: string, email: string) => void;
 }
 
 const STORAGE_ATTR_KEY = 'dawosti_ref_token_v1';
@@ -71,6 +74,16 @@ export const useReferralStore = create<ReferralState>((set, get) => ({
   currentAdvocate: null,
   allAdvocates: [],
   allPayoutRequests: [],
+  registeredCreators: {},
+
+  registerCreator: (code: string, name: string, email: string) => {
+    set((state) => ({
+      registeredCreators: {
+        ...state.registeredCreators,
+        [code]: { code, name, email },
+      },
+    }));
+  },
 
   initAttribution: () => {
     try {
@@ -128,7 +141,16 @@ export const useReferralStore = create<ReferralState>((set, get) => ({
     }
   },
 
-  openCreatorPortal: () => set({ isCreatorPortalOpen: true }),
+  openCreatorPortal: () => {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname;
+      if (host.endsWith('dawosti.com') && !host.startsWith('referral.') && !host.startsWith('creator.')) {
+        window.location.href = 'https://referral.dawosti.com';
+        return;
+      }
+    }
+    set({ isCreatorPortalOpen: true });
+  },
   closeCreatorPortal: () => set({ isCreatorPortalOpen: false }),
   openTosModal: () => set({ isTosModalOpen: true }),
   closeTosModal: () => set({ isTosModalOpen: false }),

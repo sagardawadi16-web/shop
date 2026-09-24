@@ -9,6 +9,7 @@ import { ToastContainer } from './components/common/Toast';
 import { HomePage } from './pages/HomePage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
+import { ReferralPage } from './pages/ReferralPage';
 import { useProductStore } from './stores/productStore';
 import { useOrderStore } from './stores/orderStore';
 import { useSettingsStore } from './stores/settingsStore';
@@ -22,7 +23,7 @@ import { Sparkles, X } from 'lucide-react';
 
 export default function App() {
   useMobileHistory();
-  const { pageView, theme } = useSettingsStore();
+  const { pageView, setPageView, theme } = useSettingsStore();
   const { initFirestoreSync: initProducts } = useProductStore();
   const { initFirestoreSync: initOrders, latestOrder } = useOrderStore();
   const { initFirestoreSync: initSettings } = useSettingsStore();
@@ -45,6 +46,25 @@ export default function App() {
     const unsub4 = initRetailers();
     const unsub5 = initAdminSync();
     const unsub6 = initWhitelistSync();
+
+    // Check for referral subdomain (referral.dawosti.com), path, or hash
+    const checkSubdomain = () => {
+      const host = window.location.hostname;
+      const path = window.location.pathname;
+      const hash = window.location.hash;
+      if (
+        host.startsWith('referral.') ||
+        host.startsWith('creator.') ||
+        path.startsWith('/referral') ||
+        path.startsWith('/creator') ||
+        hash === '#referral' ||
+        hash === '#creator'
+      ) {
+        setPageView('referral');
+      }
+    };
+    checkSubdomain();
+    window.addEventListener('hashchange', checkSubdomain);
 
     // Check for stealth #admin route in URL
     const checkHash = () => {
@@ -73,6 +93,7 @@ export default function App() {
       if (typeof unsub5 === 'function') unsub5();
       if (typeof unsub6 === 'function') unsub6();
       window.removeEventListener('hashchange', checkHash);
+      window.removeEventListener('hashchange', checkSubdomain);
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
@@ -134,13 +155,14 @@ export default function App() {
         </div>
       )}
 
-      {/* Global header — hidden on order confirmation for cleaner full-screen UX */}
-      {pageView !== 'order-confirmation' && <Header />}
+      {/* Global header — hidden on order confirmation and dedicated referral subdomain */}
+      {pageView !== 'order-confirmation' && pageView !== 'referral' && <Header />}
 
       {/* Page views */}
       {pageView === 'home' && <HomePage />}
       {pageView === 'checkout' && <CheckoutPage />}
       {pageView === 'order-confirmation' && latestOrder && <OrderConfirmationPage order={latestOrder} />}
+      {pageView === 'referral' && <ReferralPage />}
 
       {/* Global footer — shown on home page */}
       {pageView === 'home' && <Footer />}

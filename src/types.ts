@@ -7,7 +7,7 @@ export type ProductSize = 'XS' | 'S' | 'M' | 'L' | 'XL' | 'Free Size';
 export type SortOption = 'featured' | 'price-low' | 'price-high' | 'newest' | 'rating';
 export type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
 export type PaymentMethod = 'cod' | 'esewa' | 'khalti' | 'fonepay';
-export type PageView = 'home' | 'checkout' | 'order-confirmation';
+export type PageView = 'home' | 'checkout' | 'order-confirmation' | 'referral';
 
 export interface BilingualText {
   en: string;
