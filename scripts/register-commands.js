@@ -26,6 +26,14 @@ const commands = [
     description: 'Explore verified community collections and drops on dawosti.com',
   },
   {
+    name: 'help',
+    description: 'Overview of all Dawosti Guild commands, roles, and proof-of-taste mechanics',
+  },
+  {
+    name: 'catalog',
+    description: 'Browse premier Dawosti collections, bespoke silhouettes, and drop links',
+  },
+  {
     name: 'verify',
     description: 'Verify your Dawosti purchase order to unlock exclusive Patron Suite access',
     options: [

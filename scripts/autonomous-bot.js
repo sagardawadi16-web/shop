@@ -70,6 +70,8 @@ async function refreshCache() {
       api(`/guilds/${GUILD_ID}/roles`),
       api(`/guilds/${GUILD_ID}/channels`),
     ]);
+    roleMap = {};
+    channelMap = {};
     for (const r of roles) roleMap[r.name] = r.id;
     for (const c of channels) channelMap[c.name] = c.id;
     console.log('✅ Guild Cache Loaded:', {
@@ -78,6 +80,24 @@ async function refreshCache() {
     });
   } catch (err) {
     console.warn('Cache refresh error:', err.message);
+  }
+}
+
+// Helper to get real Discord channel mentions <#ID>
+function chMention(name) {
+  const id = channelMap[name];
+  return id ? `<#${id}>` : `#${name}`;
+}
+
+// Ensure active members receive the entry Atelier role
+async function ensureAtelierRole(userId) {
+  if (!userId) return;
+  const atelierId = roleMap['🪡 Atelier'];
+  if (!atelierId) return;
+  try {
+    await api(`/guilds/${GUILD_ID}/members/${userId}/roles/${atelierId}`, { method: 'PUT' });
+  } catch (e) {
+    // Non-critical, ignore missing permissions
   }
 }
 
@@ -125,7 +145,7 @@ async function handlePromotion(userId, newTier) {
           embeds: [
             {
               title: `⚡ EVOLUTION ASCENSION: ${newTier}`,
-              description: `A member has proven their aesthetic merit and craft, ascending to **${newTier}**!`,
+              description: `A creator has proven their aesthetic rigor and craft, ascending to **${newTier}**!`,
               color: newTier === '🏛️ Couturier' ? 0x8a1c2e : 0x1b7f5e,
               fields: [
                 {
@@ -137,12 +157,13 @@ async function handlePromotion(userId, newTier) {
                   name: 'Guild Privilege',
                   value:
                     newTier === '🏛️ Couturier'
-                      ? 'Verified designer status. Original designs qualify for direct curation and production drops on `dawosti.com`.'
+                      ? 'Verified designer status. Original garments qualify for direct curation and production drops on `dawosti.com`.'
                       : 'Recognized stylist & reviewer. Critiques carry elevated weight in community evaluations.',
                   inline: true,
                 },
               ],
               footer: { text: 'Dawosti Autonomous Evolution Engine' },
+              timestamp: new Date().toISOString(),
             },
           ],
         }),
@@ -169,55 +190,63 @@ async function startGateway() {
   };
 
   ws.onmessage = async (event) => {
-    const payload = JSON.parse(event.data);
-    const { op, d, s, t } = payload;
-    if (s) sequence = s;
+    try {
+      const payload = JSON.parse(event.data);
+      const { op, d, s, t } = payload;
+      if (s) sequence = s;
 
-    switch (op) {
-      case 10: // Hello
-        console.log(`💓 Heartbeat interval: ${d.heartbeat_interval}ms`);
-        clearInterval(heartbeatInterval);
-        heartbeatInterval = setInterval(() => {
-          ws.send(JSON.stringify({ op: 1, d: sequence }));
-        }, d.heartbeat_interval);
+      switch (op) {
+        case 10: // Hello
+          console.log(`💓 Heartbeat interval: ${d.heartbeat_interval}ms`);
+          clearInterval(heartbeatInterval);
+          heartbeatInterval = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ op: 1, d: sequence }));
+            }
+          }, d.heartbeat_interval);
 
-        // Identify with standard non-privileged intents
-        ws.send(
-          JSON.stringify({
-            op: 2,
-            d: {
-              token: TOKEN,
-              intents: 1 | 512 | 1024, // GUILDS | GUILD_MESSAGES | GUILD_MESSAGE_REACTIONS
-              properties: {
-                os: 'windows',
-                browser: 'dawosti-core',
-                device: 'dawosti-core',
+          // Identify with standard non-privileged intents
+          ws.send(
+            JSON.stringify({
+              op: 2,
+              d: {
+                token: TOKEN,
+                intents: 1 | 512 | 1024, // GUILDS | GUILD_MESSAGES | GUILD_MESSAGE_REACTIONS
+                properties: {
+                  os: 'windows',
+                  browser: 'dawosti-core',
+                  device: 'dawosti-core',
+                },
               },
-            },
-          })
-        );
-        break;
+            })
+          );
+          break;
 
-      case 0: // Dispatch Event
-        await handleDispatch(t, d);
-        break;
+        case 0: // Dispatch Event
+          await handleDispatch(t, d);
+          break;
 
-      case 1: // Heartbeat requested
-        ws.send(JSON.stringify({ op: 1, d: sequence }));
-        break;
+        case 1: // Heartbeat requested
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ op: 1, d: sequence }));
+          }
+          break;
 
-      case 7:
-      case 9:
-        console.log('🔄 Gateway reconnect requested.');
-        ws.close();
-        break;
+        case 7:
+        case 9:
+          console.log('🔄 Gateway reconnect requested by Discord.');
+          ws.close();
+          break;
+      }
+    } catch (e) {
+      console.error('Error handling message:', e);
     }
   };
 
   ws.onclose = (event) => {
     const code = event?.code ?? event;
     const reason = event?.reason ?? '';
-    console.log(`⚠️ Gateway closed with code ${code} (${reason || 'reconnecting'})...`);
+    console.log(`⚠️ Gateway closed with code ${code} (${reason || 'reconnecting in 5s'})...`);
     clearInterval(heartbeatInterval);
     setTimeout(startGateway, 5000);
   };
@@ -228,6 +257,12 @@ async function startGateway() {
 }
 
 async function handleDispatch(eventType, data) {
+  // Auto-onboard member if interacting
+  const actorId = data.member?.user?.id || data.user?.id || data.author?.id;
+  if (actorId && !data.author?.bot) {
+    ensureAtelierRole(actorId).catch(() => {});
+  }
+
   // 1. Slash Command Interactions
   if (eventType === 'INTERACTION_CREATE' && data.type === 2) {
     const cmdName = data.data.name;
@@ -256,6 +291,10 @@ async function handleDispatch(eventType, data) {
                   { name: 'Next Evolution', value: `${user.points}/${nextThreshold} pts`, inline: true },
                   { name: 'Verified Submissions', value: `${user.submissions || 0}`, inline: true },
                   { name: 'Critiques Endorsed', value: `${user.critiques || 0}`, inline: true },
+                  {
+                    name: 'How to Ascend',
+                    value: `• Post original concepts in ${chMention('design-submissions')}\n• Provide insightful feedback in ${chMention('peer-critique')}`,
+                  },
                 ],
                 footer: { text: 'Dawosti Autonomous Meritocracy • Proof-of-Taste' },
               },
@@ -283,10 +322,10 @@ async function handleDispatch(eventType, data) {
                 color: 0x1b7f5e,
                 fields: [
                   { name: 'Brief ID', value: `\`${b.id || 'BRIEF-001'}\``, inline: true },
-                  { name: 'Where to Drop', value: '<#design-submissions>', inline: true },
+                  { name: 'Where to Drop', value: chMention('design-submissions'), inline: true },
                   {
                     name: 'Evolution Reward',
-                    value: 'Top-ranked design receives Couturier verification and a feature drop review.',
+                    value: 'Top-ranked design receives Couturier verification and a feature drop review for `dawosti.com`.',
                   },
                 ],
                 footer: { text: 'Autonomous Challenge Engine • Dawosti Guild' },
@@ -314,9 +353,10 @@ async function handleDispatch(eventType, data) {
                   '• Elevating Palpali Dhaka, Himalayan nettle (Allo), and Newari tailoring to the world stage.',
                 color: 0x8a1c2e,
                 fields: [
-                  { name: 'Archive & Full Rules', value: '<#manifesto-and-philosophy>' },
+                  { name: 'Archive & Full Rules', value: chMention('manifesto-and-philosophy') },
                   { name: 'Official Store & Platform', value: 'https://dawosti.com' },
                 ],
+                footer: { text: 'Autonomous Fashion Guild • Kathmandu' },
               },
             ],
           },
@@ -334,7 +374,7 @@ async function handleDispatch(eventType, data) {
       const list =
         entries.length > 0
           ? entries.map(([id, u], i) => `${i + 1}. <@${id}> — **${u.tier}** (${u.points} pts)`).join('\n')
-          : 'No recognized rankings yet. Post a design in <#design-submissions> to begin your journey!';
+          : `No recognized rankings yet. Post a design in ${chMention('design-submissions')} to begin your journey!`;
 
       await api(`/interactions/${data.id}/${data.token}/callback`, {
         method: 'POST',
@@ -355,7 +395,7 @@ async function handleDispatch(eventType, data) {
       return;
     }
 
-    if (cmdName === 'showcase') {
+    if (cmdName === 'showcase' || cmdName === 'catalog') {
       await api(`/interactions/${data.id}/${data.token}/callback`, {
         method: 'POST',
         body: JSON.stringify({
@@ -365,14 +405,57 @@ async function handleDispatch(eventType, data) {
               {
                 title: '🛍️ DAWOSTI EDITORIAL SHOWCASE & BOUTIQUE',
                 description:
-                  'The official home of Dawosti collections, limited seasonal drops, and vetted community apparel.',
+                  'The official home of Dawosti bespoke collections, seasonal drops, and vetted community apparel.\n\n' +
+                  '• **Palpali Dhaka Avant-Garde Trench** — NPR 14,500\n' +
+                  '• **Himalayan Nettle (Allo) Utility Vest** — NPR 8,800\n' +
+                  '• **Royal Newari Festive Kurta Set** — NPR 11,200\n' +
+                  '• **Kathmandu Cyberpunk Monastic Hoodie** — NPR 6,500',
                 color: 0x8a1c2e,
                 fields: [
-                  { name: 'Boutique URL', value: 'https://dawosti.com' },
-                  { name: 'WhatsApp Concierge', value: '+977 9708251494' },
-                  { name: 'Featured Collections', value: 'Check <#announcements-and-drops> for live drop links.' },
+                  { name: 'Boutique URL', value: 'https://dawosti.com', inline: true },
+                  { name: 'WhatsApp Concierge', value: '+977 9708251494', inline: true },
+                  { name: 'Live Drops', value: chMention('announcements-and-drops'), inline: true },
                 ],
-                footer: { text: 'Kathmandu, Nepal • Global Shipping' },
+                footer: { text: 'Kathmandu, Nepal • Nationwide & Global Delivery' },
+              },
+            ],
+          },
+        }),
+      });
+      return;
+    }
+
+    if (cmdName === 'help') {
+      await api(`/interactions/${data.id}/${data.token}/callback`, {
+        method: 'POST',
+        body: JSON.stringify({
+          type: 4,
+          data: {
+            embeds: [
+              {
+                title: '🤖 DAWOSTI AUTONOMOUS CORE COMMANDS',
+                description:
+                  'Welcome to the Dawosti Autonomous Fashion Guild. Here are your autonomous tools:\n\n' +
+                  '`/rank` — Check your fashion tier, points, and evolution progress\n' +
+                  '`/brief` — Inspect the active community design challenge\n' +
+                  '`/manifesto` — Read Dawosti’s founding cultural values\n' +
+                  '`/leaderboard` — View the top tastemakers in the guild\n' +
+                  '`/catalog` — Browse current bespoke boutique collections\n' +
+                  '`/showcase` — Explore curated drops on dawosti.com\n' +
+                  '`/verify` — Verify your purchase order to enter the Patron Circle\n' +
+                  '`/help` — Show this command reference guide',
+                color: 0x1b7f5e,
+                fields: [
+                  {
+                    name: '👑 Evolutionary Hierarchy',
+                    value:
+                      '• **👑 Vanguard** (Lead Tastemakers & Council)\n' +
+                      '• **🏛️ Couturier** (Verified Creators & Designers, 100+ pts)\n' +
+                      '• **✂️ Artisan** (Stylists & Active Curators, 25+ pts)\n' +
+                      '• **🪡 Atelier** (Initiates & Fashion Explorers)',
+                  },
+                ],
+                footer: { text: 'Dawosti Autonomous Core • Proof-of-Taste Protocol' },
               },
             ],
           },
@@ -444,8 +527,8 @@ async function handleDispatch(eventType, data) {
                 color: 0xc49746,
                 fields: [
                   { name: 'Patron Bonus', value: '+50 Proof-of-Taste Points', inline: true },
-                  { name: 'Private Lounge', value: '<#patron-exclusive-drops>', inline: true },
-                  { name: 'Concierge Desk', value: '<#patron-order-concierge>', inline: true },
+                  { name: 'Private Lounge', value: chMention('patron-exclusive-drops'), inline: true },
+                  { name: 'Concierge Desk', value: chMention('patron-order-concierge'), inline: true },
                   {
                     name: 'Unlocked Privileges',
                     value:
@@ -483,6 +566,7 @@ async function handleDispatch(eventType, data) {
   if (eventType === 'MESSAGE_CREATE') {
     if (data.author?.bot) return;
 
+    // Submissions in design-submissions
     if (data.channel_id === channelMap['design-submissions']) {
       console.log(`[SUBMISSION] Design drop detected by user ${data.author.id}`);
 
@@ -492,6 +576,9 @@ async function handleDispatch(eventType, data) {
       }
       db.users[data.author.id].submissions = (db.users[data.author.id].submissions || 0) + 1;
       saveDB(db);
+
+      // Award +5 points for submitting
+      await awardPoints(data.author.id, 5, 'Original design drop submission');
 
       // Auto-add review tokens: ⭐ (Aesthetic), 🧵 (Craft), 🔥 (Vision), 👑 (Vanguard)
       const emojis = ['%E2%AD%90', '%F0%9F%A7%B5', '%F0%9F%94%A5', '%F0%9F%91%91'];
@@ -512,6 +599,20 @@ async function handleDispatch(eventType, data) {
           }),
         });
       } catch (e) {}
+    }
+
+    // High signal critique in #peer-critique
+    if (data.channel_id === channelMap['peer-critique']) {
+      if (data.content && data.content.length > 40) {
+        const db = loadDB();
+        if (!db.users[data.author.id]) {
+          db.users[data.author.id] = { points: 0, submissions: 0, critiques: 0, tier: '🪡 Atelier' };
+        }
+        db.users[data.author.id].critiques = (db.users[data.author.id].critiques || 0) + 1;
+        saveDB(db);
+        // Small critique incentive
+        await awardPoints(data.author.id, 2, 'Constructive peer critique');
+      }
     }
   }
 
