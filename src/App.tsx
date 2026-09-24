@@ -1,39 +1,68 @@
 /**
- * Dawosti - Women's Fashion Nepal
- * Production E-Commerce Platform
+ * Dawosti Boutique — Production E-Commerce Platform
+ * dawosti.com | Cloudflare Pages | Firebase Firestore
  */
-
-import React from 'react';
-import { ShopProvider, useShopStore } from './store/shopStore';
+import React, { useEffect } from 'react';
+import { Header } from './components/layout/Header';
+import { Footer } from './components/layout/Footer';
+import { CartDrawer } from './components/cart/CartDrawer';
+import { AdminPanel } from './components/admin/AdminPanel';
+import { ToastContainer } from './components/common/Toast';
 import { HomePage } from './pages/HomePage';
 import { CheckoutPage } from './pages/CheckoutPage';
-import { AdminPanelModal } from './components/admin/AdminPanelModal';
-import { FloatingWhatsAppButton } from './components/common/FloatingWhatsAppButton';
+import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
+import { useProductStore } from './stores/productStore';
+import { useOrderStore } from './stores/orderStore';
+import { useSettingsStore } from './stores/settingsStore';
+import { useAdminStore } from './stores/adminStore';
 
-function AppContent() {
-  const { pageView } = useShopStore();
+export default function App() {
+  const { pageView, theme } = useSettingsStore();
+  const { initFirestoreSync: initProducts } = useProductStore();
+  const { initFirestoreSync: initOrders, latestOrder } = useOrderStore();
+  const { initFirestoreSync: initSettings } = useSettingsStore();
+  const { initAuth } = useAdminStore();
+
+  // Initialize all Firestore listeners and Firebase auth on mount
+  useEffect(() => {
+    const unsub1 = initProducts();
+    const unsub2 = initOrders();
+    const unsub3 = initSettings();
+    const unsub4 = initAuth();
+    return () => {
+      if (typeof unsub1 === 'function') unsub1();
+      if (typeof unsub2 === 'function') unsub2();
+      if (typeof unsub3 === 'function') unsub3();
+      if (typeof unsub4 === 'function') unsub4();
+    };
+  }, []);
+
+  // Apply Dashain theme class
+  useEffect(() => {
+    document.documentElement.style.setProperty('--accent', theme.accentColor || '#8B3A3A');
+    if (theme.isDashainTheme) document.body.classList.add('dashain-theme');
+    else document.body.classList.remove('dashain-theme');
+  }, [theme.isDashainTheme, theme.accentColor]);
+
+  const isFullPage = pageView === 'checkout' || pageView === 'order-confirmation';
 
   return (
     <>
-      {pageView === 'checkout' || pageView === 'order-confirmation' ? (
-        <CheckoutPage />
-      ) : (
-        <HomePage />
-      )}
-      
-      {/* Global Admin Modal for Listings, Photos, Static QR & Passcode */}
-      <AdminPanelModal />
+      {/* Global header — hidden on order confirmation for cleaner UX */}
+      {pageView !== 'order-confirmation' && <Header />}
 
-      {/* Floating Official WhatsApp hotline button (9708251494) */}
-      <FloatingWhatsAppButton />
+      {/* Page views */}
+      {pageView === 'home' && <HomePage />}
+      {pageView === 'checkout' && <CheckoutPage />}
+      {pageView === 'order-confirmation' && latestOrder && <OrderConfirmationPage order={latestOrder} />}
+
+      {/* Global footer — hidden during checkout */}
+      {pageView === 'home' && <Footer />}
+
+      {/* Global overlays */}
+      <CartDrawer />
+      <AdminPanel />
+      <ToastContainer />
     </>
-  );
-}
-
-export default function App() {
-  return (
-    <ShopProvider>
-      <AppContent />
-    </ShopProvider>
   );
 }

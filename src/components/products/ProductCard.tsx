@@ -1,234 +1,126 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Eye, Star, Check, Sparkles, MessageCircle, Globe, Truck } from 'lucide-react';
+import { Star, Heart, Eye, ShoppingBag, Zap } from 'lucide-react';
 import { Product, ProductSize } from '../../types';
-import { useShopStore } from '../../store/shopStore';
+import { useCartStore } from '../../stores/cartStore';
+import { useProductStore } from '../../stores/productStore';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { toast } from '../common/Toast';
 
-interface ProductCardProps {
+interface Props {
   product: Product;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const {
-    language,
-    addToCart,
-    formatPrice,
-    setActiveDetailProduct,
-    getWhatsAppProductOrderUrl,
-  } = useShopStore();
+export const ProductCard: React.FC<Props> = ({ product }) => {
+  const { language, formatPrice } = useSettingsStore();
+  const { addItem } = useCartStore();
+  const { setActiveDetailProduct, setActiveQuickViewProduct } = useProductStore();
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
-  // Pick first available size
-  const [selectedSize, setSelectedSize] = useState<ProductSize>(() => {
-    const firstInStock = product.availableSizes.find((s) => {
-      const stock = product.sizeStock?.[s];
-      return stock === undefined || stock > 0;
-    });
-    return firstInStock || product.availableSizes[0];
-  });
-  const [isAdded, setIsAdded] = useState<boolean>(false);
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!selectedSize) return;
-    addToCart(product, selectedSize, 1);
-    setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 1800);
-  };
-
-  const discountPercent = product.originalPrice
+  const discountPct = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
-  const currentStock = product.sizeStock?.[selectedSize];
-  const isOutOfStock = currentStock === 0;
+  const defaultSize: ProductSize = product.availableSizes[0] || 'Free Size';
+
+  const handleQuickAdd = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addItem(product, defaultSize, 1);
+    toast(`Added "${language === 'np' ? product.title.np : product.title.en}" to cart!`);
+  };
 
   return (
     <div
-      id={`product-card-${product.id}`}
-      className="group relative bg-white rounded-2xl border border-[#EADCCE] overflow-hidden flex flex-col justify-between hover:shadow-xl hover:border-[#D4AF37]/60 transition-all duration-300"
+      className="card product-card"
+      style={{ overflow: 'hidden', cursor: 'pointer' }}
+      onClick={() => setActiveDetailProduct(product)}
     >
-      {/* Image & Overlay Triggers */}
-      <div
-        className="relative aspect-[3/4] overflow-hidden bg-[#FAF2E9] cursor-pointer"
-        onClick={() => setActiveDetailProduct(product)}
-      >
-        <img
-          src={product.images[0]}
-          alt={product.title[language]}
-          loading="lazy"
-          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-          referrerPolicy="no-referrer"
-        />
+      {/* Image */}
+      <div style={{ position: 'relative', aspectRatio: '3/4', background: 'var(--ivory-dark)', overflow: 'hidden' }}>
+        {!imgLoaded && <div className="skeleton" style={{ position: 'absolute', inset: 0 }} />}
+        {!imgError ? (
+          <img
+            src={product.images[0]}
+            alt={language === 'np' ? product.title.np : product.title.en}
+            onLoad={() => setImgLoaded(true)}
+            onError={() => { setImgError(true); setImgLoaded(true); }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease', display: imgLoaded ? 'block' : 'none' }}
+          />
+        ) : (
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brown-light)', fontSize: 40 }}>🪡</div>
+        )}
 
-        {/* Top Badges */}
-        <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 flex flex-col gap-1 z-10 pointer-events-none">
-          {product.isNewArrival && (
-            <span className="bg-[#8B3A3A] text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs">
-              {language === 'np' ? 'नयाँ' : 'NEW'}
-            </span>
-          )}
-          {discountPercent > 0 && (
-            <span className="bg-[#D4AF37] text-[#2B1810] text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs">
-              {discountPercent}% OFF
-            </span>
-          )}
+        {/* Badges */}
+        <div style={{ position: 'absolute', top: 10, left: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {product.isNewArrival && <span className="badge badge-gold">New</span>}
+          {discountPct > 0 && <span className="badge badge-burgundy">-{discountPct}%</span>}
+          {!product.inStock && <span className="badge badge-red">Sold Out</span>}
         </div>
 
-        {/* Quick View / Inspect Button (min 48px tap target) */}
-        <button
-          id={`quick-view-btn-${product.id}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            setActiveDetailProduct(product);
-          }}
-          aria-label={`View details of ${product.title[language]}`}
-          className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 min-h-[48px] min-w-[48px] p-3 bg-white/95 hover:bg-white text-[#8B3A3A] rounded-full shadow-md backdrop-blur-xs flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+        {/* Action buttons overlay */}
+        <div style={{ position: 'absolute', top: 10, right: 10, display: 'flex', flexDirection: 'column', gap: 6, opacity: 0, transition: 'var(--transition)' }}
+          className="product-card-actions"
         >
-          <Eye className="w-5 h-5" />
-        </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setIsWishlisted((v) => !v); }}
+            style={{ width: 36, height: 36, borderRadius: 99, background: 'white', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--shadow-sm)' }}
+          >
+            <Heart size={16} fill={isWishlisted ? 'var(--burgundy)' : 'none'} color={isWishlisted ? 'var(--burgundy)' : 'var(--brown-light)'} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setActiveQuickViewProduct(product); }}
+            style={{ width: 36, height: 36, borderRadius: 99, background: 'white', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--shadow-sm)' }}
+          >
+            <Eye size={16} color="var(--brown-light)" />
+          </button>
+        </div>
 
-        {/* Origin tag */}
-        {product.origin && (
-          <div className="absolute bottom-2 left-2 hidden sm:block pointer-events-none">
-            <span className="text-[10px] bg-black/60 backdrop-blur-xs text-white px-2 py-0.5 rounded-md flex items-center gap-1">
-              <Sparkles className="w-2.5 h-2.5 text-[#D4AF37]" />
-              {product.origin[language]}
-            </span>
-          </div>
+        {/* Quick add button */}
+        {product.inStock && (
+          <button
+            onClick={handleQuickAdd}
+            style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px', background: 'var(--brown)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transform: 'translateY(100%)', transition: 'transform 0.25s ease' }}
+            className="quick-add-btn"
+          >
+            <Zap size={14} style={{ color: 'var(--gold)' }} /> Quick Add
+          </button>
         )}
       </div>
 
-      {/* Product Information */}
-      <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between">
-        <div>
-          {/* Category, Buy in Website Tag & Rating */}
-          <div className="flex items-center justify-between text-xs text-[#6B564C] mb-1.5 gap-1">
-            <span className="font-semibold text-[#8B3A3A] tracking-wider uppercase text-[10px] sm:text-[11px] truncate max-w-[60%]">
-              {product.categoryName[language]}
-            </span>
-            <div className="flex items-center gap-1 shrink-0">
-              <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-[#D4AF37] text-[#D4AF37]" />
-              <span className="font-bold text-[#2B1810] text-[11px]">{product.rating}</span>
-            </div>
-          </div>
+      {/* Info */}
+      <div style={{ padding: '14px 16px' }}>
+        <div style={{ fontSize: 11, color: 'var(--burgundy)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+          {language === 'np' ? product.categoryName.np : product.categoryName.en}
+        </div>
+        <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 17, fontWeight: 600, color: 'var(--brown)', lineHeight: 1.3, marginBottom: 6 }}>
+          {language === 'np' ? product.title.np : product.title.en}
+        </h3>
 
-          {/* Title */}
-          <h3
-            onClick={() => setActiveDetailProduct(product)}
-            className="font-serif-luxury text-sm sm:text-base font-bold text-[#2B1810] hover:text-[#8B3A3A] cursor-pointer line-clamp-1 transition-colors"
-            title={product.title[language]}
-          >
-            {product.title[language]}
-          </h3>
-
-          {/* Price */}
-          <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">
-            <span className="text-sm sm:text-base font-bold text-[#8B3A3A] font-serif-luxury">
-              {formatPrice(product.price)}
-            </span>
-            {product.originalPrice && (
-              <span className="text-[11px] sm:text-xs text-[#6B564C] line-through font-mono">
-                {formatPrice(product.originalPrice)}
-              </span>
-            )}
+        {/* Rating */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+          <div className="stars">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <Star key={n} size={12} fill={n <= Math.round(product.rating) ? 'var(--gold)' : 'none'} color={n <= Math.round(product.rating) ? 'var(--gold)' : 'var(--cream)'} />
+            ))}
           </div>
+          <span style={{ fontSize: 11, color: 'var(--brown-light)' }}>({product.reviewCount})</span>
         </div>
 
-        {/* Size Selection & Actions */}
-        <div className="mt-3 pt-2.5 border-t border-[#FAF2E9] space-y-2">
-          {/* Visual Size Selector (Touch friendly) */}
-          <div>
-            <div className="flex items-center justify-between text-[11px] text-[#6B564C] mb-1">
-              <span>{language === 'np' ? 'साइज:' : 'Size:'}</span>
-              <span className="font-bold text-[#8B3A3A]">{selectedSize}</span>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {product.availableSizes.map((size) => {
-                const isSelected = selectedSize === size;
-                const stock = product.sizeStock?.[size];
-                const sizeOutOfStock = stock === 0;
-
-                return (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedSize(size);
-                    }}
-                    disabled={sizeOutOfStock}
-                    className={`min-h-[40px] min-w-[40px] px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all active:scale-[0.97] ${
-                      isSelected
-                        ? 'bg-[#8B3A3A] text-white shadow-xs'
-                        : sizeOutOfStock
-                        ? 'bg-gray-100 text-gray-400 line-through cursor-not-allowed'
-                        : 'bg-[#FAF2E9] text-[#2B1810] hover:bg-[#EADCCE] border border-[#EADCCE]'
-                    }`}
-                  >
-                    {size}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* "Buy in Website" Heading for Product Card */}
-          <div className="flex items-center justify-between text-[11px] font-bold text-[#2B1810] pt-1 border-t border-[#FAF2E9]">
-            <div className="flex items-center gap-1.5 text-[#8B3A3A]">
-              <Globe className="w-3.5 h-3.5 text-[#8B3A3A]" />
-              <span className="uppercase tracking-wider text-[10px] font-extrabold">
-                {language === 'np' ? 'वेबसाइटमा किन्नुहोस्' : 'Buy in Website'}
-              </span>
-            </div>
-            <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-              {language === 'np' ? 'सिधै डेलिभरी' : 'Fast Delivery'}
-            </span>
-          </div>
-
-          {/* Action Row: Primary Add to Bag + WhatsApp Logo Order */}
-          <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-            {/* Add to Bag Button (min 48px tap target) */}
-            <button
-              id={`add-to-cart-btn-${product.id}`}
-              onClick={handleAddToCart}
-              disabled={isOutOfStock}
-              className={`min-h-[48px] py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all duration-200 shadow-xs active:scale-[0.97] ${
-                isAdded
-                  ? 'bg-emerald-700 text-white'
-                  : isOutOfStock
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-[#8B3A3A] hover:bg-[#722E2E] text-white'
-              }`}
-            >
-              {isAdded ? (
-                <>
-                  <Check className="w-4 h-4 shrink-0" />
-                  <span>{language === 'np' ? 'थपियो' : 'Added'}</span>
-                </>
-              ) : (
-                <>
-                  <ShoppingBag className="w-4 h-4 shrink-0" />
-                  <span className="truncate">{language === 'np' ? 'झोलामा थप्नुहोस्' : 'Add to Bag'}</span>
-                </>
-              )}
-            </button>
-
-            {/* Direct WhatsApp Quick Order Button with WhatsApp Logo (min 48px tap target) */}
-            <a
-              id={`quick-whatsapp-btn-${product.id}`}
-              href={getWhatsAppProductOrderUrl(product, selectedSize, 1)}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              title={language === 'np' ? 'व्हाट्सएपबाट सिधै किन्नुहोस्' : 'Order via WhatsApp'}
-              aria-label="Order via WhatsApp"
-              className="min-h-[48px] py-2 px-2 rounded-xl bg-[#25D366] hover:bg-[#1EBE5B] text-white shadow-xs flex items-center justify-center gap-1.5 transition-all hover:shadow-md active:scale-[0.97]"
-            >
-              <MessageCircle className="w-4 h-4 fill-white text-white shrink-0" />
-              <span className="truncate text-xs font-bold">WhatsApp</span>
-            </a>
-          </div>
+        {/* Price */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontWeight: 700, fontSize: 17, color: 'var(--burgundy)' }}>{formatPrice(product.price)}</span>
+          {product.originalPrice && (
+            <span style={{ fontSize: 13, color: 'var(--brown-light)', textDecoration: 'line-through' }}>{formatPrice(product.originalPrice)}</span>
+          )}
         </div>
       </div>
+
+      <style>{`
+        .product-card:hover .product-card-actions { opacity: 1; }
+        .product-card:hover .quick-add-btn { transform: translateY(0) !important; }
+        .product-card:hover img { transform: scale(1.06); }
+      `}</style>
     </div>
   );
 };
