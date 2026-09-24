@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { ArrowLeft, CheckCircle, Truck, CreditCard, Smartphone, QrCode, MessageCircle } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { ArrowLeft, CheckCircle, Truck, CreditCard, Smartphone, QrCode, ShieldCheck } from 'lucide-react';
 import { useCartStore } from '../stores/cartStore';
 import { useOrderStore } from '../stores/orderStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useAdminStore } from '../stores/adminStore';
 import { ShippingAddress, PaymentMethod } from '../types';
+import { verifyHumanOrAgent } from '../services/botProtection';
 
 export const CheckoutPage: React.FC = () => {
   const { items, subtotal, clearCart } = useCartStore();
@@ -14,6 +15,10 @@ export const CheckoutPage: React.FC = () => {
 
   const deliveryFee = subtotal >= merchant.freeDeliveryThreshold ? 0 : merchant.deliveryFee;
   const total = subtotal + deliveryFee;
+
+  const renderTimestamp = useRef<number>(Date.now());
+  const [honeypot, setHoneypot] = useState('');
+  const [botBlockedMessage, setBotBlockedMessage] = useState<string | null>(null);
 
   const [step, setStep] = useState<'shipping' | 'payment' | 'confirm'>('shipping');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cod');
@@ -42,6 +47,19 @@ export const CheckoutPage: React.FC = () => {
 
   const handlePlaceOrder = async () => {
     if (!validate()) { setStep('shipping'); return; }
+
+    // Execute Bot Shield Verification (AI Agents automatically bypass)
+    const botCheck = verifyHumanOrAgent({
+      honeypotValue: honeypot,
+      renderTimestamp: renderTimestamp.current,
+    });
+
+    if (!botCheck.isHumanOrAgent) {
+      setBotBlockedMessage(botCheck.reason || 'Verification check failed. Please wait a few seconds and try again.');
+      return;
+    }
+    setBotBlockedMessage(null);
+
     setIsPlacing(true);
     try {
       const order = placeOrder({
@@ -201,6 +219,29 @@ export const CheckoutPage: React.FC = () => {
                   <h4 style={{ fontSize: 13, fontWeight: 700, color: 'var(--brown-light)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Payment</h4>
                   <p style={{ fontWeight: 600, color: 'var(--brown)' }}>{paymentOptions.find((p) => p.id === paymentMethod)?.label}</p>
                   {txnRef && <p style={{ fontSize: 13, color: 'var(--brown-light)' }}>Ref: {txnRef}</p>}
+                </div>
+
+                {/* Invisible Anti-Bot Honeypot Field (Bots fill this, humans don't) */}
+                <input
+                  type="text"
+                  name="hp_company_sec"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  style={{ display: 'none', position: 'absolute', left: '-9999px', opacity: 0 }}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                />
+
+                {botBlockedMessage && (
+                  <div style={{ background: '#FEE2E2', border: '1px solid #EF4444', borderRadius: 8, padding: '10px 14px', marginBottom: 14, color: '#991B1B', fontSize: 12, fontWeight: 600 }}>
+                    ⚠️ {botBlockedMessage}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 11, color: '#059669', marginBottom: 14, fontWeight: 600 }}>
+                  <ShieldCheck size={14} color="#059669" />
+                  <span>Protected by Dawosti Anti-Bot Shield (Verified Human / Partner)</span>
                 </div>
 
                 <button onClick={handlePlaceOrder} disabled={isPlacing} className="btn btn-primary" style={{ width: '100%', fontSize: 15 }}>

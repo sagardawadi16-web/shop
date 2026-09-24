@@ -16,6 +16,7 @@ import { useOrderStore } from './stores/orderStore';
 import { useSettingsStore } from './stores/settingsStore';
 import { useAdminStore } from './stores/adminStore';
 import { useMobileHistory } from './hooks/useMobileHistory';
+import { recordVisit } from './services/visitorTracker';
 
 export default function App() {
   useMobileHistory();
@@ -25,8 +26,9 @@ export default function App() {
   const { initFirestoreSync: initSettings } = useSettingsStore();
   const { initAuth } = useAdminStore();
 
-  // Initialize all Firestore listeners and Firebase auth on mount
+  // Initialize all Firestore listeners, Firebase auth, and visitor tracking on mount
   useEffect(() => {
+    recordVisit();
     const unsub1 = initProducts();
     const unsub2 = initOrders();
     const unsub3 = initSettings();

@@ -59,6 +59,18 @@ export interface ShippingAddress {
   province: string;
 }
 
+export type OrderVerificationStatus = 'unverified' | 'verified_genuine' | 'suspicious' | 'flagged_fake';
+
+export interface OrderVerification {
+  status: OrderVerificationStatus;
+  verifiedAt?: string;
+  verifiedBy?: string;
+  method?: 'phone_call' | 'whatsapp' | 'prepaid_gateway' | 'manual_review';
+  fraudScore?: number; // 0 - 100
+  fraudRisk?: 'low' | 'medium' | 'high';
+  verificationNotes?: string;
+}
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -80,6 +92,7 @@ export interface Order {
   logisticsNotes?: string;
   acknowledgedByAdmin: boolean;
   customerLoginName?: string;
+  verification?: OrderVerification;
 }
 
 export interface GoogleUser {

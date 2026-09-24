@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { Order, OrderStatus, CartItem, ShippingAddress, PaymentMethod } from '../types';
+import { Order, OrderStatus, CartItem, ShippingAddress, PaymentMethod, OrderVerificationStatus, OrderVerification } from '../types';
 import { listenOrders, saveOrder, updateOrder, deleteOrder } from '../services/firestoreOrders';
+import { useAdminStore } from './adminStore';
 
 interface OrderState {
   orders: Order[];
@@ -23,6 +24,7 @@ interface OrderState {
   }) => Order;
   updateOrderStatus: (orderId: string, status: OrderStatus, trackingInfo?: { courierName?: string; trackingNumber?: string; logisticsNotes?: string }) => void;
   acknowledgeOrder: (orderId: string) => void;
+  verifyOrder: (orderId: string, status: OrderVerificationStatus, notes?: string, method?: OrderVerification['method']) => void;
   deleteOrder: (orderId: string) => void;
   clearAllOrders: () => void;
   setLatestOrder: (order: Order | null) => void;
@@ -46,6 +48,16 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const orderNumber = `DAW-${Math.floor(100000 + Math.random() * 900000)}`;
     const orderId = `order_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
+    // Calculate Fraud Risk Score (0-100)
+    const phoneClean = (params.shippingAddress.phone || '').replace(/[^0-9]/g, '');
+    const isStandardNepalPhone = /^(98|97|96)[0-9]{8}$/.test(phoneClean);
+    const hasSufficientAddress = (params.shippingAddress.addressLine || '').length >= 5;
+    let fraudScore = 5;
+    if (!isStandardNepalPhone) fraudScore += 40;
+    if (!hasSufficientAddress) fraudScore += 30;
+    if (params.paymentMethod === 'cod' && params.totalAmount > 20000) fraudScore += 25; // Large COD
+    const fraudRisk: 'low' | 'medium' | 'high' = fraudScore >= 60 ? 'high' : fraudScore >= 35 ? 'medium' : 'low';
+
     const newOrder: Order = {
       id: orderId,
       orderNumber,
@@ -63,6 +75,12 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       acknowledgedByAdmin: false,
       customerLoginName: params.customerName || 'Guest',
       courierPartner: 'Nepal Post EMS / Sundar Express',
+      verification: {
+        status: 'unverified',
+        fraudScore,
+        fraudRisk,
+        verificationNotes: isStandardNepalPhone ? 'Valid Nepal mobile format detected' : 'Warning: Non-standard phone number format',
+      },
     };
 
     // Optimistic local update
@@ -96,6 +114,29 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const unackCount = updated.filter((o) => !o.acknowledgedByAdmin).length;
     set({ orders: updated, unacknowledgedCount: unackCount });
     updateOrder(orderId, updates);
+  },
+
+  verifyOrder: (orderId, verificationStatus, notes = '', method = 'manual_review') => {
+    const target = get().orders.find((o) => o.id === orderId || o.orderNumber === orderId);
+    if (!target) return;
+
+    const updates: Partial<Order> = {
+      verification: {
+        ...(target.verification || { fraudScore: 10, fraudRisk: 'low' }),
+        status: verificationStatus,
+        verifiedAt: new Date().toISOString(),
+        verifiedBy: useAdminStore.getState().user?.name || 'Verified Store Owner',
+        verificationNotes: notes || (verificationStatus === 'verified_genuine' ? 'Verified as Genuine Customer Order' : 'Flagged as Fake / Suspicious Order'),
+        method,
+      },
+      ...(verificationStatus === 'verified_genuine' ? { acknowledgedByAdmin: true, status: 'confirmed' } : {}),
+      ...(verificationStatus === 'flagged_fake' ? { status: 'cancelled' } : {}),
+    };
+
+    const updated = get().orders.map((o) => (o.id === orderId || o.orderNumber === orderId ? { ...o, ...updates } : o));
+    const unackCount = updated.filter((o) => !o.acknowledgedByAdmin).length;
+    set({ orders: updated, unacknowledgedCount: unackCount });
+    updateOrder(target.id, updates);
   },
 
   deleteOrder: (orderId) => {

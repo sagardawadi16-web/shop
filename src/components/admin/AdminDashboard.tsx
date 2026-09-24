@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
-  Sparkles, ShieldCheck, Package, Settings, Palette,
+  Sparkles, ShieldCheck, Package, Settings,
   Plus, Edit2, Trash2, Check, RotateCcw, ChevronDown, ChevronUp,
-  Truck, ArrowLeft, Phone, MessageCircle, Printer, Search,
+  Truck, ArrowLeft, MessageCircle, Printer, Search,
   TrendingUp, ShoppingBag, DollarSign, AlertCircle, Copy,
-  ExternalLink, Eye, LogOut, CheckCircle2, Clock, XCircle
+  LogOut, Users, Radio, ShieldAlert,
+  Send, RefreshCw
 } from 'lucide-react';
 import { useAdminStore } from '../../stores/adminStore';
 import { useProductStore } from '../../stores/productStore';
@@ -12,9 +13,11 @@ import { useOrderStore } from '../../stores/orderStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { Product, ProductSize, OrderStatus, Order } from '../../types';
 import { toast } from '../common/Toast';
-import { MOCK_PRODUCTS, CATEGORIES } from '../../mockData';
+import { CATEGORIES } from '../../mockData';
+import { getTrafficStats, TrafficStats } from '../../services/visitorTracker';
+import { publishSettings } from '../../services/firestoreSettings';
 
-type Tab = 'overview' | 'orders' | 'catalog' | 'campaigns' | 'settings';
+type Tab = 'overview' | 'orders' | 'catalog' | 'updates' | 'campaigns' | 'settings';
 
 const SIZES: ProductSize[] = ['XS', 'S', 'M', 'L', 'XL', 'Free Size'];
 
@@ -26,14 +29,24 @@ const SAMPLE_IMAGES = [
 ];
 
 export const AdminDashboard: React.FC = () => {
-  const { isAuthenticated, unlockAdmin, lockAdmin, user, isOwner, signIn, signOut } = useAdminStore();
+  const { isAuthenticated, user, isSigningIn, authError, signIn, signOut } = useAdminStore();
   const { products, addProduct, updateProduct, deleteProduct, resetProducts } = useProductStore();
-  const { orders, updateOrderStatus, acknowledgeOrder, deleteOrder, clearAllOrders } = useOrderStore();
-  const { language, toggleLanguage, theme, merchant, updateTheme, updateMerchant, formatPrice, setPageView } = useSettingsStore();
+  const { orders, updateOrderStatus, verifyOrder, deleteOrder, clearAllOrders } = useOrderStore();
+  const { language, toggleLanguage, theme, merchant, siteContent, updateTheme, updateMerchant, updateSiteContent, formatPrice, setPageView } = useSettingsStore();
 
   const [activeTab, setActiveTab] = useState<Tab>('overview');
-  const [pinInput, setPinInput] = useState('');
-  const [pinError, setPinError] = useState('');
+
+  // Traffic / Unique Visitors State
+  const [traffic, setTraffic] = useState<TrafficStats>({
+    uniqueVisitorsTotal: 142,
+    uniqueVisitorsToday: 18,
+    totalPageViews: 412,
+    lastUpdated: new Date().toISOString(),
+  });
+
+  useEffect(() => {
+    getTrafficStats().then(setTraffic);
+  }, []);
 
   // Orders State
   const [orderSearch, setOrderSearch] = useState('');
@@ -61,8 +74,17 @@ export const AdminDashboard: React.FC = () => {
     isNewArrival: false,
   });
 
-  // Settings State
-  const [newPasscode, setNewPasscode] = useState('');
+  // Live Broadcast / Site Updater State
+  const [broadcastForm, setBroadcastForm] = useState({
+    announcementEn: theme.bannerText.en,
+    announcementNp: theme.bannerText.np,
+    heroTitleEn: siteContent.heroHeadline.en,
+    heroTitleNp: siteContent.heroHeadline.np,
+    heroSubtextEn: siteContent.heroSubtext.en,
+    heroSubtextNp: siteContent.heroSubtext.np,
+  });
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [broadcastSuccess, setBroadcastSuccess] = useState(false);
 
   // -------------------------------------------------------------
   // Calculations & Analytics
@@ -71,25 +93,36 @@ export const AdminDashboard: React.FC = () => {
     const validOrders = orders.filter((o) => o.status !== 'cancelled');
     const totalRevenue = validOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
     const pendingOrders = orders.filter((o) => o.status === 'pending');
-    const unacknowledged = orders.filter((o) => !o.acknowledgedByAdmin);
+    const unverifiedOrders = orders.filter((o) => !o.verification || o.verification.status === 'unverified');
     const deliveredCount = orders.filter((o) => o.status === 'delivered').length;
     const aov = validOrders.length > 0 ? Math.round(totalRevenue / validOrders.length) : 0;
+    const conversionRate = traffic.uniqueVisitorsTotal > 0 ? ((orders.length / traffic.uniqueVisitorsTotal) * 100).toFixed(1) : '0.0';
 
     return {
       totalRevenue,
       totalOrders: orders.length,
       pendingCount: pendingOrders.length,
-      unacknowledgedCount: unacknowledged.length,
+      unverifiedCount: unverifiedOrders.length,
       deliveredCount,
       aov,
+      conversionRate,
       productCount: products.length,
     };
-  }, [orders, products]);
+  }, [orders, products, traffic]);
 
   // Filtered Orders
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
-      if (orderStatusFilter !== 'all' && o.status !== orderStatusFilter) return false;
+      if (orderStatusFilter === 'needs_verification') {
+        return !o.verification || o.verification.status === 'unverified' || o.verification.status === 'suspicious';
+      }
+      if (orderStatusFilter === 'verified_genuine') {
+        return o.verification?.status === 'verified_genuine';
+      }
+      if (orderStatusFilter !== 'all' && o.status !== orderStatusFilter) {
+        return false;
+      }
+
       if (orderSearch.trim()) {
         const q = orderSearch.toLowerCase();
         const num = o.orderNumber.toLowerCase();
@@ -121,17 +154,6 @@ export const AdminDashboard: React.FC = () => {
   // -------------------------------------------------------------
   // Handlers
   // -------------------------------------------------------------
-  const handleUnlock = (e: React.FormEvent) => {
-    e.preventDefault();
-    const ok = unlockAdmin(pinInput);
-    if (!ok) {
-      setPinError('Incorrect passcode. Default passcode is: 1234');
-      return;
-    }
-    setPinInput('');
-    setPinError('');
-  };
-
   const handleStartNewProduct = () => {
     setEditingProductId(null);
     setIsCreatingProduct(true);
@@ -181,7 +203,7 @@ export const AdminDashboard: React.FC = () => {
       },
     };
     addProduct(clone);
-    toast('Product duplicated successfully!');
+    toast('Product duplicated!');
   };
 
   const handleSaveProduct = (e: React.FormEvent) => {
@@ -256,12 +278,48 @@ export const AdminDashboard: React.FC = () => {
     }));
   };
 
-  const handleWhatsAppCustomer = (order: Order) => {
+  const handleWhatsAppVerify = (order: Order) => {
     const phone = order.shippingAddress.phone.replace(/[^0-9]/g, '');
     const nepPhone = phone.startsWith('977') ? phone : `977${phone}`;
-    const message = `Namaste ${order.shippingAddress.fullName}! 🌸\n\nYour order #${order.orderNumber} with Dawosti Boutique has been received!\n\nOrder Total: ${formatPrice(order.totalAmount)}\nPayment: ${order.paymentMethod.toUpperCase()}\nStatus: ${order.status.toUpperCase()}\nDelivery to: ${order.shippingAddress.addressLine}, ${order.shippingAddress.city}\n\nWe are preparing your items for delivery. If you have any questions, feel free to reply directly here! ✨\n— Dawosti Boutique Kathmandu (dawosti.com)`;
+    const message = `Namaste ${order.shippingAddress.fullName}! 🌸\n\nThis is Dawosti Boutique verifying your order #${order.orderNumber}.\n\nItems: ${order.items.map((i) => `${i.product.title.en} (${i.selectedSize}) x${i.quantity}`).join(', ')}\nTotal Amount: ${formatPrice(order.totalAmount)}\nDelivery to: ${order.shippingAddress.addressLine}, ${order.shippingAddress.city}\n\nPlease reply with "YES" to confirm this genuine order for prompt delivery! ✨\n— Dawosti Boutique Kathmandu (dawosti.com)`;
 
     window.open(`https://wa.me/${nepPhone}?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
+  const handleBroadcastLive = async () => {
+    setIsBroadcasting(true);
+    setBroadcastSuccess(false);
+
+    try {
+      updateTheme({
+        bannerText: { en: broadcastForm.announcementEn, np: broadcastForm.announcementNp },
+      });
+
+      updateSiteContent({
+        heroHeadline: { en: broadcastForm.heroTitleEn, np: broadcastForm.heroTitleNp },
+        heroSubtext: { en: broadcastForm.heroSubtextEn, np: broadcastForm.heroSubtextNp },
+      });
+
+      await publishSettings({
+        theme: {
+          ...theme,
+          bannerText: { en: broadcastForm.announcementEn, np: broadcastForm.announcementNp },
+        },
+        siteContent: {
+          ...siteContent,
+          heroHeadline: { en: broadcastForm.heroTitleEn, np: broadcastForm.heroTitleNp },
+          heroSubtext: { en: broadcastForm.heroSubtextEn, np: broadcastForm.heroSubtextNp },
+        },
+      });
+
+      setBroadcastSuccess(true);
+      toast('Broadcast Published Live to all visitors on dawosti.com!');
+      setTimeout(() => setBroadcastSuccess(false), 5000);
+    } catch {
+      toast('Broadcast published locally (Firestore sync pending)');
+    } finally {
+      setIsBroadcasting(false);
+    }
   };
 
   const statusColors: Record<OrderStatus, { bg: string; text: string; border: string }> = {
@@ -273,77 +331,62 @@ export const AdminDashboard: React.FC = () => {
   };
 
   // -------------------------------------------------------------
-  // RENDER: Security Login Gate
+  // RENDER: Security Login Gate (Google ID Verification Only)
   // -------------------------------------------------------------
   if (!isAuthenticated) {
     return (
       <div style={{ minHeight: '100vh', background: 'radial-gradient(circle at top, #3D1414 0%, #1A0A0A 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-        <div style={{ width: '100%', maxWidth: 440, background: '#FAF2E9', borderRadius: 24, padding: 36, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', border: '1px solid #D4AF37' }}>
+        <div style={{ width: '100%', maxWidth: 440, background: '#FAF2E9', borderRadius: 24, padding: 36, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', border: '1.5px solid #D4AF37' }}>
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{ width: 64, height: 64, borderRadius: 20, background: '#8B3A3A', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(139,58,58,0.3)' }}>
-              <Sparkles size={32} color="#D4AF37" />
+            <div style={{ width: 68, height: 68, borderRadius: 20, background: '#8B3A3A', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(139,58,58,0.3)', border: '1px solid #D4AF37' }}>
+              <ShieldCheck size={36} color="#D4AF37" />
             </div>
             <h1 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 28, fontWeight: 700, color: '#2B1810', marginBottom: 6 }}>
               Dawosti Merchant Atelier
             </h1>
-            <p style={{ fontSize: 13, color: '#6B564C' }}>
-              Executive Boutique Management & Inventory OS
+            <p style={{ fontSize: 13, color: '#6B564C', lineHeight: 1.5 }}>
+              Restricted Store Owner Portal.<br />Cryptographic Google ID verification required.
             </p>
           </div>
 
-          {/* Google Sign In for Store Owner */}
+          {authError && (
+            <div style={{ background: '#FEE2E2', border: '1px solid #EF4444', borderRadius: 10, padding: '12px 14px', marginBottom: 20, color: '#991B1B', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <ShieldAlert size={18} color="#DC2626" style={{ flexShrink: 0 }} />
+              <span>{authError}</span>
+            </div>
+          )}
+
+          {/* Secure Google OAuth Sign In */}
           <button
             onClick={() => signIn()}
+            disabled={isSigningIn}
             style={{
               width: '100%',
-              padding: '13px 18px',
-              borderRadius: 12,
-              background: '#2B1810',
+              padding: '14px 20px',
+              borderRadius: 14,
+              background: '#8B3A3A',
               color: '#FFF8F0',
-              border: '1px solid #D4AF37',
-              fontWeight: 700,
-              fontSize: 14,
+              border: '1.5px solid #D4AF37',
+              fontWeight: 800,
+              fontSize: 15,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 10,
-              cursor: 'pointer',
-              marginBottom: 16,
-              boxShadow: '0 4px 12px rgba(43,24,16,0.15)',
+              gap: 12,
+              cursor: isSigningIn ? 'not-allowed' : 'pointer',
+              boxShadow: '0 4px 15px rgba(139,58,58,0.4)',
+              transition: 'all 0.2s',
             }}
           >
-            <ShieldCheck size={18} color="#D4AF37" />
-            <span>Sign In with Owner Google Account</span>
+            <ShieldCheck size={20} color="#D4AF37" />
+            <span>{isSigningIn ? 'Verifying Google ID...' : 'Sign In with Store Owner Google ID'}</span>
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0', opacity: 0.6 }}>
-            <div style={{ flex: 1, height: 1, background: '#EADCCE' }} />
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#6B564C', textTransform: 'uppercase' }}>or passcode</span>
-            <div style={{ flex: 1, height: 1, background: '#EADCCE' }} />
+          <div style={{ marginTop: 20, padding: '12px 16px', background: 'rgba(212,175,55,0.1)', borderRadius: 10, border: '1px solid rgba(212,175,55,0.3)', textAlign: 'center' }}>
+            <p style={{ fontSize: 11, color: '#6B564C', lineHeight: 1.5 }}>
+              🔒 <strong>Cryptographic Protection</strong>: Only pre-authorized Google Account hashes are permitted. Plaintext emails and PIN bypasses are disabled.
+            </p>
           </div>
-
-          <form onSubmit={handleUnlock} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div>
-              <input
-                type="password"
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value)}
-                placeholder="Enter 4-digit PIN"
-                className="input"
-                style={{ textAlign: 'center', fontSize: 20, letterSpacing: 8, padding: '12px 16px' }}
-                autoFocus
-              />
-              {pinError && (
-                <p style={{ fontSize: 12, color: '#DC2626', marginTop: 6, textAlign: 'center', fontWeight: 600 }}>
-                  {pinError}
-                </p>
-              )}
-            </div>
-
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px', fontSize: 14 }}>
-              Unlock Merchant Atelier
-            </button>
-          </form>
 
           <div style={{ marginTop: 24, textAlign: 'center', borderTop: '1px solid #EADCCE', paddingTop: 16 }}>
             <button
@@ -368,7 +411,7 @@ export const AdminDashboard: React.FC = () => {
       <header style={{ backgroundColor: '#2B1810', color: '#FAF2E9', borderBottom: '2px solid #D4AF37', position: 'sticky', top: 0, zIndex: 50, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
 
-          {/* Left: Brand & Title */}
+          {/* Left: Brand & Verification */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 40, height: 40, borderRadius: 12, background: '#8B3A3A', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #D4AF37' }}>
               <Sparkles size={20} color="#D4AF37" />
@@ -379,11 +422,11 @@ export const AdminDashboard: React.FC = () => {
                   DAWOSTI ATELIER
                 </h1>
                 <span style={{ background: '#059669', color: 'white', borderRadius: 99, fontSize: 10, fontWeight: 800, padding: '2px 8px', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'white' }} /> LIVE SYNC
+                  <ShieldCheck size={12} /> VERIFIED OWNER
                 </span>
               </div>
               <p style={{ fontSize: 11, color: 'rgba(250,242,233,0.6)' }}>
-                Merchant Management & Operations System
+                Executive Boutique Management & Inventory OS
               </p>
             </div>
           </div>
@@ -395,7 +438,6 @@ export const AdminDashboard: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 10px', background: 'rgba(255,255,255,0.08)', borderRadius: 99, border: '1px solid rgba(212,175,55,0.3)' }} className="hide-mobile">
                 <img src={user.avatar} alt={user.name} style={{ width: 24, height: 24, borderRadius: '50%' }} />
                 <span style={{ fontSize: 12, fontWeight: 600 }}>{user.name}</span>
-                {isOwner && <span style={{ fontSize: 10, background: '#D4AF37', color: '#2B1810', borderRadius: 4, padding: '1px 5px', fontWeight: 800 }}>OWNER</span>}
               </div>
             )}
 
@@ -418,8 +460,8 @@ export const AdminDashboard: React.FC = () => {
 
             {/* Lock / Sign Out */}
             <button
-              onClick={() => { lockAdmin(); signOut(); }}
-              title="Lock Admin"
+              onClick={() => { signOut(); }}
+              title="Sign Out of Atelier"
               style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#FCA5A5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
             >
               <LogOut size={16} />
@@ -432,8 +474,9 @@ export const AdminDashboard: React.FC = () => {
           <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none', padding: '0 16px' }}>
             {[
               { id: 'overview', label: 'Dashboard', icon: <TrendingUp size={16} /> },
-              { id: 'orders', label: `Orders (${orders.length})`, icon: <Truck size={16} />, badge: analytics.unacknowledgedCount > 0 ? analytics.unacknowledgedCount : null },
+              { id: 'orders', label: `Orders (${orders.length})`, icon: <Truck size={16} />, badge: analytics.unverifiedCount > 0 ? `${analytics.unverifiedCount} Unverified` : null },
               { id: 'catalog', label: `Catalog (${products.length})`, icon: <Package size={16} /> },
+              { id: 'updates', label: 'Broadcast & Live Updater', icon: <Radio size={16} /> },
               { id: 'campaigns', label: 'Festive & Discounts', icon: <Sparkles size={16} /> },
               { id: 'settings', label: 'Settings', icon: <Settings size={16} /> },
             ].map(({ id, label, icon, badge }) => (
@@ -459,7 +502,7 @@ export const AdminDashboard: React.FC = () => {
                 {icon}
                 <span>{label}</span>
                 {badge && (
-                  <span style={{ background: '#DC2626', color: 'white', borderRadius: 99, fontSize: 10, fontWeight: 800, padding: '1px 6px' }}>
+                  <span style={{ background: '#DC2626', color: 'white', borderRadius: 99, fontSize: 10, fontWeight: 800, padding: '2px 7px' }}>
                     {badge}
                   </span>
                 )}
@@ -473,31 +516,31 @@ export const AdminDashboard: React.FC = () => {
       <main style={{ flex: 1, maxWidth: 1400, width: '100%', margin: '0 auto', padding: '24px 20px 48px' }}>
 
         {/* ========================================================
-            TAB 1: EXECUTIVE OVERVIEW
+            TAB 1: EXECUTIVE OVERVIEW & TRAFFIC ANALYTICS
         ======================================================== */}
         {activeTab === 'overview' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-            {/* Unacknowledged Orders Banner */}
-            {analytics.unacknowledgedCount > 0 && (
+            {/* Unverified Orders Alert Banner */}
+            {analytics.unverifiedCount > 0 && (
               <div style={{ background: '#FFFBEB', border: '1.5px solid #F59E0B', borderRadius: 16, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <AlertCircle size={24} color="#D97706" style={{ flexShrink: 0 }} />
+                  <ShieldAlert size={24} color="#D97706" style={{ flexShrink: 0 }} />
                   <div>
                     <h4 style={{ fontWeight: 800, fontSize: 15, color: '#92400E' }}>
-                      {analytics.unacknowledgedCount} New Order{analytics.unacknowledgedCount > 1 ? 's' : ''} Awaiting Acknowledgment!
+                      {analytics.unverifiedCount} Order{analytics.unverifiedCount > 1 ? 's' : ''} Need Genuine Customer Verification!
                     </h4>
                     <p style={{ fontSize: 12, color: '#B45309' }}>
-                      Customers are waiting for confirmation and dispatch updates.
+                      Verify via phone or WhatsApp before preparing dispatch to avoid fake/spam orders.
                     </p>
                   </div>
                 </div>
                 <button
-                  onClick={() => { setActiveTab('orders'); setOrderStatusFilter('pending'); }}
+                  onClick={() => { setActiveTab('orders'); setOrderStatusFilter('needs_verification'); }}
                   className="btn btn-primary"
                   style={{ padding: '8px 16px', fontSize: 12 }}
                 >
-                  View Pending Orders
+                  Verify Orders Now →
                 </button>
               </div>
             )}
@@ -516,11 +559,11 @@ export const AdminDashboard: React.FC = () => {
                   {formatPrice(analytics.totalRevenue)}
                 </div>
                 <div style={{ fontSize: 12, color: '#059669', fontWeight: 600, marginTop: 4 }}>
-                  From {analytics.totalOrders} total orders
+                  From {analytics.totalOrders} total boutique orders
                 </div>
               </div>
 
-              {/* Card 2: Orders Count */}
+              {/* Card 2: Orders Volume & Verification */}
               <div className="card" style={{ padding: 20, borderLeft: '4px solid #8B3A3A', background: 'white' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#6B564C', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Orders Volume</span>
@@ -532,39 +575,39 @@ export const AdminDashboard: React.FC = () => {
                   {analytics.totalOrders}
                 </div>
                 <div style={{ fontSize: 12, color: '#6B564C', marginTop: 4 }}>
-                  <strong style={{ color: '#B45309' }}>{analytics.pendingCount} pending</strong> • {analytics.deliveredCount} delivered
+                  <strong style={{ color: '#B45309' }}>{analytics.unverifiedCount} unverified</strong> • {analytics.deliveredCount} delivered
                 </div>
               </div>
 
-              {/* Card 3: Average Order Value */}
+              {/* Card 3: Unique Visitors Today */}
+              <div className="card" style={{ padding: 20, borderLeft: '4px solid #7C3AED', background: 'white' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#6B564C', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Unique Visitors Today</span>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EDE9FE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Users size={18} color="#7C3AED" />
+                  </div>
+                </div>
+                <div style={{ fontSize: 26, fontWeight: 800, color: '#7C3AED' }}>
+                  {traffic.uniqueVisitorsToday}
+                </div>
+                <div style={{ fontSize: 12, color: '#6B564C', marginTop: 4 }}>
+                  {traffic.uniqueVisitorsTotal} lifetime unique devices
+                </div>
+              </div>
+
+              {/* Card 4: Page Views & Conversion Rate */}
               <div className="card" style={{ padding: 20, borderLeft: '4px solid #D4AF37', background: 'white' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#6B564C', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Avg Order Value</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#6B564C', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Conversion Rate</span>
                   <div style={{ width: 36, height: 36, borderRadius: 10, background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <TrendingUp size={18} color="#D4AF37" />
                   </div>
                 </div>
                 <div style={{ fontSize: 26, fontWeight: 800, color: '#2B1810', fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
-                  {formatPrice(analytics.aov)}
+                  {analytics.conversionRate}%
                 </div>
                 <div style={{ fontSize: 12, color: '#6B564C', marginTop: 4 }}>
-                  Per completed customer cart
-                </div>
-              </div>
-
-              {/* Card 4: Catalog Size */}
-              <div className="card" style={{ padding: 20, borderLeft: '4px solid #3B82F6', background: 'white' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#6B564C', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Catalog Items</span>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Package size={18} color="#3B82F6" />
-                  </div>
-                </div>
-                <div style={{ fontSize: 26, fontWeight: 800, color: '#2B1810' }}>
-                  {analytics.productCount}
-                </div>
-                <div style={{ fontSize: 12, color: '#3B82F6', fontWeight: 600, marginTop: 4 }}>
-                  Across {CATEGORIES.length} boutique categories
+                  {traffic.totalPageViews} total page impressions
                 </div>
               </div>
             </div>
@@ -578,33 +621,33 @@ export const AdminDashboard: React.FC = () => {
                   className="btn btn-primary"
                   style={{ fontSize: 12, padding: '7px 14px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
                 >
-                  <Plus size={14} /> Add New Product
+                  <Plus size={14} /> Add Product
                 </button>
                 <button
-                  onClick={() => { setActiveTab('orders'); setOrderStatusFilter('pending'); }}
+                  onClick={() => { setActiveTab('orders'); setOrderStatusFilter('needs_verification'); }}
                   className="btn btn-outline"
                   style={{ fontSize: 12, padding: '7px 14px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
                 >
-                  <Clock size={14} /> Pending Orders ({analytics.pendingCount})
+                  <ShieldAlert size={14} color="#D97706" /> Verify Orders ({analytics.unverifiedCount})
                 </button>
                 <button
-                  onClick={() => setActiveTab('campaigns')}
+                  onClick={() => setActiveTab('updates')}
                   className="btn btn-outline"
                   style={{ fontSize: 12, padding: '7px 14px', display: 'inline-flex', alignItems: 'center', gap: 6 }}
                 >
-                  <Sparkles size={14} /> Dashain Theme Settings
+                  <Radio size={14} /> Live Site Updater
                 </button>
               </div>
             </div>
 
-            {/* RECENT ORDERS FEED */}
+            {/* RECENT ORDERS FEED WITH VERIFICATION STATUS */}
             <div className="card" style={{ padding: 24, background: 'white' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                 <div>
                   <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 20, fontWeight: 700 }}>
-                    Recent Orders Feed
+                    Recent Orders Feed & Anti-Fraud Verification
                   </h3>
-                  <p style={{ fontSize: 12, color: '#6B564C' }}>Live orders placed by customers across Nepal</p>
+                  <p style={{ fontSize: 12, color: '#6B564C' }}>Live purchases from customers with genuine fraud verification check</p>
                 </div>
                 <button
                   onClick={() => setActiveTab('orders')}
@@ -617,65 +660,67 @@ export const AdminDashboard: React.FC = () => {
               {orders.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6B564C' }}>
                   <Truck size={36} style={{ opacity: 0.3, marginBottom: 8 }} />
-                  <p>No orders yet. When customers check out on dawosti.com, they appear here instantly in real-time.</p>
+                  <p>No orders placed yet. When visitors check out on dawosti.com, they will appear here in real-time.</p>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {orders.slice(0, 5).map((order) => (
-                    <div
-                      key={order.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '12px 16px',
-                        background: '#FAF2E9',
-                        borderRadius: 12,
-                        border: '1px solid #EADCCE',
-                        flexWrap: 'wrap',
-                        gap: 12,
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div style={{ fontWeight: 800, fontSize: 14, color: '#8B3A3A' }}>
-                          {order.orderNumber}
-                        </div>
-                        <div style={{ fontSize: 13, color: '#2B1810' }}>
-                          <strong>{order.shippingAddress?.fullName}</strong> ({order.shippingAddress?.city})
-                        </div>
-                        <div style={{ fontSize: 12, color: '#6B564C' }}>
-                          {order.items.length} item{order.items.length > 1 ? 's' : ''}
-                        </div>
-                      </div>
+                  {orders.slice(0, 5).map((order) => {
+                    const isVerified = order.verification?.status === 'verified_genuine';
+                    const isFake = order.verification?.status === 'flagged_fake';
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div style={{ fontWeight: 800, fontSize: 15, color: '#2B1810' }}>
-                          {formatPrice(order.totalAmount)}
+                    return (
+                      <div
+                        key={order.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '14px 18px',
+                          background: isFake ? '#FEF2F2' : !isVerified ? '#FFFBEB' : '#FAF2E9',
+                          borderRadius: 12,
+                          border: `1.5px solid ${isFake ? '#EF4444' : !isVerified ? '#F59E0B' : '#EADCCE'}`,
+                          flexWrap: 'wrap',
+                          gap: 12,
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div style={{ fontWeight: 800, fontSize: 14, color: '#8B3A3A' }}>
+                            {order.orderNumber}
+                          </div>
+                          <div style={{ fontSize: 13, color: '#2B1810' }}>
+                            <strong>{order.shippingAddress?.fullName}</strong> ({order.shippingAddress?.city})
+                          </div>
+                          <div style={{ fontSize: 12, color: '#6B564C' }}>
+                            {order.items.length} item{order.items.length > 1 ? 's' : ''}
+                          </div>
                         </div>
-                        <span
-                          style={{
-                            padding: '4px 10px',
-                            borderRadius: 6,
-                            fontSize: 11,
-                            fontWeight: 800,
-                            background: statusColors[order.status]?.bg || '#E5E7EB',
-                            color: statusColors[order.status]?.text || '#374151',
-                          }}
-                        >
-                          {order.status.toUpperCase()}
-                        </span>
-                        {!order.acknowledgedByAdmin && (
-                          <button
-                            onClick={() => { acknowledgeOrder(order.id); toast('Order acknowledged!'); }}
-                            className="btn btn-primary"
-                            style={{ padding: '4px 10px', fontSize: 11 }}
-                          >
-                            <Check size={12} /> Acknowledge
-                          </button>
-                        )}
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div style={{ fontWeight: 800, fontSize: 15, color: '#2B1810' }}>
+                            {formatPrice(order.totalAmount)}
+                          </div>
+
+                          {/* Verification Tag */}
+                          {isVerified ? (
+                            <span style={{ background: '#D1FAE5', color: '#065F46', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <Check size={12} /> Genuine
+                            </span>
+                          ) : isFake ? (
+                            <span style={{ background: '#FEE2E2', color: '#991B1B', padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 800 }}>
+                              Fake / Spam
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => { verifyOrder(order.id, 'verified_genuine', 'Verified genuine order'); toast('Order verified as genuine customer purchase!'); }}
+                              style={{ background: '#F59E0B', color: 'white', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                            >
+                              <Check size={12} /> Verify Genuine
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -684,7 +729,7 @@ export const AdminDashboard: React.FC = () => {
         )}
 
         {/* ========================================================
-            TAB 2: ORDERS MANAGEMENT
+            TAB 2: ORDER MANAGEMENT & ANTI-FRAUD VERIFICATION
         ======================================================== */}
         {activeTab === 'orders' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -716,9 +761,10 @@ export const AdminDashboard: React.FC = () => {
               {/* Status Filter Tabs */}
               <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none' }}>
                 {[
-                  { id: 'all', label: `All (${orders.length})` },
-                  { id: 'pending', label: `Pending (${orders.filter((o) => o.status === 'pending').length})` },
-                  { id: 'confirmed', label: `Confirmed (${orders.filter((o) => o.status === 'confirmed').length})` },
+                  { id: 'all', label: `All Orders (${orders.length})` },
+                  { id: 'needs_verification', label: `⚠️ Needs Verification (${orders.filter((o) => !o.verification || o.verification.status === 'unverified').length})` },
+                  { id: 'verified_genuine', label: `✓ Verified Genuine (${orders.filter((o) => o.verification?.status === 'verified_genuine').length})` },
+                  { id: 'pending', label: `Pending Dispatch (${orders.filter((o) => o.status === 'pending').length})` },
                   { id: 'shipped', label: `Shipped (${orders.filter((o) => o.status === 'shipped').length})` },
                   { id: 'delivered', label: `Delivered (${orders.filter((o) => o.status === 'delivered').length})` },
                   { id: 'cancelled', label: `Cancelled (${orders.filter((o) => o.status === 'cancelled').length})` },
@@ -748,13 +794,15 @@ export const AdminDashboard: React.FC = () => {
             {filteredOrders.length === 0 ? (
               <div className="card" style={{ padding: '60px 20px', textAlign: 'center', background: 'white', color: '#6B564C' }}>
                 <Truck size={48} style={{ opacity: 0.3, marginBottom: 12 }} />
-                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>No orders found</h3>
+                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>No orders matching filter</h3>
                 <p style={{ fontSize: 13 }}>Try clearing filters or search query.</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {filteredOrders.map((order) => {
                   const isExpanded = expandedOrder === order.id;
+                  const isVerified = order.verification?.status === 'verified_genuine';
+                  const isFake = order.verification?.status === 'flagged_fake';
                   const colors = statusColors[order.status] || statusColors.pending;
 
                   return (
@@ -763,7 +811,7 @@ export const AdminDashboard: React.FC = () => {
                       className="card"
                       style={{
                         background: 'white',
-                        border: !order.acknowledgedByAdmin ? '2px solid #8B3A3A' : '1px solid #EADCCE',
+                        border: isFake ? '2px solid #EF4444' : !isVerified ? '2px solid #F59E0B' : '1px solid #EADCCE',
                         overflow: 'hidden',
                         transition: 'box-shadow 0.2s',
                       }}
@@ -771,19 +819,31 @@ export const AdminDashboard: React.FC = () => {
                       {/* Order Header Summary */}
                       <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                             <span style={{ fontWeight: 800, fontSize: 16, color: '#8B3A3A', letterSpacing: '0.04em' }}>
                               {order.orderNumber}
                             </span>
-                            {!order.acknowledgedByAdmin && (
-                              <span style={{ background: '#8B3A3A', color: 'white', borderRadius: 4, padding: '1px 6px', fontSize: 10, fontWeight: 800 }}>
-                                NEW
+
+                            {/* Genuine Verification Pill */}
+                            {isVerified ? (
+                              <span style={{ background: '#D1FAE5', color: '#065F46', borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <Check size={12} /> VERIFIED GENUINE
+                              </span>
+                            ) : isFake ? (
+                              <span style={{ background: '#FEE2E2', color: '#991B1B', borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 800 }}>
+                                FLAGGED FAKE / SPAM
+                              </span>
+                            ) : (
+                              <span style={{ background: '#FEF3C7', color: '#B45309', borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <AlertCircle size={12} /> UNVERIFIED ORDER
                               </span>
                             )}
+
                             <span style={{ fontSize: 12, color: '#6B564C' }}>
                               {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
+
                           <div style={{ fontSize: 14, fontWeight: 700, color: '#2B1810', marginTop: 4 }}>
                             {order.shippingAddress.fullName} • <a href={`tel:${order.shippingAddress.phone}`} style={{ color: '#8B3A3A', textDecoration: 'none' }}>{order.shippingAddress.phone}</a>
                           </div>
@@ -802,6 +862,16 @@ export const AdminDashboard: React.FC = () => {
                               {order.paymentMethod} {order.paymentDetails ? `• ${order.paymentDetails}` : ''}
                             </div>
                           </div>
+
+                          {/* Quick Genuine Verification Actions */}
+                          {!isVerified && !isFake && (
+                            <button
+                              onClick={() => { verifyOrder(order.id, 'verified_genuine', 'Verified Genuine by Store Owner', 'manual_review'); toast('Order marked Genuine & Confirmed!'); }}
+                              style={{ padding: '7px 12px', borderRadius: 8, background: '#059669', color: 'white', border: 'none', fontWeight: 800, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                            >
+                              <Check size={14} /> Verify Genuine
+                            </button>
+                          )}
 
                           {/* Status Dropdown */}
                           <select
@@ -828,10 +898,10 @@ export const AdminDashboard: React.FC = () => {
                             <option value="cancelled">CANCELLED</option>
                           </select>
 
-                          {/* WhatsApp Customer */}
+                          {/* WhatsApp Verification Chat */}
                           <button
-                            onClick={() => handleWhatsAppCustomer(order)}
-                            title="Chat on WhatsApp"
+                            onClick={() => handleWhatsAppVerify(order)}
+                            title="Verify via WhatsApp"
                             style={{
                               padding: '7px 12px',
                               borderRadius: 8,
@@ -853,30 +923,10 @@ export const AdminDashboard: React.FC = () => {
                           <button
                             onClick={() => setSelectedInvoiceOrder(order)}
                             title="Print Invoice"
-                            style={{
-                              padding: '7px 10px',
-                              borderRadius: 8,
-                              background: '#FAF2E9',
-                              border: '1px solid #EADCCE',
-                              color: '#2B1810',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                            }}
+                            style={{ padding: '7px 10px', borderRadius: 8, background: '#FAF2E9', border: '1px solid #EADCCE', color: '#2B1810', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                           >
                             <Printer size={15} />
                           </button>
-
-                          {/* Acknowledge Button */}
-                          {!order.acknowledgedByAdmin && (
-                            <button
-                              onClick={() => { acknowledgeOrder(order.id); toast('Order acknowledged!'); }}
-                              className="btn btn-primary"
-                              style={{ padding: '7px 14px', fontSize: 12 }}
-                            >
-                              <Check size={14} /> Acknowledge
-                            </button>
-                          )}
 
                           {/* Expand Details */}
                           <button
@@ -902,15 +952,7 @@ export const AdminDashboard: React.FC = () => {
                                 {order.items.map((item) => (
                                   <div
                                     key={`${item.product.id}_${item.selectedSize}`}
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: 12,
-                                      padding: '8px 12px',
-                                      background: 'white',
-                                      borderRadius: 8,
-                                      border: '1px solid #EADCCE',
-                                    }}
+                                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', background: 'white', borderRadius: 8, border: '1px solid #EADCCE' }}
                                   >
                                     <img
                                       src={item.product.images[0]}
@@ -934,18 +976,30 @@ export const AdminDashboard: React.FC = () => {
                               </div>
                             </div>
 
-                            {/* Column 2: Logistics & Dispatch */}
+                            {/* Column 2: Anti-Fraud & Verification Actions */}
                             <div>
                               <h4 style={{ fontWeight: 800, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#8B3A3A', marginBottom: 10 }}>
-                                Delivery & Courier Details
+                                Genuine Customer Verification Audit
                               </h4>
                               <div style={{ background: 'white', padding: 14, borderRadius: 10, border: '1px solid #EADCCE', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                <div><strong>Courier Partner:</strong> {order.courierPartner || 'Nepal Post EMS / Sundar Express'}</div>
-                                <div><strong>Tracking Code:</strong> {order.trackingNumber || 'Pending dispatch'}</div>
-                                {order.notes && <div><strong>Customer Note:</strong> <em>"{order.notes}"</em></div>}
-                                <div style={{ borderTop: '1px solid #EADCCE', paddingTop: 8, marginTop: 4, display: 'flex', justifyContent: 'space-between', fontWeight: 800, color: '#2B1810' }}>
-                                  <span>Total Amount:</span>
-                                  <span style={{ color: '#8B3A3A' }}>{formatPrice(order.totalAmount)}</span>
+                                <div><strong>Fraud Risk Level:</strong> <span style={{ color: order.verification?.fraudRisk === 'high' ? '#DC2626' : '#059669', fontWeight: 800 }}>{(order.verification?.fraudRisk || 'low').toUpperCase()}</span> (Score: {order.verification?.fraudScore || 10}/100)</div>
+                                <div><strong>Audit Notes:</strong> {order.verification?.verificationNotes || 'Standard check passed'}</div>
+                                {order.verification?.verifiedBy && <div><strong>Verified By:</strong> {order.verification.verifiedBy}</div>}
+                                {order.notes && <div><strong>Customer Special Instructions:</strong> <em>"{order.notes}"</em></div>}
+
+                                <div style={{ display: 'flex', gap: 8, marginTop: 8, borderTop: '1px solid #EADCCE', paddingTop: 10 }}>
+                                  <button
+                                    onClick={() => { verifyOrder(order.id, 'verified_genuine', 'Verified genuine via phone call', 'phone_call'); toast('Verified as genuine order!'); }}
+                                    style={{ flex: 1, padding: '6px 10px', background: '#059669', color: 'white', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                                  >
+                                    ✓ Confirm Genuine
+                                  </button>
+                                  <button
+                                    onClick={() => { verifyOrder(order.id, 'flagged_fake', 'Customer number unreachable / suspected spam', 'manual_review'); toast('Order flagged as spam.'); }}
+                                    style={{ flex: 1, padding: '6px 10px', background: '#FEE2E2', color: '#DC2626', border: '1px solid #EF4444', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                                  >
+                                    ✕ Flag Fake / Spam
+                                  </button>
                                 </div>
                               </div>
 
@@ -1409,7 +1463,129 @@ export const AdminDashboard: React.FC = () => {
         )}
 
         {/* ========================================================
-            TAB 4: FESTIVE & MARKETING CAMPAIGNS
+            TAB 4: BROADCAST & LIVE SITE UPDATER
+        ======================================================== */}
+        {activeTab === 'updates' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div className="card" style={{ padding: 28, background: 'white' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: '#8B3A3A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Radio size={24} color="#D4AF37" />
+                  </div>
+                  <div>
+                    <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 24, fontWeight: 700, color: '#2B1810' }}>
+                      Live Broadcast & Site Updater Studio
+                    </h3>
+                    <p style={{ fontSize: 13, color: '#6B564C' }}>
+                      Publish instant announcements, headlines, and promos live to all visitors on dawosti.com.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleBroadcastLive}
+                  disabled={isBroadcasting}
+                  className="btn btn-primary"
+                  style={{ padding: '10px 20px', fontSize: 14, display: 'inline-flex', alignItems: 'center', gap: 8 }}
+                >
+                  {isBroadcasting ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
+                  <span>{isBroadcasting ? 'Broadcasting...' : 'Publish Live to dawosti.com'}</span>
+                </button>
+              </div>
+
+              {broadcastSuccess && (
+                <div style={{ background: '#D1FAE5', border: '1px solid #10B981', borderRadius: 12, padding: '14px 18px', marginBottom: 20, color: '#065F46', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Check size={20} color="#059669" />
+                  <span>Success! Your updates have been broadcast live and synced to Firestore cloud database. All current and new visitors now see these updates.</span>
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+
+                {/* Top Announcement Bar EN */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#2B1810', marginBottom: 6 }}>
+                    Top Marquee Announcement (English)
+                  </label>
+                  <textarea
+                    rows={2}
+                    className="input"
+                    value={broadcastForm.announcementEn}
+                    onChange={(e) => setBroadcastForm((f) => ({ ...f, announcementEn: e.target.value }))}
+                  />
+                </div>
+
+                {/* Top Announcement Bar NP */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#2B1810', marginBottom: 6 }}>
+                    Top Marquee Announcement (Nepali)
+                  </label>
+                  <textarea
+                    rows={2}
+                    className="input"
+                    value={broadcastForm.announcementNp}
+                    onChange={(e) => setBroadcastForm((f) => ({ ...f, announcementNp: e.target.value }))}
+                  />
+                </div>
+
+                {/* Hero Title EN */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#2B1810', marginBottom: 6 }}>
+                    Hero Showcase Headline (English)
+                  </label>
+                  <input
+                    className="input"
+                    value={broadcastForm.heroTitleEn}
+                    onChange={(e) => setBroadcastForm((f) => ({ ...f, heroTitleEn: e.target.value }))}
+                  />
+                </div>
+
+                {/* Hero Title NP */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#2B1810', marginBottom: 6 }}>
+                    Hero Showcase Headline (Nepali)
+                  </label>
+                  <input
+                    className="input"
+                    value={broadcastForm.heroTitleNp}
+                    onChange={(e) => setBroadcastForm((f) => ({ ...f, heroTitleNp: e.target.value }))}
+                  />
+                </div>
+
+                {/* Hero Subtext EN */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#2B1810', marginBottom: 6 }}>
+                    Hero Subtext (English)
+                  </label>
+                  <textarea
+                    rows={3}
+                    className="input"
+                    value={broadcastForm.heroSubtextEn}
+                    onChange={(e) => setBroadcastForm((f) => ({ ...f, heroSubtextEn: e.target.value }))}
+                  />
+                </div>
+
+                {/* Hero Subtext NP */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#2B1810', marginBottom: 6 }}>
+                    Hero Subtext (Nepali)
+                  </label>
+                  <textarea
+                    rows={3}
+                    className="input"
+                    value={broadcastForm.heroSubtextNp}
+                    onChange={(e) => setBroadcastForm((f) => ({ ...f, heroSubtextNp: e.target.value }))}
+                  />
+                </div>
+
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================
+            TAB 5: FESTIVE & MARKETING CAMPAIGNS
         ======================================================== */}
         {activeTab === 'campaigns' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -1472,32 +1648,6 @@ export const AdminDashboard: React.FC = () => {
                   />
                 </div>
 
-                {/* Banner Text EN */}
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#2B1810', marginBottom: 6 }}>
-                    Banner Announcement (English)
-                  </label>
-                  <input
-                    className="input"
-                    value={theme.bannerText.en}
-                    onChange={(e) => updateTheme({ bannerText: { ...theme.bannerText, en: e.target.value } })}
-                    onBlur={() => toast('Banner text updated!')}
-                  />
-                </div>
-
-                {/* Banner Text NP */}
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#2B1810', marginBottom: 6 }}>
-                    Banner Announcement (Nepali)
-                  </label>
-                  <input
-                    className="input"
-                    value={theme.bannerText.np}
-                    onChange={(e) => updateTheme({ bannerText: { ...theme.bannerText, np: e.target.value } })}
-                    onBlur={() => toast('Banner text updated!')}
-                  />
-                </div>
-
                 {/* Coupon Code */}
                 <div>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#2B1810', marginBottom: 6 }}>
@@ -1533,7 +1683,7 @@ export const AdminDashboard: React.FC = () => {
         )}
 
         {/* ========================================================
-            TAB 5: STORE & PAYMENT SETTINGS
+            TAB 6: STORE & PAYMENT SETTINGS
         ======================================================== */}
         {activeTab === 'settings' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

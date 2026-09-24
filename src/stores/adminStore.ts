@@ -3,10 +3,34 @@ import { GoogleUser } from '../types';
 import { signInWithGoogle, signOutUser, onAuthChange } from '../services/firebaseAuth';
 import { useSettingsStore } from './settingsStore';
 
-const OWNER_EMAILS = ['sagardawadi10@gmail.com', 'sagardawadi16@gmail.com'];
+/**
+ * Cryptographic SHA-256 Hashes of Authorized Owner Google IDs.
+ * The raw email address is NEVER included in client source code or inspectable bundles.
+ * Hashing is one-way: mathematically irreversible.
+ */
+const OWNER_EMAIL_HASHES: string[] = [
+  'b10168596673508b9b26e9e41002a64dfb915493f8a78a8f4492f6f78c33815e', // owner account 1
+  'e9e12083b4b6ee5bdd16a1b03830200b48141517d4fa5573aaa1de04093f2f5b', // owner account 2
+];
+
 const LS_KEY = 'dawosti_user_v3';
 
-const loadUser = (): GoogleUser | null => {
+/** Compute SHA-256 hex string using browser native Web Crypto API */
+export const hashEmail = async (email: string): Promise<string> => {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return '';
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(normalized);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return '';
+  }
+};
+
+const loadSavedUser = (): GoogleUser | null => {
   try {
     const raw = localStorage.getItem(LS_KEY);
     if (raw) return JSON.parse(raw);
@@ -21,52 +45,56 @@ interface AdminState {
   isSigningIn: boolean;
   authError: string | null;
 
-  // Admin panel
+  // Admin View State
   isAdminOpen: boolean;
-  isAuthenticated: boolean; // true if owner OR correct passcode entered
-  requirePasscode: boolean;
-  passcode: string;
+  isAuthenticated: boolean; // TRUE ONLY when verified against owner cryptographic hash
 
   // Actions
   initAuth: () => () => void;
-  signIn: () => Promise<void>;
+  signIn: () => Promise<boolean>;
   signOut: () => Promise<void>;
   openAdmin: () => void;
   closeAdmin: () => void;
-  unlockAdmin: (pin: string) => boolean;
-  lockAdmin: () => void;
-  setRequirePasscode: (v: boolean) => void;
-  setPasscode: (p: string) => void;
 }
 
 export const useAdminStore = create<AdminState>((set, get) => ({
-  user: loadUser(),
-  isOwner: OWNER_EMAILS.includes(loadUser()?.email?.toLowerCase() || ''),
+  user: loadSavedUser(),
+  isOwner: false, // Calculated asynchronously via cryptographic hash on init
   isSigningIn: false,
   authError: null,
   isAdminOpen: false,
-  isAuthenticated: true, // Default: open access (owner can lock with passcode if desired)
-  requirePasscode: false,
-  passcode: '1234',
+  isAuthenticated: false, // Strictly false until Google OAuth verifies owner hash
 
   initAuth: () => {
+    // Check initial cached user hash
+    const cachedUser = loadSavedUser();
+    if (cachedUser?.email) {
+      hashEmail(cachedUser.email).then((hash) => {
+        const isOwner = OWNER_EMAIL_HASHES.includes(hash);
+        set({ isOwner, isAuthenticated: isOwner });
+      });
+    }
+
     return onAuthChange(
-      (firebaseUser) => {
+      async (firebaseUser) => {
+        const email = firebaseUser.email || '';
+        const emailHash = await hashEmail(email);
+        const isOwner = OWNER_EMAIL_HASHES.includes(emailHash);
+
         const user: GoogleUser = {
           id: firebaseUser.uid,
-          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Customer',
+          name: firebaseUser.displayName || 'Authorized Merchant',
           email: firebaseUser.email || '',
-          avatar: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || 'U')}&background=8B3A3A&color=fff`,
+          avatar: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || 'M')}&background=8B3A3A&color=fff`,
           isLoggedIn: true,
         };
-        const isOwner = OWNER_EMAILS.includes(user.email.toLowerCase());
+
         try { localStorage.setItem(LS_KEY, JSON.stringify(user)); } catch {}
-        set({ user, isOwner, isAuthenticated: isOwner ? true : get().isAuthenticated });
+        set({ user, isOwner, isAuthenticated: isOwner, authError: isOwner ? null : 'Access Denied: This Google Account is not the registered Dawosti Store Owner.' });
       },
       () => {
-        // Firebase session ended — only clear if localStorage is also empty
-        const saved = loadUser();
-        if (!saved) set({ user: null, isOwner: false });
+        try { localStorage.removeItem(LS_KEY); } catch {}
+        set({ user: null, isOwner: false, isAuthenticated: false });
       }
     );
   },
@@ -75,37 +103,36 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     set({ isSigningIn: true, authError: null });
     const firebaseUser = await signInWithGoogle();
     if (!firebaseUser) {
-      set({ isSigningIn: false, authError: 'Sign-in was cancelled or failed. Please try again.' });
-      setTimeout(() => set({ authError: null }), 4000);
-      return;
+      set({ isSigningIn: false, authError: 'Sign-in cancelled or failed. Please try again.' });
+      setTimeout(() => set({ authError: null }), 5000);
+      return false;
     }
-    // onAuthChange will handle setting user state
-    set({ isSigningIn: false });
+
+    const email = firebaseUser.email || '';
+    const emailHash = await hashEmail(email);
+    const isOwner = OWNER_EMAIL_HASHES.includes(emailHash);
+
+    set({ isSigningIn: false, isOwner, isAuthenticated: isOwner });
+    if (!isOwner) {
+      set({ authError: 'Access Denied: Your Google ID is not authorized to access the Dawosti Admin Atelier.' });
+      return false;
+    }
+    return true;
   },
 
   signOut: async () => {
     await signOutUser();
     try { localStorage.removeItem(LS_KEY); } catch {}
-    set({ user: null, isOwner: false, isAuthenticated: true });
+    set({ user: null, isOwner: false, isAuthenticated: false });
   },
 
   openAdmin: () => {
     set({ isAdminOpen: true });
     useSettingsStore.getState().setPageView('admin');
   },
+
   closeAdmin: () => {
     set({ isAdminOpen: false });
     useSettingsStore.getState().setPageView('home');
   },
-
-  unlockAdmin: (pin) => {
-    const { requirePasscode, passcode, isOwner } = get();
-    if (isOwner || !requirePasscode) { set({ isAuthenticated: true }); return true; }
-    if (pin.trim() === passcode.trim()) { set({ isAuthenticated: true }); return true; }
-    return false;
-  },
-
-  lockAdmin: () => set({ isAuthenticated: false }),
-  setRequirePasscode: (v) => set({ requirePasscode: v }),
-  setPasscode: (p) => set({ passcode: p }),
 }));
