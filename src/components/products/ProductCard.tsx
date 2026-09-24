@@ -89,19 +89,19 @@ export const ProductCard: React.FC<Props> = ({ product }) => {
       </div>
 
       {/* Info */}
-      <div style={{ padding: '14px 16px' }}>
-        <div style={{ fontSize: 11, color: 'var(--burgundy)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+      <div className="card-content" style={{ padding: '12px 14px' }}>
+        <div style={{ fontSize: 10, color: 'var(--burgundy)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>
           {language === 'np' ? product.categoryName.np : product.categoryName.en}
         </div>
-        <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 17, fontWeight: 600, color: 'var(--brown)', lineHeight: 1.3, marginBottom: 6 }}>
+        <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 600, color: 'var(--brown)', lineHeight: 1.3, marginBottom: 6 }}>
           {language === 'np' ? product.title.np : product.title.en}
         </h3>
 
         {/* Rating */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
           <div className="stars">
             {[1, 2, 3, 4, 5].map((n) => (
-              <Star key={n} size={12} fill={n <= Math.round(product.rating) ? 'var(--gold)' : 'none'} color={n <= Math.round(product.rating) ? 'var(--gold)' : 'var(--cream)'} />
+              <Star key={n} size={11} fill={n <= Math.round(product.rating) ? 'var(--gold)' : 'none'} color={n <= Math.round(product.rating) ? 'var(--gold)' : 'var(--cream)'} />
             ))}
           </div>
           <span style={{ fontSize: 11, color: 'var(--brown-light)' }}>({product.reviewCount})</span>
@@ -109,9 +109,9 @@ export const ProductCard: React.FC<Props> = ({ product }) => {
 
         {/* Price */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontWeight: 700, fontSize: 17, color: 'var(--burgundy)' }}>{formatPrice(product.price)}</span>
+          <span className="price-tag" style={{ fontWeight: 700, fontSize: 16, color: 'var(--burgundy)' }}>{formatPrice(product.price)}</span>
           {product.originalPrice && (
-            <span style={{ fontSize: 13, color: 'var(--brown-light)', textDecoration: 'line-through' }}>{formatPrice(product.originalPrice)}</span>
+            <span style={{ fontSize: 12, color: 'var(--brown-light)', textDecoration: 'line-through' }}>{formatPrice(product.originalPrice)}</span>
           )}
         </div>
       </div>

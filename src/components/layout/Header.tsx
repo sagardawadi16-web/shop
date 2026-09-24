@@ -191,6 +191,7 @@ export const Header: React.FC = () => {
           <button
             onClick={openAdmin}
             title="Merchant Admin Atelier"
+            className="hide-mobile"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -238,6 +239,7 @@ export const Header: React.FC = () => {
               <button
                 onClick={() => signIn()}
                 disabled={isSigningIn}
+                className="hide-mobile"
                 style={{
                   display: 'flex',
                   alignItems: 'center',

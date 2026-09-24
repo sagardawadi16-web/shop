@@ -22,7 +22,7 @@ export const CartDrawer: React.FC = () => {
     <>
       <div className="drawer-overlay animate-fadeIn" onClick={() => setIsOpen(false)} />
       <div
-        className="animate-slideInRight"
+        className="drawer-panel animate-slideInRight"
         style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: '100%', maxWidth: 420, zIndex: 50, background: 'white', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-lg)' }}
       >
         {/* Header */}

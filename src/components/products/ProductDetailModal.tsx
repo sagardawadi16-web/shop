@@ -45,8 +45,8 @@ export const ProductDetailModal: React.FC<Props> = ({ product, onClose }) => {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 0 }}>
           {/* Images */}
-          <div style={{ background: 'var(--ivory-dark)', position: 'relative', minHeight: 420 }}>
-            <img src={product.images[imgIdx]} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover', minHeight: 420 }} />
+          <div style={{ background: 'var(--ivory-dark)', position: 'relative', minHeight: 'clamp(260px, 45vw, 420px)' }}>
+            <img src={product.images[imgIdx]} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover', minHeight: 'clamp(260px, 45vw, 420px)', maxHeight: 460 }} />
 
             {product.images.length > 1 && (
               <>
@@ -63,7 +63,7 @@ export const ProductDetailModal: React.FC<Props> = ({ product, onClose }) => {
                 <div style={{ position: 'absolute', bottom: 12, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 6 }}>
                   {product.images.map((img, i) => (
                     <button key={i} onClick={() => setImgIdx(i)}
-                      style={{ width: 48, height: 48, borderRadius: 8, overflow: 'hidden', border: `2px solid ${i === imgIdx ? 'var(--burgundy)' : 'transparent'}`, cursor: 'pointer', padding: 0, background: 'none' }}>
+                      style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', border: `2px solid ${i === imgIdx ? 'var(--burgundy)' : 'transparent'}`, cursor: 'pointer', padding: 0, background: 'none' }}>
                       <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </button>
                   ))}
@@ -75,7 +75,7 @@ export const ProductDetailModal: React.FC<Props> = ({ product, onClose }) => {
           </div>
 
           {/* Details */}
-          <div style={{ padding: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ padding: 'clamp(18px, 4vw, 32px)', display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
               <div style={{ fontSize: 11, color: 'var(--burgundy)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6 }}>
                 {language === 'np' ? product.categoryName.np : product.categoryName.en}

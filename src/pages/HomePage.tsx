@@ -36,7 +36,7 @@ export const HomePage: React.FC = () => {
       {/* Hero */}
       <section style={{
         background: `linear-gradient(135deg, #2B1810 0%, #8B3A3A 50%, #5C1F1F 100%)`,
-        color: 'white', padding: 'clamp(60px, 10vw, 100px) 24px',
+        color: 'white', padding: 'clamp(44px, 8vw, 90px) 16px',
         textAlign: 'center', position: 'relative', overflow: 'hidden',
       }}>
         {/* decorative circles */}
@@ -44,26 +44,26 @@ export const HomePage: React.FC = () => {
         <div style={{ position: 'absolute', bottom: -80, left: -80, width: 400, height: 400, borderRadius: '50%', background: 'rgba(212,175,55,0.05)' }} />
 
         <div style={{ position: 'relative', maxWidth: 700, margin: '0 auto' }}>
-          <div style={{ fontSize: 12, letterSpacing: '0.3em', color: 'var(--gold)', textTransform: 'uppercase', marginBottom: 16, fontWeight: 700 }}>
+          <div style={{ fontSize: 11, letterSpacing: '0.25em', color: 'var(--gold)', textTransform: 'uppercase', marginBottom: 14, fontWeight: 700 }}>
             {language === 'np' ? 'स्वागत छ • DAWOSTI बुटिक' : 'Welcome to • DAWOSTI Boutique'}
           </div>
-          <h1 className="section-title" style={{ color: 'white', fontSize: 'clamp(36px, 7vw, 72px)', marginBottom: 20, lineHeight: 1.1 }}>
+          <h1 className="section-title" style={{ color: 'white', fontSize: 'clamp(26px, 6vw, 64px)', marginBottom: 16, lineHeight: 1.15 }}>
             {heroHeadline}
           </h1>
-          <p style={{ fontSize: 'clamp(15px, 2.5vw, 19px)', color: 'rgba(255,255,255,0.75)', marginBottom: 36, lineHeight: 1.7 }}>
+          <p style={{ fontSize: 'clamp(14px, 2.2vw, 18px)', color: 'rgba(255,255,255,0.8)', marginBottom: 28, lineHeight: 1.6 }}>
             {heroSubtext}
           </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
               onClick={() => { setSelectedCategory('all'); productsRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
               className="btn btn-gold"
-              style={{ fontSize: 15, padding: '12px 28px' }}
+              style={{ fontSize: 14, padding: '10px 24px' }}
             >
               Shop Collection
             </button>
             <button
               onClick={() => { setSelectedCategory('cat-festive'); productsRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
-              className="btn btn-outline" style={{ borderColor: 'rgba(255,255,255,0.4)', color: 'white', fontSize: 15, padding: '12px 28px' }}
+              className="btn btn-outline" style={{ borderColor: 'rgba(255,255,255,0.4)', color: 'white', fontSize: 14, padding: '10px 24px' }}
             >
               🪔 Festive Picks
             </button>
@@ -72,8 +72,8 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* Category chips */}
-      <section style={{ padding: '28px 24px 0', maxWidth: 1280, margin: '0 auto' }}>
-        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
+      <section style={{ padding: '20px 16px 0', maxWidth: 1280, margin: '0 auto' }}>
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
           {CATEGORIES.map((cat) => (
             <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
               className={`chip ${selectedCategory === cat.id ? 'active' : ''}`}
@@ -85,11 +85,11 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* Products section */}
-      <section ref={productsRef} style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px 60px' }}>
+      <section ref={productsRef} style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 16px 60px' }}>
         {/* Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <h2 className="section-title" style={{ fontSize: 'clamp(24px, 4vw, 36px)' }}>
+            <h2 className="section-title" style={{ fontSize: 'clamp(20px, 3.5vw, 32px)' }}>
               {selectedCategory === 'all'
                 ? (language === 'np' ? 'सबै संग्रह' : 'Full Collection')
                 : (language === 'np' ? CATEGORIES.find((c) => c.id === selectedCategory)?.name.np : CATEGORIES.find((c) => c.id === selectedCategory)?.name.en)}
@@ -144,13 +144,13 @@ export const HomePage: React.FC = () => {
 
         {/* Product grid */}
         {isProductGridLoading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: isGridView ? 'repeat(auto-fill, minmax(240px, 1fr))' : '1fr', gap: 20 }}>
+          <div className={`products-grid-layout ${!isGridView ? 'list-view' : ''}`}>
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="skeleton" style={{ height: isGridView ? 380 : 100, borderRadius: 16 }} />
+              <div key={i} className="skeleton" style={{ height: isGridView ? 320 : 100, borderRadius: 16 }} />
             ))}
           </div>
         ) : filteredProducts.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '80px 24px', color: 'var(--brown-light)' }}>
+          <div style={{ textAlign: 'center', padding: '60px 16px', color: 'var(--brown-light)' }}>
             <Filter size={48} style={{ opacity: 0.3, marginBottom: 16 }} />
             <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24 }}>No products found</h3>
             <p style={{ fontSize: 14, marginTop: 8 }}>Try adjusting your filters or search query</p>
@@ -159,11 +159,7 @@ export const HomePage: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isGridView ? 'repeat(auto-fill, minmax(240px, 1fr))' : '1fr',
-            gap: isGridView ? 20 : 12,
-          }}>
+          <div className={`products-grid-layout ${!isGridView ? 'list-view' : ''}`}>
             {filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

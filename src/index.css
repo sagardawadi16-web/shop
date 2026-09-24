@@ -222,10 +222,101 @@ h4,h5,h6 { font-family: 'Inter', sans-serif; font-weight: 600; }
   animation: fadeInUp 0.3s ease, fadeIn 0.3s ease reverse 3s forwards;
 }
 
-/* ─── Responsive ─────────────────────────────────────────────────────────────── */
+/* ─── Responsive & Touch UX ─────────────────────────────────────────────────── */
+.desktop-search-container {
+  display: flex !important;
+}
+.mobile-only-btn,
+.mobile-search-btn {
+  display: none !important;
+}
+
+/* Product Responsive Grid */
+.products-grid-layout {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+.products-grid-layout.list-view {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+/* Tablets (iPad, 768px - 1024px) */
+@media (max-width: 1024px) {
+  .products-grid-layout {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+/* Mobile & Small Tablets (< 768px) */
 @media (max-width: 768px) {
   .hide-mobile { display: none !important; }
+  
+  .desktop-search-container {
+    display: none !important;
+  }
+  
+  .mobile-only-btn {
+    display: flex !important;
+  }
+  
+  .mobile-search-btn {
+    display: flex !important;
+  }
+
+  /* 2-Column Responsive Grid on Mobile */
+  .products-grid-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  /* Mobile card refinements */
+  .product-card {
+    border-radius: var(--radius-sm) !important;
+  }
+  .product-card .card-content {
+    padding: 10px !important;
+  }
+  .product-card h3 {
+    font-size: 14px !important;
+    line-height: 1.3 !important;
+  }
+  .product-card .price-tag {
+    font-size: 14px !important;
+  }
+
+  /* Modal scaling for mobile */
+  .modal-overlay {
+    padding: 10px !important;
+    align-items: flex-end !important;
+  }
+  .modal-overlay .card {
+    max-height: 90vh !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Full-width Cart drawer on mobile */
+  .drawer-panel {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
 }
+
+/* Ultra-compact phones (< 380px) */
+@media (max-width: 380px) {
+  .products-grid-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  .product-card h3 {
+    font-size: 13px !important;
+  }
+}
+
 @media (min-width: 769px) {
   .hide-desktop { display: none !important; }
 }
