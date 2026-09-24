@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Language, MerchantSettings, ThemeSettings, SiteContent } from '../types';
+import { Language, MerchantSettings, ThemeSettings, SiteContent, PageView } from '../types';
 import { DEFAULT_MERCHANT, DEFAULT_THEME, DEFAULT_SITE_CONTENT } from '../mockData';
 import { listenSettings, publishSettings } from '../services/firestoreSettings';
 
@@ -8,7 +8,7 @@ interface SettingsState {
   merchant: MerchantSettings;
   theme: ThemeSettings;
   siteContent: SiteContent;
-  pageView: 'home' | 'checkout' | 'order-confirmation';
+  pageView: PageView;
   isOrderTrackingOpen: boolean;
 
   // Actions
@@ -20,7 +20,7 @@ interface SettingsState {
   updateSiteContent: (updates: Partial<SiteContent>) => void;
   resetMerchant: () => void;
   resetTheme: () => void;
-  setPageView: (view: 'home' | 'checkout' | 'order-confirmation') => void;
+  setPageView: (view: PageView) => void;
   setIsOrderTrackingOpen: (v: boolean) => void;
   formatPrice: (amount: number) => string;
 }

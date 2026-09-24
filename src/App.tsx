@@ -6,7 +6,7 @@ import React, { useEffect } from 'react';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
-import { AdminPanel } from './components/admin/AdminPanel';
+import { AdminDashboard } from './components/admin/AdminDashboard';
 import { ToastContainer } from './components/common/Toast';
 import { HomePage } from './pages/HomePage';
 import { CheckoutPage } from './pages/CheckoutPage';
@@ -46,24 +46,22 @@ export default function App() {
     else document.body.classList.remove('dashain-theme');
   }, [theme.isDashainTheme, theme.accentColor]);
 
-  const isFullPage = pageView === 'checkout' || pageView === 'order-confirmation';
-
   return (
     <>
-      {/* Global header — hidden on order confirmation for cleaner UX */}
-      {pageView !== 'order-confirmation' && <Header />}
+      {/* Global header — hidden on order confirmation and admin for cleaner full-screen UX */}
+      {pageView !== 'order-confirmation' && pageView !== 'admin' && <Header />}
 
       {/* Page views */}
       {pageView === 'home' && <HomePage />}
       {pageView === 'checkout' && <CheckoutPage />}
       {pageView === 'order-confirmation' && latestOrder && <OrderConfirmationPage order={latestOrder} />}
+      {pageView === 'admin' && <AdminDashboard />}
 
-      {/* Global footer — hidden during checkout */}
+      {/* Global footer — hidden during checkout and admin */}
       {pageView === 'home' && <Footer />}
 
       {/* Global overlays */}
       <CartDrawer />
-      <AdminPanel />
       <ToastContainer />
     </>
   );

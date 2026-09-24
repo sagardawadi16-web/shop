@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { GoogleUser } from '../types';
 import { signInWithGoogle, signOutUser, onAuthChange } from '../services/firebaseAuth';
+import { useSettingsStore } from './settingsStore';
 
 const OWNER_EMAILS = ['sagardawadi10@gmail.com', 'sagardawadi16@gmail.com'];
 const LS_KEY = 'dawosti_user_v3';
@@ -88,8 +89,14 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     set({ user: null, isOwner: false, isAuthenticated: true });
   },
 
-  openAdmin: () => set({ isAdminOpen: true }),
-  closeAdmin: () => set({ isAdminOpen: false }),
+  openAdmin: () => {
+    set({ isAdminOpen: true });
+    useSettingsStore.getState().setPageView('admin');
+  },
+  closeAdmin: () => {
+    set({ isAdminOpen: false });
+    useSettingsStore.getState().setPageView('home');
+  },
 
   unlockAdmin: (pin) => {
     const { requirePasscode, passcode, isOwner } = get();

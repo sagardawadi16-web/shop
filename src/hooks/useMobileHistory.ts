@@ -104,8 +104,12 @@ export const useMobileHistory = () => {
       if (window.location.hash !== '#order-confirmed') {
         window.history.pushState({ __dawosti: true, page: 'order-confirmation' }, '', '#order-confirmed');
       }
+    } else if (pageView === 'admin') {
+      if (window.location.hash !== '#admin') {
+        window.history.pushState({ __dawosti: true, page: 'admin' }, '', '#admin');
+      }
     } else if (pageView === 'home') {
-      if (window.location.hash === '#checkout' || window.location.hash === '#order-confirmed') {
+      if (window.location.hash === '#checkout' || window.location.hash === '#order-confirmed' || window.location.hash === '#admin') {
         if (!isInternalNavigation.current) {
           isInternalNavigation.current = true;
           window.history.back();
@@ -117,6 +121,11 @@ export const useMobileHistory = () => {
 
   // Listen for the native phone back button / swipe back gesture / browser back
   useEffect(() => {
+    // Check initial hash on mount
+    if (window.location.hash === '#admin') {
+      setPageView('admin');
+    }
+
     const handlePopState = (e: PopStateEvent) => {
       // 1. If product detail modal is open, close it
       if (useProductStore.getState().activeDetailProduct) {
@@ -136,9 +145,9 @@ export const useMobileHistory = () => {
         return;
       }
 
-      // 4. If on checkout or order confirmation, return smoothly to home view
+      // 4. If on checkout, order confirmation, or admin dashboard, return smoothly to home view
       const currentView = useSettingsStore.getState().pageView;
-      if (currentView === 'checkout' || currentView === 'order-confirmation') {
+      if (currentView === 'checkout' || currentView === 'order-confirmation' || currentView === 'admin') {
         setPageView('home');
         return;
       }
