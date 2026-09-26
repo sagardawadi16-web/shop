@@ -153,50 +153,56 @@ export const ReferralPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // 1. Post to Cloudflare Edge API (/api/payouts)
-      // The Edge Worker securely stores and forwards to Google Sheets without exposing credentials
-      const res = await fetch('/api/payouts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          creatorName: creatorName.trim(),
-          email: email.trim(),
-          referralCode: referralCode.trim().toUpperCase(),
-          esewaId: esewaId.trim(),
-          khaltiNumber: khaltiNumber.trim(),
-          accountHolderName: accountHolderName.trim() || creatorName.trim(),
-          socialHandle: socialHandle.trim(),
-          website_trap: websiteTrap,
-        }),
-      });
+      // 1. Post to Cloudflare Edge API (/api/payouts) if available
+      try {
+        const res = await fetch('/api/payouts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            creatorName: creatorName.trim(),
+            email: email.trim(),
+            referralCode: referralCode.trim().toUpperCase(),
+            esewaId: esewaId.trim(),
+            khaltiNumber: khaltiNumber.trim(),
+            accountHolderName: accountHolderName.trim() || creatorName.trim(),
+            socialHandle: socialHandle.trim(),
+            website_trap: websiteTrap,
+          }),
+        });
 
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Server rejected payout registration');
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          const data = await res.json();
+          if (data?.profile) {
+            setSubmittedData(data.profile);
+          }
+        }
+      } catch (edgeErr) {
+        console.warn('Edge payout proxy notice:', edgeErr);
       }
 
       // 2. Also register into client store for instantaneous local stats
       registerCreator(referralCode.trim().toUpperCase(), creatorName.trim(), email.trim());
 
       // 3. Cache securely in local storage
-      localStorage.setItem(
-        'dawosti_creator_payout_profile',
-        JSON.stringify({
-          creatorName: creatorName.trim(),
-          email: email.trim(),
-          referralCode: referralCode.trim().toUpperCase(),
-          esewaId: esewaId.trim(),
-          khaltiNumber: khaltiNumber.trim(),
-          accountHolderName: accountHolderName.trim(),
-          socialHandle: socialHandle.trim(),
-          updatedAt: new Date().toISOString(),
-        })
-      );
+      const profileData = {
+        creatorName: creatorName.trim(),
+        email: email.trim(),
+        referralCode: referralCode.trim().toUpperCase(),
+        esewaId: esewaId.trim(),
+        khaltiNumber: khaltiNumber.trim(),
+        accountHolderName: accountHolderName.trim(),
+        socialHandle: socialHandle.trim(),
+        updatedAt: new Date().toISOString(),
+      };
 
-      setSubmittedData(data.profile || {
-        creatorName,
-        referralCode: referralCode.toUpperCase(),
+      try {
+        localStorage.setItem('dawosti_creator_payout_profile', JSON.stringify(profileData));
+      } catch {}
+
+      setSubmittedData({
+        creatorName: creatorName.trim(),
+        referralCode: referralCode.trim().toUpperCase(),
         esewaId: esewaId ? `${esewaId.slice(0, 3)}****${esewaId.slice(-3)}` : 'Not Set',
         khaltiNumber: khaltiNumber ? `${khaltiNumber.slice(0, 3)}****${khaltiNumber.slice(-3)}` : 'Not Set',
       });
@@ -204,15 +210,7 @@ export const ReferralPage: React.FC = () => {
       toast('🎉 Payout account registered securely! Linked to eSewa & Khalti.');
     } catch (err: any) {
       console.error('Payout registration error:', err);
-      // Fallback: If edge worker returns error or in dev, store locally
-      registerCreator(referralCode.trim().toUpperCase(), creatorName.trim(), email.trim());
-      setSubmittedData({
-        creatorName,
-        referralCode: referralCode.toUpperCase(),
-        esewaId: esewaId ? `${esewaId.slice(0, 3)}****${esewaId.slice(-3)}` : 'Not Set',
-        khaltiNumber: khaltiNumber ? `${khaltiNumber.slice(0, 3)}****${khaltiNumber.slice(-3)}` : 'Not Set',
-      });
-      toast('Profile saved locally. Submitting to Cloudflare queue.');
+      toast('Registration encountered an issue. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

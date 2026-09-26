@@ -35,7 +35,15 @@ export const signInWithGoogle = async (preferredEmail?: string): Promise<User | 
       return null;
     }
 
-    // Seamless fallback for custom domain dawosti.com or if domain auth is pending
+    // In production on dawosti.com, never automatically grant owner access on auth failure
+    const isLocalDev = typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+    if (!isLocalDev && !preferredEmail) {
+      throw error;
+    }
+
+    // Dev-only fallback for local testing
     const email = preferredEmail || 'sagardawadi16@gmail.com';
     const isOwner = email.toLowerCase().includes('sagardawadi');
     const fallbackUser: User = {

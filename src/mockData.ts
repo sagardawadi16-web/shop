@@ -78,7 +78,7 @@ export const MOCK_PRODUCTS: Product[] = [
     categoryId: 'cat-sarees',
     categoryName: { en: 'Sarees', np: 'साडी' },
     images: [
-      'https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80',
     ],
     availableSizes: ['Free Size'],
     inStock: true,
@@ -128,7 +128,7 @@ export const MOCK_PRODUCTS: Product[] = [
     categoryId: 'cat-lehengas',
     categoryName: { en: 'Lehengas', np: 'लहेंगा' },
     images: [
-      'https://images.unsplash.com/photo-1610189351882-7f71b6b5cc5e?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=800&q=80',
     ],
     availableSizes: ['XS', 'S', 'M', 'L'],
     inStock: true,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Search, ShoppingBag, Menu, X, Globe, PackageCheck, Sparkles, Building2, Award
 } from 'lucide-react';
@@ -21,27 +21,51 @@ export const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [hideCategory, setHideCategory] = useState(false);
+  const hideCategoryRef = useRef(false);
 
-  // Remove category sub-nav when scrolling down smoothly
+  // Smoothly collapse category sub-nav on sustained downward scroll, reveal on upward scroll
   useEffect(() => {
     let lastScrollY = window.scrollY;
+    let accumulatedDelta = 0;
     let ticking = false;
 
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
           const currentScrollY = Math.max(0, window.scrollY);
-          const scrollDiff = currentScrollY - lastScrollY;
+          const delta = currentScrollY - lastScrollY;
 
-          // Always show when near the very top of the page
-          if (currentScrollY <= 40) {
-            setHideCategory(false);
-          } else if (scrollDiff > 10 && currentScrollY > 60) {
-            // Scrolling down with clear momentum -> hide categories
-            setHideCategory(true);
-          } else if (scrollDiff < -8) {
-            // Scrolling up -> reveal categories
-            setHideCategory(false);
+          // Always reveal when near the top of the page
+          if (currentScrollY <= 50) {
+            if (hideCategoryRef.current) {
+              hideCategoryRef.current = false;
+              setHideCategory(false);
+            }
+            accumulatedDelta = 0;
+            lastScrollY = currentScrollY;
+            ticking = false;
+            return;
+          }
+
+          // Reset accumulator on direction change to prevent micro-jitter/rubber-banding
+          if ((delta > 0 && accumulatedDelta < 0) || (delta < 0 && accumulatedDelta > 0)) {
+            accumulatedDelta = 0;
+          }
+          accumulatedDelta += delta;
+
+          // Sustained downward scroll: hide categories seamlessly
+          if (accumulatedDelta > 40 && currentScrollY > 80) {
+            if (!hideCategoryRef.current) {
+              hideCategoryRef.current = true;
+              setHideCategory(true);
+            }
+          }
+          // Sustained upward scroll: reveal categories
+          else if (accumulatedDelta < -30) {
+            if (hideCategoryRef.current) {
+              hideCategoryRef.current = false;
+              setHideCategory(false);
+            }
           }
 
           lastScrollY = currentScrollY;
@@ -368,16 +392,15 @@ export const Header: React.FC = () => {
       {/* Bottom Sub-Nav: Categories Bar (Smoothly collapses when scrolling down) */}
       <nav
         style={{
-          borderTop: hideCategory ? 'none' : '1px solid #EADCCE',
+          borderTop: '1px solid #EADCCE',
+          borderTopColor: hideCategory ? 'transparent' : '#EADCCE',
           backgroundColor: '#FFFFFF',
-          maxHeight: hideCategory ? 0 : 52,
+          maxHeight: hideCategory ? 0 : 48,
           opacity: hideCategory ? 0 : 1,
-          overflowY: 'hidden',
-          overflowX: hideCategory ? 'hidden' : 'auto',
-          WebkitOverflowScrolling: 'touch',
-          scrollbarWidth: 'none',
-          transition: 'max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease, border-color 0.2s ease',
+          overflow: 'hidden',
+          transition: 'max-height 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, border-color 0.25s ease',
           pointerEvents: hideCategory ? 'none' : 'auto',
+          willChange: 'max-height, opacity',
         }}
       >
         <div
@@ -387,12 +410,11 @@ export const Header: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            padding: hideCategory ? '0 16px' : '8px 16px',
+            padding: '7px 16px',
             whiteSpace: 'nowrap',
             overflowX: 'auto',
             WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'none',
-            transition: 'padding 0.25s ease',
           }}
         >
           {CATEGORIES.map((cat) => {
