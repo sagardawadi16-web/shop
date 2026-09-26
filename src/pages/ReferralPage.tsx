@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import {
   Award, ShieldCheck, CheckCircle2, Wallet, ArrowLeft, Sparkles,
   Copy, ExternalLink, AlertCircle, TrendingUp, Users, DollarSign,

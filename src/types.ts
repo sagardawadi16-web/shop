@@ -50,7 +50,7 @@ export interface CartItem {
   product: Product;
   selectedSize: ProductSize;
   quantity: number;
-  addedAt: string;
+  addedAt?: string;
 }
 
 export interface ShippingAddress {
@@ -58,7 +58,7 @@ export interface ShippingAddress {
   phone: string;
   addressLine: string;
   city: string;
-  province: string;
+  province?: string;
 }
 
 export type OrderVerificationStatus = 'unverified' | 'verified_genuine' | 'suspicious' | 'flagged_fake';
