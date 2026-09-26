@@ -57,10 +57,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ user: userObj, isLoading: false });
       },
       () => {
+        // IMPORTANT: When Firebase returns null (e.g. during initial async auth check
+        // or popup fallback), DO NOT wipe the persistent session if user is already saved!
+        // The user remains signed in until they explicitly click "Logout".
+        const currentUser = get().user;
+        if (currentUser) {
+          set({ isLoading: false });
+          return;
+        }
+
         try {
-          localStorage.removeItem(STORAGE_USER_KEY);
+          const saved = localStorage.getItem(STORAGE_USER_KEY);
+          if (saved) {
+            const parsed: GoogleUser = JSON.parse(saved);
+            if (parsed?.email) {
+              parsed.role = getUserRole(parsed.email) || undefined;
+              set({ user: parsed, isLoading: false });
+              return;
+            }
+          }
         } catch {}
-        set({ user: null, isLoading: false });
+
+        set({ isLoading: false });
       }
     );
     return unsubscribe;
