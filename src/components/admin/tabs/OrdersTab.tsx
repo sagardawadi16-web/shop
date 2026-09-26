@@ -291,7 +291,7 @@ ${itemsList}
       </div>
 
       {/* Wipe All Showcase Demo Orders Banner */}
-      {activeFilter === 'seed' && seedOrders.length > 0 && (
+      {seedOrders.length > 0 && (
         <div style={{ background: '#FFF3CD', border: '1px solid #FFEEBA', padding: '12px 16px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
           <div style={{ fontSize: 13, color: '#856404' }}>
             <strong>Notice:</strong> These are {seedOrders.length} pre-loaded showcase demo orders used for initial layout testing.
@@ -300,7 +300,7 @@ ${itemsList}
             onClick={async () => {
               if (window.confirm('Permanently purge all showcase demo orders from this store? Real customer orders will NOT be affected.')) {
                 await wipeAllDemoOrders();
-                alert('Successfully purged all showcase demo orders.');
+                toast('Successfully purged all showcase demo orders.', 'success');
               }
             }}
             className="btn btn-outline"
@@ -537,6 +537,262 @@ ${itemsList}
                   <div style={{ fontSize: 13, fontWeight: 800, color: profitResult.netProfit > 0 ? '#1B7F5E' : '#B02A37' }}>
                     Calculated Net Profit: NPR {profitResult.netProfit.toLocaleString()} ({profitResult.marginPercent}%)
                   </div>
+                </div>
+
+                {/* Dropshipping Supplier Routing & Fulfillment Section */}
+                <div
+                  style={{
+                    background: order.assignedSupplier ? '#F0F9F5' : '#FCF8F4',
+                    border: `1.5px solid ${order.assignedSupplier ? '#A3E2C3' : '#E8D9CD'}`,
+                    borderRadius: 8,
+                    padding: '12px 14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 10,
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Building2 size={16} color={order.assignedSupplier ? '#1B7F5E' : '#8B3A3A'} />
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#2B1810' }}>
+                        Dropshipping Supplier Routing:
+                      </span>
+                      {order.assignedSupplier ? (
+                        <span
+                          style={{
+                            fontSize: 11,
+                            background: order.assignedSupplier.status === 'dispatched' ? '#E0F3EA' : '#FFF3CD',
+                            color: order.assignedSupplier.status === 'dispatched' ? '#1B7F5E' : '#856404',
+                            border: `1px solid ${order.assignedSupplier.status === 'dispatched' ? '#A3E2C3' : '#FFE08A'}`,
+                            padding: '2px 8px',
+                            borderRadius: 4,
+                            fontWeight: 800,
+                          }}
+                        >
+                          {order.assignedSupplier.status === 'dispatched' ? 'DISPATCH SLIP ROUTED ✓' : 'SUPPLIER ASSIGNED'}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: 11, background: '#FFF3CD', color: '#856404', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>
+                          PENDING SUPPLIER ALLOCATION
+                        </span>
+                      )}
+                    </div>
+
+                    {order.assignedSupplier && (
+                      <div style={{ fontSize: 12, color: '#555' }}>
+                        Assigned: <strong style={{ color: '#2B1810' }}>{order.assignedSupplier.name}</strong> ({order.assignedSupplier.location}) • Tel: <strong>{order.assignedSupplier.phone}</strong>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* If assigned, show 1-click WhatsApp Dispatch slip generator and copy buttons */}
+                  {order.assignedSupplier ? (
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <button
+                        onClick={() => handleSendSupplierWhatsApp(order, order.assignedSupplier!, orderBuyingCost)}
+                        style={{
+                          padding: '7px 14px',
+                          backgroundColor: '#25D366',
+                          color: '#FFF',
+                          border: 'none',
+                          borderRadius: 6,
+                          fontSize: 12,
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          boxShadow: '0 2px 6px rgba(37,211,102,0.25)',
+                        }}
+                      >
+                        <Send size={13} />
+                        <span>1-Click WhatsApp Seller Dispatch</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleCopySlip(order, order.assignedSupplier!, orderBuyingCost)}
+                        style={{
+                          padding: '7px 12px',
+                          backgroundColor: '#FFF',
+                          color: '#2B1810',
+                          border: '1px solid #D4C5B9',
+                          borderRadius: 6,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
+                        }}
+                      >
+                        {copiedOrderId === order.id ? <Check size={13} color="#1B7F5E" /> : <Copy size={13} />}
+                        <span>{copiedOrderId === order.id ? 'Copied Slip!' : 'Copy Dispatch Slip'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const nextStatus = order.assignedSupplier!.status === 'dispatched' ? 'assigned' : 'dispatched';
+                          assignSupplier(order.id, {
+                            ...order.assignedSupplier!,
+                            status: nextStatus,
+                          });
+                          toast(`Supplier status updated to ${nextStatus}`, 'success');
+                        }}
+                        style={{
+                          padding: '7px 12px',
+                          backgroundColor: '#FAF2E9',
+                          color: '#666',
+                          border: '1px solid #D4C5B9',
+                          borderRadius: 6,
+                          fontSize: 12,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Toggle Status ({order.assignedSupplier.status || 'assigned'})
+                      </button>
+
+                      <button
+                        onClick={() => setActiveDropdownOrder(activeDropdownOrder === order.id ? null : order.id)}
+                        style={{
+                          padding: '7px 10px',
+                          background: 'transparent',
+                          color: '#8B3A3A',
+                          border: 'none',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        {activeDropdownOrder === order.id ? 'Cancel Change' : 'Change Supplier'}
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {/* Supplier Selector Dropdown & Custom Form (shown if unassigned OR user clicked Change Supplier) */}
+                  {(!order.assignedSupplier || activeDropdownOrder === order.id) && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: '#FFF', padding: 10, borderRadius: 6, border: '1px solid #EADCCE' }}>
+                      <div style={{ fontSize: 12, color: '#555', fontWeight: 600 }}>
+                        Select verified supplier/atelier to receive customer delivery location and fulfill order #{order.orderNumber}:
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <select
+                          defaultValue=""
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === 'custom') {
+                              setCustomSupplierForms((prev) => ({
+                                ...prev,
+                                [order.id]: prev[order.id] || { name: '', phone: '', location: '' },
+                              }));
+                            } else if (val) {
+                              const matched = PRESET_SUPPLIERS.find((s) => s.id === val);
+                              if (matched) {
+                                assignSupplier(order.id, {
+                                  ...matched,
+                                  assignedAt: new Date().toISOString(),
+                                  status: 'assigned',
+                                });
+                                setActiveDropdownOrder(null);
+                                toast(`Assigned ${matched.name} to order #${order.orderNumber}`, 'success');
+                              }
+                            }
+                          }}
+                          style={{
+                            padding: '7px 10px',
+                            borderRadius: 6,
+                            border: '1px solid #D4C5B9',
+                            fontSize: 12,
+                            backgroundColor: '#FFF',
+                            color: '#2B1810',
+                            outline: 'none',
+                            minWidth: 260,
+                          }}
+                        >
+                          <option value="" disabled>-- Select Verified Dropship Supplier --</option>
+                          {PRESET_SUPPLIERS.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name} ({s.location}) — +977 {s.phone}
+                            </option>
+                          ))}
+                          <option value="custom">➕ Enter Custom Supplier / Local Shop...</option>
+                        </select>
+                      </div>
+
+                      {/* Custom Supplier Inline Form */}
+                      {customSupplierForms[order.id] && (
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 4 }}>
+                          <input
+                            type="text"
+                            placeholder="Supplier / Atelier Name"
+                            value={customSupplierForms[order.id]?.name || ''}
+                            onChange={(e) =>
+                              setCustomSupplierForms((prev) => ({
+                                ...prev,
+                                [order.id]: { ...prev[order.id], name: e.target.value },
+                              }))
+                            }
+                            style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #D4C5B9', fontSize: 12, flex: 1, minWidth: 150 }}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Phone (e.g. 9801234567)"
+                            value={customSupplierForms[order.id]?.phone || ''}
+                            onChange={(e) =>
+                              setCustomSupplierForms((prev) => ({
+                                ...prev,
+                                [order.id]: { ...prev[order.id], phone: e.target.value },
+                              }))
+                            }
+                            style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #D4C5B9', fontSize: 12, width: 150 }}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Location (e.g. Asan, Kathmandu)"
+                            value={customSupplierForms[order.id]?.location || ''}
+                            onChange={(e) =>
+                              setCustomSupplierForms((prev) => ({
+                                ...prev,
+                                [order.id]: { ...prev[order.id], location: e.target.value },
+                              }))
+                            }
+                            style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #D4C5B9', fontSize: 12, flex: 1, minWidth: 140 }}
+                          />
+                          <button
+                            onClick={() => {
+                              const f = customSupplierForms[order.id];
+                              if (!f || !f.name.trim() || !f.phone.trim()) {
+                                toast('Please enter supplier name and phone number', 'error');
+                                return;
+                              }
+                              assignSupplier(order.id, {
+                                id: `custom-${Date.now()}`,
+                                name: f.name.trim(),
+                                phone: f.phone.trim(),
+                                location: f.location.trim() || 'Nepal',
+                                assignedAt: new Date().toISOString(),
+                                status: 'assigned',
+                              });
+                              setActiveDropdownOrder(null);
+                              toast(`Custom supplier "${f.name}" assigned to order #${order.orderNumber}`, 'success');
+                            }}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#8B3A3A',
+                              color: '#FFF',
+                              border: 'none',
+                              borderRadius: 6,
+                              fontSize: 12,
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Save & Assign
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Actions Row */}
