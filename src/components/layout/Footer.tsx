@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sparkles, MapPin, Phone, Mail, MessageCircle, Building2, Award } from 'lucide-react';
+import { DiscordIcon } from '../common/DiscordIcon';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useProductStore } from '../../stores/productStore';
 import { useRetailerStore } from '../../stores/retailerStore';
@@ -190,8 +191,9 @@ export const Footer: React.FC = () => {
                   fontSize: 12.5,
                 }}
               >
-                <span>🏛️ {language === 'np' ? 'फेसन गिल्ड (Discord)' : 'Autonomous Fashion Guild'}</span>
-                <span style={{ fontSize: 9, padding: '2px 6px', background: 'rgba(212,175,55,0.2)', border: '1px solid rgba(212,175,55,0.4)', borderRadius: 4, color: '#FFF8F0', textTransform: 'uppercase' }}>
+                <DiscordIcon size={18} withBurgundyBg />
+                <span>{language === 'np' ? 'फेसन गिल्ड (Discord)' : 'Fashion Guild (Discord)'}</span>
+                <span style={{ fontSize: 9, padding: '2px 6px', background: 'rgba(138,28,46,0.35)', border: '1px solid #8A1C2E', borderRadius: 4, color: '#D4AF37', textTransform: 'uppercase', fontWeight: 800 }}>
                   Patrons
                 </span>
               </a>

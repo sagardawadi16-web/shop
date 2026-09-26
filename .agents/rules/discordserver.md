@@ -1,15 +1,15 @@
 ---
 trigger: always_on
 glob:
-description: Architecture, evolutionary hierarchy, and autonomous rules for the Dawosti Fashion Discord Guild
+description: Architecture, evolutionary hierarchy, and rules for the Dawosti Fashion Discord Guild
 ---
 
-# Dawosti Autonomous Fashion Guild — Core Architecture & Blueprint
+# Dawosti Fashion Guild — Core Architecture & Blueprint
 
 ## 1. Vision & Cultural Mandate
 Dawosti leads fashion in Nepal not through marketing claims, but through **demonstrable creative impact, aesthetic rigor, and community talent cultivation**. 
 * **The Inspiration**: Similar to how Apple sets uncompromising standards for industrial design and how Google empowers builders through meritocratic developer communities, Dawosti establishes Nepal's benchmark for fashion, textiles, avant-garde streetwear, and heritage reimagination (e.g., Dhaka, raw silks, Newari tailoring married to modern cuts).
-* **Autonomous Meritocracy**: No arbitrary favoritism or chat-grinding XP bots. Roles evolve through **Proof-of-Taste** (curation & high-signal critique) and **Proof-of-Craft** (tangible designs, sketches, lookbooks, garments).
+* **Fashion Meritocracy**: No arbitrary favoritism or chat-grinding XP bots. Roles evolve through **Proof-of-Taste** (curation & high-signal critique) and **Proof-of-Craft** (tangible designs, sketches, lookbooks, garments).
 
 ---
 
@@ -43,7 +43,7 @@ Dawosti leads fashion in Nepal not through marketing claims, but through **demon
 📜 ── DAWOSTI ARCHIVE ──
   ├── #manifesto-and-rules     (Foundational values, evolution mechanics, guidelines)
   ├── #announcements-drops     (Official Dawosti announcements, website drops)
-  └── #guild-roster            (Live autonomous leaderboard of recognized creators)
+  └── #guild-roster            (Live guild leaderboard of recognized creators)
 
 🏛️ ── ATELIER (CRAFT & CRITIQUE) ──
   ├── #design-submissions      (Original sketches, prototypes, digital & physical garments)
@@ -55,15 +55,15 @@ Dawosti leads fashion in Nepal not through marketing claims, but through **demon
   ├── #runway-and-editorial     (Global and regional couture analysis)
   └── #curated-moodboards       (Palette, texture, and visual references)
 
-⚡ ── AUTONOMOUS CORE ──
+⚡ ── GUILD CORE ──
   ├── #bot-commands            (Check taste score, submit portfolio, view challenge)
-  └── #evolution-log           (Autonomous logs of role upgrades & design spotlights)
+  └── #evolution-log           (Guild logs of role upgrades & design spotlights)
 ```
 
 ---
 
-## 4. Autonomous Bot Responsibilities
+## 4. Guild Bot Responsibilities
 1. **Automated Server Provisioning**: Setup categories, channels, permission overrides, and role hierarchies.
 2. **Reputation & Promotion Engine**: Monitor submissions and reaction quality; promote members based on merit rather than spam.
-3. **Weekly Fashion Prompts**: Post autonomous weekly design prompts (e.g. *Himalayan Monastic Wear x Cyberpunk Outerwear*).
+3. **Weekly Fashion Prompts**: Post weekly design prompts (e.g. *Himalayan Monastic Wear x Cyberpunk Outerwear*).
 4. **Dawosti.com Showcase Integration**: Sync top-rated community designs with the `dawosti.com` editorial radar.

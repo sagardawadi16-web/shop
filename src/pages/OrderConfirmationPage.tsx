@@ -1,4 +1,5 @@
 import { CheckCircle, MessageCircle, ArrowLeft, Package, Truck, Award, Sparkles, QrCode } from 'lucide-react';
+import { DiscordIcon } from '../components/common/DiscordIcon';
 import { Order } from '../types';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useReferralStore } from '../stores/referralStore';
@@ -172,7 +173,7 @@ export const OrderConfirmationPage: React.FC<Props> = ({ order }) => {
                   VIP Patron Access
                 </div>
                 <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 17, fontWeight: 700, color: '#FFF8F0', lineHeight: 1.2 }}>
-                  Autonomous Fashion Guild
+                  Dawosti Fashion Guild
                 </div>
               </div>
             </div>
@@ -215,6 +216,7 @@ export const OrderConfirmationPage: React.FC<Props> = ({ order }) => {
             onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
             onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
+            <DiscordIcon size={18} color="#2B1810" />
             <span>Claim Patron Access (Discord)</span>
           </a>
           <div style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255, 248, 240, 0.6)', marginTop: 8 }}>

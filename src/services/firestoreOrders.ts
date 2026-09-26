@@ -4,6 +4,7 @@ import {
   setDoc,
   deleteDoc,
   onSnapshot,
+  getDocs,
   Unsubscribe,
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -26,6 +27,19 @@ export const listenOrders = (onUpdate: (orders: Order[]) => void): Unsubscribe =
   } catch (err) {
     console.warn('[Firestore] Failed to attach orders listener:', err);
     return () => {};
+  }
+};
+
+/** One-shot fetch of all orders from Firestore. */
+export const fetchOrdersFromFirestore = async (): Promise<Order[]> => {
+  try {
+    const snap = await getDocs(collection(db, COL));
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Order));
+    list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return list;
+  } catch (err) {
+    console.warn('[Firestore] fetchOrdersFromFirestore error:', err);
+    return [];
   }
 };
 

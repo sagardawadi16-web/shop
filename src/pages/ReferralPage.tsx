@@ -1392,7 +1392,7 @@ export const ReferralPage: React.FC = () => {
       {/* Footer */}
       <footer style={{ marginTop: 'auto', backgroundColor: '#FFFFFF', borderTop: '1px solid #EADCCE', padding: '24px 20px', textAlign: 'center', fontSize: 12, color: '#777' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-          <div>© {new Date().getFullYear()} DAWOSTI • Autonomous Fashion Guild • Kathmandu, Nepal</div>
+          <div>© {new Date().getFullYear()} DAWOSTI • Fashion Guild • Kathmandu, Nepal</div>
           <div style={{ display: 'flex', gap: 16 }}>
             <a href="https://dawosti.com" style={{ color: '#1B7F5E', textDecoration: 'none', fontWeight: 600 }}>dawosti.com</a>
             <span>•</span>

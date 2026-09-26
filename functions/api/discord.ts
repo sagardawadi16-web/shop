@@ -1,6 +1,6 @@
 /**
  * Cloudflare Pages Function: /api/discord
- * 24/7 Serverless Discord Autonomous Interaction Engine for Dawosti Guild
+ * 24/7 Serverless Discord Interaction Engine for Dawosti Guild
  *
  * Implements Discord HTTP Interaction verification (Ed25519) and edge slash command handlers.
  * Allows the Dawosti Discord Bot to run 24/7 globally without requiring a local machine/daemon.
@@ -52,7 +52,7 @@ export const onRequestGet: PagesFunction<Env> = async () => {
   return new Response(
     JSON.stringify({
       status: 'active',
-      engine: 'Dawosti Autonomous Fashion Guild Edge Engine',
+      engine: 'Dawosti Fashion Guild Edge Engine',
       edgeRuntime: 'Cloudflare Pages / Workers',
       domain: 'dawosti.com',
       endpoint: 'https://dawosti.com/api/discord',
@@ -70,7 +70,7 @@ export const onRequestGet: PagesFunction<Env> = async () => {
         'Ed25519 Signature Verification',
         '24/7 Zero-Cold-Start Serverless',
         'Direct dawosti.com Store Integration',
-        'Proof-of-Taste Autonomous Meritocracy',
+        'Proof-of-Taste Meritocracy',
       ],
     }),
     {
@@ -148,7 +148,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
                     '• Give technical feedback on fabric/silhouette in `#peer-critique` (+5 pts)',
                 },
               ],
-              footer: { text: 'Dawosti Autonomous Meritocracy • Proof-of-Taste' },
+              footer: { text: 'Dawosti Meritocracy • Proof-of-Taste' },
             },
           ],
         },
@@ -164,7 +164,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             {
               title: '⚡ ACTIVE DESIGN BRIEF: The Himalayan Nomad 2085',
               description:
-                'Create a conceptual silhouette fusing traditional high-altitude Himalayan wear (Bakhu, Sherpa wool, Palpali Dhaka geometry) with utilitarian cyberpunk streetwear.',
+                'Create a conceptual silhouette fusing traditional high-altitude Himalayan wear (Bakhu, Sherpa wool, Palpali Dhaka geometry) with utilitarian streetwear.',
               color: 0x1b7f5e,
               fields: [
                 { name: 'Brief ID', value: '`BRIEF-001`', inline: true },
@@ -176,7 +176,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
                     '• Selected designs enter physical sampling at Dawosti’s Kathmandu atelier for a commercial drop on `dawosti.com` with a 10% creator royalty.',
                 },
               ],
-              footer: { text: 'Autonomous Challenge Engine • Dawosti Guild' },
+              footer: { text: 'Challenge Engine • Dawosti Fashion Guild' },
             },
           ],
         },
@@ -193,15 +193,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
               title: 'DAWOSTI (दावोस्ती) — THE CULTURAL MANDATE',
               description:
                 'We lead fashion in Nepal not through claims, but through **demonstrable creative impact, aesthetic rigor, and community talent cultivation**.\n\n' +
-                '• **Design Purity & Meritocracy**: Inspired by Apple’s uncompromising craft and Google’s developer meritocracy.\n' +
+                '• **Design Purity & Meritocracy**: Inspired by uncompromising craft and developer meritocracy.\n' +
                 '• **Heritage Reimagination**: Palpali Dhaka, Himalayan Allo (nettle), and Newari tailoring reimagined for contemporary global streetwear.\n' +
-                '• **Autonomous Hierarchy**: Roles are earned via Proof-of-Taste and tangible design output—never spam.',
+                '• **Guild Hierarchy**: Roles are earned via Proof-of-Taste and tangible design output—never spam.',
               color: 0x8a1c2e,
               fields: [
                 { name: 'Official Store', value: 'https://dawosti.com', inline: true },
                 { name: 'Boutique Location', value: 'New Road, Kathmandu', inline: true },
               ],
-              footer: { text: 'Autonomous Fashion Guild • Kathmandu' },
+              footer: { text: 'Dawosti Fashion Guild • Kathmandu' },
             },
           ],
         },
@@ -251,7 +251,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
                 { name: 'Explore Live Drops', value: 'https://dawosti.com', inline: true },
                 { name: 'Submit for Curation', value: '<#1553289612632268852>', inline: true },
               ],
-              footer: { text: 'Dawosti Autonomous Fashion Guild' },
+              footer: { text: 'Dawosti Fashion Guild' },
             },
           ],
         },
@@ -269,10 +269,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
               description:
                 'Leading community tastemakers evaluated by peer critique and design signal:\n\n' +
                 '1. **Founder & Vanguard Council** — `👑 Vanguard` (500 pts)\n' +
-                '2. <@1552696559596998726> — `⚡ Autonomous Core`\n\n' +
+                '2. <@1552696559596998726> — `⚡ Guild Bot`\n\n' +
                 'Post your daily outfit in `#fit-checks-wdywt` or drop a concept in `#design-concepts` to climb the ranks!',
               color: 0xe5a93c,
-              footer: { text: 'Evolution governed autonomously by peer signal' },
+              footer: { text: 'Evolution governed by peer signal' },
             },
           ],
         },
@@ -330,9 +330,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         data: {
           embeds: [
             {
-              title: '🤖 DAWOSTI AUTONOMOUS CORE COMMANDS',
+              title: '🤖 DAWOSTI GUILD COMMANDS',
               description:
-                'Welcome to the Dawosti Autonomous Fashion Guild. Here are your available commands:\n\n' +
+                'Welcome to the Dawosti Fashion Guild. Here are your available commands:\n\n' +
                 '`/rank` — Check your fashion tier and Proof-of-Taste points\n' +
                 '`/brief` — Inspect the active design challenge and production targets\n' +
                 '`/manifesto` — Read Dawosti’s founding cultural values\n' +
@@ -353,7 +353,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
                     '• **🛍️ Verified Patron** (Authentic Dawosti garment owners)',
                 },
               ],
-              footer: { text: 'Dawosti Autonomous Core • Proof-of-Taste Protocol' },
+              footer: { text: 'Dawosti Fashion Guild • Proof-of-Taste Protocol' },
             },
           ],
         },
@@ -364,7 +364,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return jsonResponse({
       type: 4,
       data: {
-        content: `Command \`/${cmdName}\` received by Dawosti Autonomous Core.`,
+        content: `Command \`/${cmdName}\` received by Dawosti Guild Core.`,
         flags: 64,
       },
     });

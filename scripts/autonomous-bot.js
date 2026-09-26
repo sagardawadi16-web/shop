@@ -158,7 +158,7 @@ async function handlePromotion(userId, newTier) {
                   inline: true,
                 },
               ],
-              footer: { text: 'Dawosti Autonomous Evolution Engine • Proof-of-Taste' },
+              footer: { text: 'Dawosti Guild Engine • Proof-of-Taste' },
               timestamp: new Date().toISOString(),
             },
           ],
@@ -230,7 +230,7 @@ async function startGateway() {
   await refreshCache();
   checkAndRotateBrief();
 
-  console.log('\n🌐 Connecting to Discord Gateway v10 (Autonomous Business Daemon)...');
+  console.log('\n🌐 Connecting to Discord Gateway v10 (Guild Business Daemon)...');
   ws = new WebSocket('wss://gateway.discord.gg/?v=10&encoding=json');
 
   ws.onopen = () => {
@@ -1012,7 +1012,7 @@ async function handleDispatch(eventType, data) {
                               { name: 'Commercial Rights', value: '**10% Lifetime Royalty** on all boutique sales', inline: true },
                               { name: 'Production Pipeline', value: 'Sent to Kathmandu Atelier desk for sample line-sheet on `dawosti.com`' },
                             ],
-                            footer: { text: 'Dawosti Autonomous Meritocracy • Proof-of-Craft' },
+                            footer: { text: 'Dawosti Meritocracy • Proof-of-Craft' },
                             timestamp: new Date().toISOString(),
                           },
                         ],

@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Filter, Grid3X3, LayoutList, SlidersHorizontal, X, Building2, Sparkles, ArrowRight } from 'lucide-react';
 import { ProductCard } from '../components/products/ProductCard';
 import { ProductDetailModal } from '../components/products/ProductDetailModal';
+import { DiscordIcon } from '../components/common/DiscordIcon';
+import { GuildCategoryShowcase } from '../components/home/GuildCategoryShowcase';
 import { useProductStore } from '../stores/productStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useRetailerStore } from '../stores/retailerStore';
@@ -73,6 +75,8 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
+      {/* Autonomous Fashion Guild & AI Art Category Section */}
+      <GuildCategoryShowcase />
 
       {/* Products section */}
       <section ref={productsRef} style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 16px 60px' }}>
@@ -238,9 +242,13 @@ export const HomePage: React.FC = () => {
                 fontSize: 14,
                 padding: '12px 24px',
                 textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
               }}
             >
-              <span>🏛️ {language === 'np' ? 'फेसन गिल्ड हेर्नुहोस्' : 'Explore Fashion Guild'}</span>
+              <DiscordIcon size={18} color="#D4AF37" />
+              <span>{language === 'np' ? 'फेसन गिल्ड हेर्नुहोस्' : 'Visit Fashion Guild'}</span>
               <ArrowRight size={15} color="#D4AF37" />
             </a>
           </div>

@@ -165,7 +165,7 @@ export interface RetailerInquiry {
 3. **Global B2B Platforms**:
    - List Dawosti on **Faire.com** and **Ankorstore** for independent global concept boutique reach.
 4. **Discord Guild Synergy**:
-   - Engage with stylists and showroom designers in the Dawosti Autonomous Fashion Guild (`#heritage-and-textile`).
+   - Engage with stylists and showroom designers in the Dawosti Fashion Guild (`#heritage-and-textile`).
 
 ---
 
