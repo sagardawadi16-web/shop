@@ -1,15 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
-import { RetailerInquiryModal } from './components/wholesale/RetailerInquiryModal';
-import { AdminModal } from './components/admin/AdminModal';
-import { CreatorPortalModal } from './components/referral/CreatorPortalModal';
 import { ToastContainer } from './components/common/Toast';
 import { HomePage } from './pages/HomePage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
-import { ReferralPage } from './pages/ReferralPage';
 import { useProductStore } from './stores/productStore';
 import { useOrderStore } from './stores/orderStore';
 import { useSettingsStore } from './stores/settingsStore';
@@ -20,6 +16,20 @@ import { useAuthStore } from './stores/authStore';
 import { useMobileHistory } from './hooks/useMobileHistory';
 import { recordVisit } from './services/visitorTracker';
 import { Sparkles, X } from 'lucide-react';
+
+// Lazy load heavy admin & secondary views to shrink initial 4G bundle
+const ReferralPage = lazy(() =>
+  import('./pages/ReferralPage').then((m) => ({ default: m.ReferralPage }))
+);
+const RetailerInquiryModal = lazy(() =>
+  import('./components/wholesale/RetailerInquiryModal').then((m) => ({ default: m.RetailerInquiryModal }))
+);
+const AdminModal = lazy(() =>
+  import('./components/admin/AdminModal').then((m) => ({ default: m.AdminModal }))
+);
+const CreatorPortalModal = lazy(() =>
+  import('./components/referral/CreatorPortalModal').then((m) => ({ default: m.CreatorPortalModal }))
+);
 
 export default function App() {
   useMobileHistory();
@@ -162,18 +172,26 @@ export default function App() {
       {pageView === 'home' && <HomePage />}
       {pageView === 'checkout' && <CheckoutPage />}
       {pageView === 'order-confirmation' && latestOrder && <OrderConfirmationPage order={latestOrder} />}
-      {pageView === 'referral' && <ReferralPage />}
+      {pageView === 'referral' && (
+        <Suspense fallback={<div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading Portal...</div>}>
+          <ReferralPage />
+        </Suspense>
+      )}
 
       {/* Global footer — shown on home page */}
       {pageView === 'home' && <Footer />}
 
-      {/* Global overlays */}
+      {/* Global cart overlay */}
       <CartDrawer />
-      <RetailerInquiryModal />
-      <CreatorPortalModal />
-      <AdminModal />
+
+      {/* Lazy Overlays */}
+      <Suspense fallback={null}>
+        <RetailerInquiryModal />
+        <CreatorPortalModal />
+        <AdminModal />
+      </Suspense>
+
       <ToastContainer />
     </>
   );
 }
-
