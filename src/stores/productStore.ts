@@ -5,7 +5,6 @@ import {
   listenProducts,
   saveProduct,
   deleteProduct as deleteProductFromFirestore,
-  seedProductsIfEmpty,
 } from '../services/firestoreProducts';
 
 interface ProductState {
@@ -103,16 +102,12 @@ export const useProductStore = create<ProductState>((set, get) => ({
   isProductGridLoading: false,
 
   initFirestoreSync: () => {
-    // Seed Firestore if empty, then start listener
-    seedProductsIfEmpty(MOCK_PRODUCTS);
-
     const unsubscribe = listenProducts((remoteProducts) => {
       const { selectedCategory, searchQuery, priceRange, selectedSize, sortBy, inStockOnly } = get();
-      const source = remoteProducts.length > 0 ? remoteProducts : MOCK_PRODUCTS;
       set({
-        products: source,
+        products: remoteProducts,
         isLoaded: true,
-        filteredProducts: applyFilters(source, selectedCategory, searchQuery, priceRange, selectedSize, sortBy, inStockOnly),
+        filteredProducts: applyFilters(remoteProducts, selectedCategory, searchQuery, priceRange, selectedSize, sortBy, inStockOnly),
       });
     });
 

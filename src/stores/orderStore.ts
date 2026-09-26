@@ -3,241 +3,6 @@ import { Order, OrderStatus, CartItem, ShippingAddress, PaymentMethod, OrderVeri
 import { listenOrders, saveOrder, updateOrder, deleteOrder } from '../services/firestoreOrders';
 import { creditAdvocateOrder } from '../services/firestoreReferrals';
 import { useReferralStore } from './referralStore';
-import { MOCK_PRODUCTS } from '../mockData';
-
-export const SEED_SHOWCASE_ORDERS: Order[] = [
-  {
-    id: 'seed_order_1',
-    orderNumber: 'DAW-849201',
-    items: [
-      {
-        product: MOCK_PRODUCTS[0], // Crimson Silk Kurtha
-        quantity: 1,
-        selectedSize: 'M',
-        addedAt: '2026-09-22T10:00:00.000Z',
-      },
-    ],
-    subtotalAmount: 5400,
-    discountAmount: 300,
-    deliveryFee: 0,
-    totalAmount: 5100,
-    shippingAddress: {
-      fullName: 'Pooja Sharma',
-      phone: '9841203948',
-      addressLine: 'Lazimpat Embassy Road, House 14',
-      city: 'Kathmandu',
-      province: 'Bagmati Province',
-    },
-    paymentMethod: 'esewa',
-    paymentDetails: 'ESW-9048123',
-    status: 'delivered',
-    createdAt: '2026-09-22T10:15:00.000Z',
-    dispatchDate: '2026-09-23T08:30:00.000Z',
-    acknowledgedByAdmin: true,
-    customerLoginName: 'Pooja Sharma',
-    courierPartner: 'Sundar Express Logistics',
-    trackingNumber: 'SN-KTM-8492',
-    referredByCode: 'SAGAR-82',
-    referralDiscountAmount: 300,
-    referralCommissionAmount: 510, // 10% of net 5,100
-    costPriceTotal: 2268,
-    shippingCostActual: 150,
-    netProfitCalculated: 2172, // 5100 - 2268 - 150 - 510
-    verification: {
-      status: 'verified_genuine',
-      fraudScore: 8,
-      fraudRisk: 'low',
-      verifiedAt: '2026-09-22T11:00:00.000Z',
-      verifiedBy: 'Sagar Dawadi',
-      verificationNotes: 'Verified genuine delivery to Lazimpat resident',
-      method: 'phone_call',
-    },
-  },
-  {
-    id: 'seed_order_2',
-    orderNumber: 'DAW-631892',
-    items: [
-      {
-        product: MOCK_PRODUCTS[2], // Royal Banarasi Saree
-        quantity: 1,
-        selectedSize: 'Free Size',
-        addedAt: '2026-09-23T14:00:00.000Z',
-      },
-    ],
-    subtotalAmount: 12500,
-    discountAmount: 300,
-    deliveryFee: 0,
-    totalAmount: 12200,
-    shippingAddress: {
-      fullName: 'Bikash Adhikari',
-      phone: '9803847291',
-      addressLine: 'Lakeside Ward 6, Near Peace Stupa Gate',
-      city: 'Pokhara',
-      province: 'Gandaki Province',
-    },
-    paymentMethod: 'khalti',
-    paymentDetails: 'KHL-4491028',
-    status: 'shipped',
-    createdAt: '2026-09-23T14:30:00.000Z',
-    dispatchDate: '2026-09-24T06:00:00.000Z',
-    acknowledgedByAdmin: true,
-    customerLoginName: 'Bikash Adhikari',
-    courierPartner: 'Nepal Post EMS Express',
-    trackingNumber: 'EMS-PKR-9042',
-    referredByCode: 'PRASHANT-10',
-    referralDiscountAmount: 300,
-    referralCommissionAmount: 1220, // 10% of net 12,200
-    costPriceTotal: 5250,
-    shippingCostActual: 250,
-    netProfitCalculated: 5480, // 12200 - 5250 - 250 - 1220
-    verification: {
-      status: 'verified_genuine',
-      fraudScore: 12,
-      fraudRisk: 'low',
-      verifiedAt: '2026-09-23T15:00:00.000Z',
-      verifiedBy: 'Sagar Dawadi',
-      verificationNotes: 'Pokhara shipment confirmed via WhatsApp concierge',
-      method: 'whatsapp',
-    },
-  },
-  {
-    id: 'seed_order_3',
-    orderNumber: 'DAW-510943',
-    items: [
-      {
-        product: MOCK_PRODUCTS[1], // Ivory Handloom Kurtha
-        quantity: 2,
-        selectedSize: 'S',
-        addedAt: '2026-09-24T08:30:00.000Z',
-      },
-    ],
-    subtotalAmount: 6400,
-    discountAmount: 300,
-    deliveryFee: 0,
-    totalAmount: 6100,
-    shippingAddress: {
-      fullName: 'Srijana Gurung',
-      phone: '9818937201',
-      addressLine: 'Sanepa 2, Near British School',
-      city: 'Lalitpur',
-      province: 'Bagmati Province',
-    },
-    paymentMethod: 'cod',
-    status: 'delivered',
-    createdAt: '2026-09-24T09:00:00.000Z',
-    dispatchDate: '2026-09-24T12:00:00.000Z',
-    acknowledgedByAdmin: true,
-    customerLoginName: 'Srijana Gurung',
-    courierPartner: 'Sundar Express Logistics',
-    trackingNumber: 'SN-LAL-5109',
-    referredByCode: 'SAGAR-82',
-    referralDiscountAmount: 300,
-    referralCommissionAmount: 610,
-    costPriceTotal: 2688,
-    shippingCostActual: 150,
-    netProfitCalculated: 2652,
-    verification: {
-      status: 'verified_genuine',
-      fraudScore: 6,
-      fraudRisk: 'low',
-      verifiedAt: '2026-09-24T09:30:00.000Z',
-      verifiedBy: 'Dawosti Merchant',
-      verificationNotes: 'Confirmed address and delivery window',
-      method: 'phone_call',
-    },
-  },
-  {
-    id: 'seed_order_4',
-    orderNumber: 'DAW-902314',
-    items: [
-      {
-        product: MOCK_PRODUCTS[3] || MOCK_PRODUCTS[0],
-        quantity: 1,
-        selectedSize: 'M',
-        addedAt: '2026-09-24T16:00:00.000Z',
-      },
-    ],
-    subtotalAmount: 4800,
-    discountAmount: 300,
-    deliveryFee: 150,
-    totalAmount: 4650,
-    shippingAddress: {
-      fullName: 'Dikshya Malla',
-      phone: '9860293847',
-      addressLine: 'Suryabinayak Chowk',
-      city: 'Bhaktapur',
-      province: 'Bagmati Province',
-    },
-    paymentMethod: 'cod',
-    status: 'confirmed',
-    createdAt: '2026-09-24T16:20:00.000Z',
-    acknowledgedByAdmin: true,
-    customerLoginName: 'Dikshya Malla',
-    courierPartner: 'Sundar Express Logistics',
-    referredByCode: 'ANUSHA-24',
-    referralDiscountAmount: 300,
-    referralCommissionAmount: 450,
-    costPriceTotal: 2016,
-    shippingCostActual: 150,
-    netProfitCalculated: 2034,
-    verification: {
-      status: 'verified_genuine',
-      fraudScore: 10,
-      fraudRisk: 'low',
-      verifiedAt: '2026-09-24T16:45:00.000Z',
-      verifiedBy: 'Dawosti Merchant',
-      verificationNotes: 'Bhaktapur order verified by WhatsApp',
-      method: 'whatsapp',
-    },
-  },
-  {
-    id: 'seed_order_5',
-    orderNumber: 'DAW-472819',
-    items: [
-      {
-        product: MOCK_PRODUCTS[0],
-        quantity: 1,
-        selectedSize: 'L',
-        addedAt: '2026-09-24T18:00:00.000Z',
-      },
-    ],
-    subtotalAmount: 5400,
-    discountAmount: 300,
-    deliveryFee: 250,
-    totalAmount: 5350,
-    shippingAddress: {
-      fullName: 'Ankit Shrestha',
-      phone: '9845019283',
-      addressLine: 'Lions Chowk, Narayangarh',
-      city: 'Chitwan',
-      province: 'Bagmati Province',
-    },
-    paymentMethod: 'esewa',
-    paymentDetails: 'ESW-1984201',
-    status: 'delivered',
-    createdAt: '2026-09-24T18:45:00.000Z',
-    dispatchDate: '2026-09-24T20:00:00.000Z',
-    acknowledgedByAdmin: true,
-    customerLoginName: 'Ankit Shrestha',
-    courierPartner: 'Nepal Post EMS Express',
-    trackingNumber: 'EMS-NRY-4728',
-    referredByCode: 'ANUSHA-24',
-    referralDiscountAmount: 300,
-    referralCommissionAmount: 510,
-    costPriceTotal: 2268,
-    shippingCostActual: 250,
-    netProfitCalculated: 2322,
-    verification: {
-      status: 'verified_genuine',
-      fraudScore: 5,
-      fraudRisk: 'low',
-      verifiedAt: '2026-09-24T19:00:00.000Z',
-      verifiedBy: 'Sagar Dawadi',
-      verificationNotes: 'Narayangarh delivery successfully completed',
-      method: 'manual_review',
-    },
-  },
-];
 
 interface OrderState {
   orders: Order[];
@@ -284,18 +49,14 @@ const loadLocalOrders = (): Order[] => {
 const saveLocalOrders = (orders: Order[]) => {
   if (typeof window === 'undefined') return;
   try {
-    const realOnly = orders.filter((o) => !o.id.startsWith('seed_order_'));
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(realOnly));
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(orders));
   } catch {}
 };
 
 const mergeOrdersLists = (...lists: Order[][]): Order[] => {
   const map = new Map<string, Order>();
 
-  // Default seed showcase orders as lowest priority fallback
-  SEED_SHOWCASE_ORDERS.forEach((o) => map.set(o.id, o));
-
-  // Later arrays in arguments override earlier entries
+  // Merge all lists — later arrays override earlier entries
   lists.forEach((list) => {
     (list || []).forEach((o) => {
       if (o && o.id) {
@@ -310,22 +71,21 @@ const mergeOrdersLists = (...lists: Order[][]): Order[] => {
 };
 
 export const useOrderStore = create<OrderState>((set, get) => ({
-  orders: mergeOrdersLists(loadLocalOrders()),
+  orders: loadLocalOrders(),
   latestOrder: null,
   unacknowledgedCount: 0,
 
   initFirestoreSync: () => {
     // 1. Initial hydration from local cache
     const initialLocal = loadLocalOrders();
-    const initialMerged = mergeOrdersLists(get().orders, initialLocal);
-    const initialUnack = initialMerged.filter((o) => !o.acknowledgedByAdmin).length;
-    set({ orders: initialMerged, unacknowledgedCount: initialUnack });
+    const initialUnack = initialLocal.filter((o) => !o.acknowledgedByAdmin).length;
+    set({ orders: initialLocal, unacknowledgedCount: initialUnack });
 
     // 2. Real-time Firestore sync
     const unsubscribe = listenOrders((remoteOrders) => {
       const currentLocal = loadLocalOrders();
       const currentOrders = get().orders;
-      const updated = mergeOrdersLists(SEED_SHOWCASE_ORDERS, currentOrders, currentLocal, remoteOrders);
+      const updated = mergeOrdersLists(currentOrders, currentLocal, remoteOrders);
       const unackCount = updated.filter((o) => !o.acknowledgedByAdmin).length;
       set({ orders: updated, unacknowledgedCount: unackCount });
       saveLocalOrders(updated);
@@ -340,7 +100,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
             const edgeOrders: Order[] = data.orders;
             const currentLocal = loadLocalOrders();
             const currentOrders = get().orders;
-            const updated = mergeOrdersLists(SEED_SHOWCASE_ORDERS, currentOrders, currentLocal, edgeOrders);
+            const updated = mergeOrdersLists(currentOrders, currentLocal, edgeOrders);
             const unackCount = updated.filter((o) => !o.acknowledgedByAdmin).length;
             set({ orders: updated, unacknowledgedCount: unackCount });
             saveLocalOrders(updated);
