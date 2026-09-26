@@ -12,7 +12,7 @@ import {
   MASTER_OWNER_EMAILS,
 } from '../services/firestoreWhitelist';
 
-export type AdminTab = 'profit' | 'orders' | 'referrals' | 'whitelist' | 'payment-qr' | 'catalog';
+export type AdminTab = 'profit' | 'orders' | 'referrals' | 'retailers' | 'whitelist' | 'payment-qr' | 'catalog';
 
 interface AdminState {
   isAdminModalOpen: boolean;
@@ -41,7 +41,7 @@ export const isTabAllowedForRole = (tab: AdminTab, role: AdminRole | null): bool
   if (!role) return false;
   if (role === 'owner' || role === 'super_admin') return true;
   if (role === 'manager') return tab !== 'whitelist';
-  if (role === 'staff') return tab === 'orders' || tab === 'referrals' || tab === 'payment-qr';
+  if (role === 'staff') return tab === 'orders' || tab === 'referrals' || tab === 'payment-qr' || tab === 'retailers';
   return false;
 };
 

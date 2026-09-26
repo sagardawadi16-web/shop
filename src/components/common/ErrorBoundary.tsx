@@ -91,7 +91,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 {this.props.fallbackTitle || 'Display Recovery Activated'}
               </h2>
               <p style={{ margin: 0, fontSize: 13.5, color: '#6B564C', lineHeight: 1.5 }}>
-                An unexpected view state occurred. Our autonomous recovery system has caught this to protect your account data.
+                An unexpected view state occurred. Our automated recovery system has caught this to protect your account data.
               </p>
             </div>
 

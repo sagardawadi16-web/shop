@@ -14,6 +14,7 @@ import {
   Shield,
   Briefcase,
   Scissors,
+  Building2,
 } from 'lucide-react';
 import { useAdminStore, AdminTab, isTabAllowedForRole } from '../../stores/adminStore';
 import { ProfitSimulatorTab } from './tabs/ProfitSimulatorTab';
@@ -21,6 +22,7 @@ import { OrdersTab } from './tabs/OrdersTab';
 import { ReferralsTab } from './tabs/ReferralsTab';
 import { WhitelistTab } from './tabs/WhitelistTab';
 import { PaymentQRTab } from './tabs/PaymentQRTab';
+import { RetailersTab } from './tabs/RetailersTab';
 import { AdminRole } from '../../types';
 
 export const AdminModal: React.FC = () => {
@@ -142,6 +144,7 @@ export const AdminModal: React.FC = () => {
   const allTabs: { id: AdminTab; label: string; icon: any }[] = [
     { id: 'orders', label: 'Orders & Dispatch', icon: ShoppingBag },
     { id: 'referrals', label: 'Creator Payouts', icon: Award },
+    { id: 'retailers', label: 'Wholesale & Stockists', icon: Building2 },
     { id: 'profit', label: 'Unit Economics & Margins', icon: Calculator },
     { id: 'payment-qr', label: 'Payment QR Terminal', icon: QrCode },
     { id: 'whitelist', label: 'Staff & Owner Roles', icon: Users },
@@ -480,6 +483,7 @@ export const AdminModal: React.FC = () => {
             <div style={{ padding: 24, overflowY: 'auto', flex: 1 }}>
               {adminActiveTab === 'orders' && <OrdersTab />}
               {adminActiveTab === 'referrals' && <ReferralsTab />}
+              {adminActiveTab === 'retailers' && isTabAllowedForRole('retailers', currentRole) && <RetailersTab />}
               {adminActiveTab === 'profit' && isTabAllowedForRole('profit', currentRole) && <ProfitSimulatorTab />}
               {adminActiveTab === 'payment-qr' && isTabAllowedForRole('payment-qr', currentRole) && <PaymentQRTab />}
               {adminActiveTab === 'whitelist' && isTabAllowedForRole('whitelist', currentRole) && <WhitelistTab />}

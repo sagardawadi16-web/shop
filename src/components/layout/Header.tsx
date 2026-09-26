@@ -112,7 +112,14 @@ export const Header: React.FC = () => {
       setPageView('home');
     }
     setMobileMenuOpen(false);
-    window.scrollTo({ top: 400, behavior: 'smooth' });
+    setTimeout(() => {
+      const catalogEl = document.getElementById('product-catalog');
+      if (catalogEl) {
+        catalogEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.scrollTo({ top: 380, behavior: 'smooth' });
+      }
+    }, 60);
   };
 
   const handleLogoClick = () => {

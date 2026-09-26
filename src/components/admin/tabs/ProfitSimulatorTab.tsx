@@ -1,12 +1,37 @@
 import React, { useState } from 'react';
-import { Calculator, TrendingUp, AlertTriangle, CheckCircle, DollarSign, Package, LayoutTemplate, Eye, EyeOff } from 'lucide-react';
+import { Calculator, TrendingUp, AlertTriangle, CheckCircle, DollarSign, Package, LayoutTemplate, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { useProductStore } from '../../../stores/productStore';
 import { calculateProfit, DEFAULT_SHIPPING_ESTIMATE } from '../../../services/profitCalculator';
 import { useSettingsStore } from '../../../stores/settingsStore';
+import { deleteAllDemoProducts } from '../../../services/firestoreProducts';
+import { deleteAllSeedOrders } from '../../../services/firestoreOrders';
 
 export const ProfitSimulatorTab: React.FC = () => {
   const { products, updateProduct } = useProductStore();
   const { theme, updateTheme } = useSettingsStore();
+
+  // Demo data wipe state
+  const [wipeState, setWipeState] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+  const [wipeMsg, setWipeMsg] = useState('');
+
+  const handleWipeDemoData = async () => {
+    if (!window.confirm('This will permanently delete all demo products (daw-001 to daw-008) and seed orders from Firestore. Are you sure?')) return;
+    setWipeState('running');
+    setWipeMsg('Deleting from Firestore...');
+    try {
+      const [deletedProducts, deletedOrders] = await Promise.all([
+        deleteAllDemoProducts(),
+        deleteAllSeedOrders(),
+      ]);
+      // Also clear localStorage order cache
+      try { localStorage.removeItem('dawosti_local_orders_v2'); } catch {}
+      setWipeState('done');
+      setWipeMsg(`✅ Done! Removed ${deletedProducts} demo product(s) and ${deletedOrders} seed order(s) from Firestore. Refresh the page to see changes.`);
+    } catch (err) {
+      setWipeState('error');
+      setWipeMsg('❌ Failed to delete some items. Check console for details.');
+    }
+  };
 
   // Active simulator parameters
   const [selectedProductId, setSelectedProductId] = useState<string>(products[0]?.id || '');

@@ -142,8 +142,8 @@ export const GuildCategoryShowcase: React.FC = () => {
             }}
           >
             {language === 'np'
-              ? 'स्वायत्त फेसन गिल्ड तथा एआई-आर्ट क्याटागोरी'
-              : 'Autonomous Fashion Guild & Aesthetic Categories'}
+              ? 'दावोस्ती फेसन गिल्ड तथा एआई-आर्ट क्याटागोरी'
+              : 'Dawosti Fashion Guild & Aesthetic Categories'}
           </h2>
           <p
             style={{

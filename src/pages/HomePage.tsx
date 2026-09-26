@@ -79,9 +79,9 @@ export const HomePage: React.FC = () => {
       {theme.showGuildSection && <GuildCategoryShowcase />}
 
       {/* Products section */}
-      <section ref={productsRef} style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 16px 60px' }}>
+      <section id="product-catalog" ref={productsRef} style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 16px 60px' }}>
         {/* Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
           <div>
             <h2 className="section-title" style={{ fontSize: 'clamp(20px, 3.5vw, 32px)' }}>
               {selectedCategory === 'all'
@@ -121,6 +121,46 @@ export const HomePage: React.FC = () => {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Horizontal Category Quick-Filter Bar (1-tap on mobile & desktop) */}
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            overflowX: 'auto',
+            paddingBottom: 10,
+            marginBottom: 20,
+            scrollbarWidth: 'none',
+            WebkitOverflowScrolling: 'touch',
+          }}
+          className="no-scrollbar"
+        >
+          {CATEGORIES.map((cat) => {
+            const isSelected = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: 99,
+                  fontSize: 13,
+                  fontWeight: isSelected ? 700 : 500,
+                  whiteSpace: 'nowrap',
+                  border: isSelected ? '1.5px solid #8B3A3A' : '1px solid #EADCCE',
+                  background: isSelected ? '#8B3A3A' : 'white',
+                  color: isSelected ? 'white' : '#2B1810',
+                  cursor: 'pointer',
+                  boxShadow: isSelected ? '0 2px 8px rgba(139, 58, 58, 0.25)' : 'none',
+                  transition: 'all 0.15s ease',
+                  flexShrink: 0,
+                }}
+              >
+                {language === 'np' ? cat.name.np : cat.name.en}
+              </button>
+            );
+          })}
         </div>
 
         {/* Filter bar */}

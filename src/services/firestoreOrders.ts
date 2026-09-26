@@ -69,3 +69,19 @@ export const deleteOrder = async (orderId: string): Promise<void> => {
     console.warn('[Firestore] deleteOrder failed:', err);
   }
 };
+
+/** Delete all seed/demo orders (IDs starting with 'seed_order_') from Firestore. */
+export const deleteAllSeedOrders = async (): Promise<number> => {
+  let deleted = 0;
+  try {
+    const snap = await getDocs(collection(db, COL));
+    const toDelete = snap.docs.filter((d) => d.id.startsWith('seed_order_'));
+    for (const d of toDelete) {
+      await deleteDoc(doc(db, COL, d.id));
+      deleted++;
+    }
+  } catch (err) {
+    console.warn('[Firestore] deleteAllSeedOrders failed:', err);
+  }
+  return deleted;
+};
