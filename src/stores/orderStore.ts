@@ -35,6 +35,28 @@ interface OrderState {
 }
 
 const LOCAL_STORAGE_KEY = 'dawosti_local_orders_v2';
+const LATEST_ORDER_KEY = 'dawosti_latest_order_v2';
+
+const loadLatestOrder = (): Order | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(LATEST_ORDER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveLatestOrder = (order: Order | null) => {
+  if (typeof window === 'undefined') return;
+  try {
+    if (order) {
+      localStorage.setItem(LATEST_ORDER_KEY, JSON.stringify(order));
+    } else {
+      localStorage.removeItem(LATEST_ORDER_KEY);
+    }
+  } catch {}
+};
 
 const loadLocalOrders = (): Order[] => {
   if (typeof window === 'undefined') return [];
@@ -72,7 +94,7 @@ const mergeOrdersLists = (...lists: Order[][]): Order[] => {
 
 export const useOrderStore = create<OrderState>((set, get) => ({
   orders: loadLocalOrders(),
-  latestOrder: null,
+  latestOrder: loadLatestOrder(),
   unacknowledgedCount: 0,
 
   initFirestoreSync: () => {
@@ -202,6 +224,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const unackCount = updated.filter((o) => !o.acknowledgedByAdmin).length;
     set({ orders: updated, latestOrder: newOrder, unacknowledgedCount: unackCount });
     saveLocalOrders(updated);
+    saveLatestOrder(newOrder);
 
     // Persist to Firestore (source of truth)
     saveOrder(newOrder);
@@ -339,7 +362,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     saveLocalOrders([]);
   },
 
-  setLatestOrder: (order) => set({ latestOrder: order }),
+  setLatestOrder: (order) => {
+    saveLatestOrder(order);
+    set({ latestOrder: order });
+  },
 
   trackByNumber: (search) => {
     const q = search.trim().toLowerCase();

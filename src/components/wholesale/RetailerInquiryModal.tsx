@@ -57,7 +57,7 @@ export const RetailerInquiryModal: React.FC = () => {
     const text = encodeURIComponent(
       `Namaste Sagar! I submitted a Retailer / Stockist inquiry for "${storeName}" (${city}, ${country}). We are interested in stocking Dawosti collections. Let's discuss wholesale terms!`
     );
-    return `https://wa.me/${merchant.whatsappNumber || '9779708251494'}?text=${text}`;
+    return `https://wa.me/${merchant.whatsappNumber || '9779808251494'}?text=${text}`;
   };
 
   return (

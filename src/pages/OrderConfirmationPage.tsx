@@ -295,8 +295,16 @@ export const OrderConfirmationPage: React.FC<Props> = ({ order }) => {
           <span>{language === 'np' ? 'ह्वाट्सएपमा अर्डर पठाउनुहोस् (+९७७ ९८०८२५१४९४)' : 'Confirm & Send to WhatsApp (+977 9808251494)'}</span>
         </a>
 
+        <button
+          onClick={() => useSettingsStore.getState().setIsOrderTrackingOpen(true)}
+          className="btn btn-outline"
+          style={{ width: '100%', marginBottom: 10, borderColor: '#8B3A3A', color: '#8B3A3A', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+        >
+          <Truck size={16} /> <span>{language === 'np' ? 'अर्डर डेलिभरी स्थिति ट्र्याक गर्नुहोस्' : 'Track Delivery Status'}</span>
+        </button>
+
         <button onClick={() => setPageView('home')} className="btn btn-outline" style={{ width: '100%' }}>
-          <ArrowLeft size={16} /> Continue Shopping
+          <ArrowLeft size={16} /> {language === 'np' ? 'पसलमा फर्किनुहोस्' : 'Continue Shopping'}
         </button>
       </div>
     </div>

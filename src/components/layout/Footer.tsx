@@ -234,7 +234,7 @@ export const Footer: React.FC = () => {
                   rel="noopener noreferrer"
                   style={{ color: '#25D366', textDecoration: 'none', fontWeight: 600 }}
                 >
-                  WhatsApp: +977 9708251494
+                  WhatsApp: +977 9808251494
                 </a>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

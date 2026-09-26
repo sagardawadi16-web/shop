@@ -30,6 +30,9 @@ const AdminModal = lazy(() =>
 const CreatorPortalModal = lazy(() =>
   import('./components/referral/CreatorPortalModal').then((m) => ({ default: m.CreatorPortalModal }))
 );
+const OrderTrackingModal = lazy(() =>
+  import('./components/orders/OrderTrackingModal').then((m) => ({ default: m.OrderTrackingModal }))
+);
 
 export default function App() {
   useMobileHistory();
@@ -171,7 +174,28 @@ export default function App() {
       {/* Page views */}
       {pageView === 'home' && <HomePage />}
       {pageView === 'checkout' && <CheckoutPage />}
-      {pageView === 'order-confirmation' && latestOrder && <OrderConfirmationPage order={latestOrder} />}
+      {pageView === 'order-confirmation' && (
+        latestOrder ? (
+          <OrderConfirmationPage order={latestOrder} />
+        ) : (
+          <div style={{ minHeight: '65vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 16px', textAlign: 'center' }}>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 26, fontWeight: 700, marginBottom: 8, color: '#2B1810' }}>
+              No recent order found in this session
+            </h2>
+            <p style={{ color: '#6B564C', marginBottom: 24, fontSize: 14, maxWidth: 440 }}>
+              If you recently placed an order, you can look up its live delivery status anytime with our Order Tracking tool.
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button onClick={() => setPageView('home')} className="btn btn-primary" style={{ padding: '10px 24px' }}>
+                ← Return to Boutique
+              </button>
+              <button onClick={() => useSettingsStore.getState().setIsOrderTrackingOpen(true)} className="btn btn-outline" style={{ padding: '10px 20px', borderColor: '#8B3A3A', color: '#8B3A3A' }}>
+                🔍 Track Past Order
+              </button>
+            </div>
+          </div>
+        )
+      )}
       {pageView === 'referral' && (
         <Suspense fallback={<div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading Portal...</div>}>
           <ReferralPage />
@@ -189,6 +213,7 @@ export default function App() {
         <RetailerInquiryModal />
         <CreatorPortalModal />
         <AdminModal />
+        <OrderTrackingModal />
       </Suspense>
 
       <ToastContainer />
