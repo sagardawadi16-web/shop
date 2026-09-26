@@ -221,10 +221,10 @@ export const MOCK_PRODUCTS: Product[] = [
 export const DEFAULT_MERCHANT: MerchantSettings = {
   shopName: { en: 'DAWOSTI Boutique', np: 'दावोस्ती बुटिक' },
   shopTagline: { en: 'Authentic Nepali Fashion', np: 'मौलिक नेपाली फेसन' },
-  shopPhone: '9708251494',
+  shopPhone: '9808251494',
   shopEmail: 'contact.dawosti@gmail.com',
   shopAddress: { en: 'Kathmandu, Nepal', np: 'काठमाडौँ, नेपाल' },
-  whatsappNumber: '9779708251494',
+  whatsappNumber: '9779808251494',
   freeDeliveryThreshold: 3000,
   deliveryFee: 150,
 };

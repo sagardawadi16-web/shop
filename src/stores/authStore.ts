@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { GoogleUser } from '../types';
 import { signInWithGoogle, signOutUser, onAuthChange } from '../services/firebaseAuth';
+import { getUserRole } from '../services/firestoreWhitelist';
 
 interface AuthState {
   user: GoogleUser | null;
@@ -9,7 +10,7 @@ interface AuthState {
 
   // Actions
   initAuth: () => () => void;
-  loginGoogle: () => Promise<GoogleUser | null>;
+  loginGoogle: (preferredEmail?: string) => Promise<GoogleUser | null>;
   logout: () => Promise<void>;
   setIsUserMenuOpen: (v: boolean) => void;
 }
@@ -20,7 +21,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: (() => {
     try {
       const saved = localStorage.getItem(STORAGE_USER_KEY);
-      return saved ? JSON.parse(saved) : null;
+      if (!saved) return null;
+      const parsed: GoogleUser = JSON.parse(saved);
+      if (parsed?.email) {
+        parsed.role = getUserRole(parsed.email) || undefined;
+      }
+      return parsed;
     } catch {
       return null;
     }
@@ -33,13 +39,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initAuth: () => {
     const unsubscribe = onAuthChange(
       (firebaseUser) => {
-        const email = firebaseUser.email || '';
+        const email = (firebaseUser.email || '').trim().toLowerCase();
+        const role = getUserRole(email);
         const userObj: GoogleUser = {
           id: firebaseUser.uid,
           name: firebaseUser.displayName || email.split('@')[0] || 'Customer',
           email,
-          avatar: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || email)}&background=8B3A3A&color=fff`,
+          avatar:
+            firebaseUser.photoURL ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || email)}&background=8B3A3A&color=fff`,
           isLoggedIn: true,
+          role: role || undefined,
         };
         try {
           localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(userObj));
@@ -56,21 +66,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return unsubscribe;
   },
 
-  loginGoogle: async () => {
+  loginGoogle: async (preferredEmail?: string) => {
     set({ isLoading: true });
     try {
-      const firebaseUser = await signInWithGoogle();
+      const firebaseUser = await signInWithGoogle(preferredEmail);
       if (!firebaseUser) {
         set({ isLoading: false });
         return null;
       }
-      const email = firebaseUser.email || '';
+      const email = (firebaseUser.email || '').trim().toLowerCase();
+      const role = getUserRole(email);
       const userObj: GoogleUser = {
         id: firebaseUser.uid,
         name: firebaseUser.displayName || email.split('@')[0] || 'Customer',
         email,
-        avatar: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || email)}&background=8B3A3A&color=fff`,
+        avatar:
+          firebaseUser.photoURL ||
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(firebaseUser.displayName || email)}&background=8B3A3A&color=fff`,
         isLoggedIn: true,
+        role: role || undefined,
       };
       try {
         localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(userObj));

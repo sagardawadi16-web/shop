@@ -63,22 +63,47 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       country: context.request.headers.get('cf-ipcountry') || 'NP',
     };
 
-    // 5. Build Direct WhatsApp Verification URI for Merchant (+977 9708251494)
+    // 5. Build Direct WhatsApp Verification URI for Merchant (+977 9808251494)
+    const itemsList = items.map((i: any, idx: number) => {
+      const name = i.product?.title?.np || i.product?.title?.en || i.product?.title || 'पोशाक';
+      const size = i.selectedSize || 'Free';
+      const qty = i.quantity || 1;
+      const price = (i.product?.price || 0) * qty;
+      return `${idx + 1}. *${name}*\n   साइज: ${size} | थान: ${qty} | रु ${price.toLocaleString()}`;
+    }).join('\n');
+
+    const paymentLabel = paymentMethod === 'cod'
+      ? 'सामान हातमा परेपछि (Cash on Delivery)'
+      : paymentMethod.toUpperCase();
+
+    const noteText = body.deliveryNote ? `\n📝 *डेलिभरी नोट:* ${body.deliveryNote}` : '';
+    const refCodeText = body.referredByCode ? `\n🎁 *रेफरल कोड:* ${body.referredByCode}` : '';
+    const txnText = body.paymentDetails ? `\n🧾 *कारोबार कोड (Txn Ref):* ${body.paymentDetails}` : '';
+
     const whatsappText = encodeURIComponent(
-      `🛍️ *DAWOSTI Boutique Order #${orderNumber}*\n` +
-      `👤 Customer: ${shipping.fullName}\n` +
-      `📞 Phone: ${shipping.phone}\n` +
-      `📍 City: ${shipping.city || 'Kathmandu'}\n` +
-      `💰 Total: NPR ${totalAmount.toLocaleString()}\n` +
-      `💳 Method: ${paymentMethod.toUpperCase()}`
+      `🛍️ *दावोस्ती बुटिक — नयाँ अनलाइन अर्डर #${orderNumber}*\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `👤 *ग्राहकको नाम (Customer):* ${shipping.fullName}\n` +
+      `📞 *सम्पर्क फोन (Phone):* ${shipping.phone}\n` +
+      `📍 *डेलिभरी ठेगाना:* ${shipping.addressLine || ''}, ${shipping.city || 'Kathmandu'}\n` +
+      `${noteText}` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📦 *अर्डर गरिएका वस्त्रहरू (Items):*\n${itemsList}\n\n` +
+      `💰 *जम्मा रकम (Total):* NPR ${totalAmount.toLocaleString()}\n` +
+      `💳 *भुक्तानी माध्यम:* ${paymentLabel}` +
+      `${txnText}` +
+      `${refCodeText}\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `🙏 *कृपया यो अर्डर प्रमाणीकरण गरी छिटो डेलिभरी व्यवस्था गरिदिनुहोला। धन्यवाद!*`
     );
-    const whatsappUrl = `https://wa.me/9779708251494?text=${whatsappText}`;
+    const whatsappUrl = `https://wa.me/9779808251494?text=${whatsappText}`;
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Order verified and recorded at Cloudflare edge.',
+        message: 'Order verified and recorded at Cloudflare edge. Forwarding customer details to WhatsApp 9808251494.',
         order: verifiedOrder,
+        targetPhone: '9808251494',
         whatsappUrl,
       }),
       {
@@ -106,8 +131,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     JSON.stringify({
       status: 'active',
       store: 'DAWOSTI Boutique Kathmandu',
-      helpline: '+977 9708251494',
-      whatsapp: 'https://wa.me/9779708251494',
+      helpline: '+977 9808251494',
+      whatsapp: 'https://wa.me/9779808251494',
       query: orderNumber ? { orderNumber, status: 'confirmed' } : null,
       timestamp: new Date().toISOString(),
     }),

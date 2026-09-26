@@ -1,4 +1,4 @@
-import { CheckCircle, MessageCircle, ArrowLeft, Package, Truck, Award, Sparkles } from 'lucide-react';
+import { CheckCircle, MessageCircle, ArrowLeft, Package, Truck, Award, Sparkles, QrCode } from 'lucide-react';
 import { Order } from '../types';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useReferralStore } from '../stores/referralStore';
@@ -14,18 +14,17 @@ export const OrderConfirmationPage: React.FC<Props> = ({ order }) => {
   };
 
   const whatsappMsg = encodeURIComponent(
-    `🛍️ *New Order Confirmed — DAWOSTI Boutique*\n\n` +
-    `📋 Order No: *${order.orderNumber}*\n` +
-    `👤 Customer: ${order.shippingAddress.fullName}\n` +
-    `📞 Phone: ${order.shippingAddress.phone}\n` +
-    `📍 Address: ${order.shippingAddress.addressLine}, ${order.shippingAddress.city}\n\n` +
-    `📦 *Items:*\n` +
-    order.items.map((i) => `• ${i.product.title.en} (${i.selectedSize}) × ${i.quantity} = NPR ${(i.product.price * i.quantity).toLocaleString()}`).join('\n') +
-    `\n\n💰 Total: NPR ${order.totalAmount.toLocaleString()}\n` +
-    `💳 Payment: ${paymentLabels[order.paymentMethod] || order.paymentMethod}\n` +
-    `${order.paymentDetails ? `🧾 Ref: ${order.paymentDetails}\n` : ''}` +
-    `${order.referredByCode ? `🎁 Referral Attribution: *[REF: ${order.referredByCode}]*\n` : ''}` +
-    `\nKindly confirm this order. Thank you! 🙏`
+    `🛍️ *दावोस्ती फेसन — अर्डर विवरण पुष्टि #${order.orderNumber}*\n\n` +
+    `👤 ग्राहक: *${order.shippingAddress.fullName}*\n` +
+    `📞 फोन: *${order.shippingAddress.phone}*\n` +
+    `📍 ठेगाना: *${order.shippingAddress.addressLine}, ${order.shippingAddress.city}*\n\n` +
+    `📦 *अर्डर गरिएका वस्त्रहरू:*\n` +
+    order.items.map((i) => `• ${(language === 'np' ? i.product.title.np : i.product.title.en) || i.product.title.en} (${i.selectedSize}) × ${i.quantity} = रु ${(i.product.price * i.quantity).toLocaleString()}`).join('\n') +
+    `\n\n💰 *जम्मा रकम:* NPR ${order.totalAmount.toLocaleString()}\n` +
+    `💳 *भुक्तानी तरिका:* ${paymentLabels[order.paymentMethod] || order.paymentMethod}\n` +
+    `${order.paymentDetails ? `🧾 *कारोबार कोड:* ${order.paymentDetails}\n` : ''}` +
+    `${order.referredByCode ? `🎁 *रेफरल कोड:* ${order.referredByCode}\n` : ''}` +
+    `\n🙏 कृपया मेरो यो अर्डर दर्ता गरी डेलिभरी गरिदिनुहोला। धन्यवाद!`
   );
 
   return (
@@ -65,6 +64,69 @@ export const OrderConfirmationPage: React.FC<Props> = ({ order }) => {
           </div>
         </div>
 
+        {/* Digital Payment Receipt Card if Digital Wallet */}
+        {order.paymentMethod !== 'cod' && (
+          <div
+            style={{
+              background: '#FAF2E9',
+              border: '1.5px solid #D4AF37',
+              borderRadius: 14,
+              padding: '16px 20px',
+              marginBottom: 20,
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 8 }}>
+              <QrCode size={16} color="#8B3A3A" />
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: '#8B3A3A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {language === 'np' ? 'डिजिटल भुक्तानी विवरण' : 'Digital Payment Reference'}
+              </span>
+            </div>
+
+            {(() => {
+              const activeQr =
+                order.paymentMethod === 'esewa'
+                  ? (merchant.esewaQrDataUri || merchant.fonepayQrDataUri)
+                  : order.paymentMethod === 'khalti'
+                  ? (merchant.khaltiQrDataUri || merchant.fonepayQrDataUri)
+                  : merchant.fonepayQrDataUri;
+
+              return activeQr ? (
+                <div
+                  style={{
+                    width: 140,
+                    height: 140,
+                    margin: '0 auto 10px',
+                    background: '#FFFFFF',
+                    padding: 6,
+                    borderRadius: 8,
+                    border: '1px solid #D4AF37',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
+                  }}
+                >
+                  <img
+                    src={activeQr}
+                    alt="Payment QR"
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 4 }}
+                  />
+                </div>
+              ) : null;
+            })()}
+
+            <p style={{ margin: '0 0 4px', fontSize: 12, color: '#2B1810' }}>
+              <strong>{language === 'np' ? 'खाता / फोन नम्बर:' : 'Account / Phone:'}</strong>{' '}
+              <code style={{ background: '#FFF', padding: '1px 6px', borderRadius: 4, color: '#8B3A3A', fontWeight: 800 }}>
+                {merchant.shopPhone}
+              </code>
+            </p>
+            {order.paymentDetails && (
+              <p style={{ margin: '4px 0 0', fontSize: 11.5, color: '#6B564C' }}>
+                <strong>Txn ID:</strong> <code>{order.paymentDetails}</code>
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Status steps */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 28 }}>
           {[{ icon: <CheckCircle size={18} />, label: 'Order Placed' }, { icon: <Package size={18} />, label: 'Packing' }, { icon: <Truck size={18} />, label: 'Delivery' }].map(({ icon, label }, i) => (
@@ -84,8 +146,8 @@ export const OrderConfirmationPage: React.FC<Props> = ({ order }) => {
           </div>
           <p style={{ fontSize: 12, color: '#047857', margin: 0, lineHeight: 1.5 }}>
             {language === 'np'
-              ? 'तपाईंको अर्डर तुरुन्तै दर्ता र डेलिभरी गर्नका लागि तलको हरियो बटन थिचेर हाम्रो आधिकारिक ह्वाट्सएप (+९७७ ९७०८२५१४९४) मा अर्डर विवरण पठाउनुहोस्।'
-              : 'To verify your order immediately and guarantee priority express dispatch, tap the button below to send your order details directly to our Kathmandu boutique.'}
+              ? 'तपाईंको अर्डर तुरुन्तै दर्ता र डेलिभरी गर्नका लागि तलको हरियो बटन थिचेर हाम्रो आधिकारिक ह्वाट्सएप (+९७७ ९८०८२५१४९४) मा अर्डर विवरण पठाउनुहोस्।'
+              : 'To verify your order immediately and guarantee priority express dispatch, tap the button below to send your order details directly to our WhatsApp (+977 9808251494).'}
           </p>
         </div>
 
@@ -228,7 +290,7 @@ export const OrderConfirmationPage: React.FC<Props> = ({ order }) => {
           onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
         >
           <MessageCircle size={20} />
-          <span>{language === 'np' ? 'ह्वाट्सएपमा अर्डर पठाउनुहोस् (+९७७ ९७०८२५१४९४)' : 'Confirm & Send to WhatsApp (+977 9708251494)'}</span>
+          <span>{language === 'np' ? 'ह्वाट्सएपमा अर्डर पठाउनुहोस् (+९७७ ९८०८२५१४९४)' : 'Confirm & Send to WhatsApp (+977 9808251494)'}</span>
         </a>
 
         <button onClick={() => setPageView('home')} className="btn btn-outline" style={{ width: '100%' }}>

@@ -57,8 +57,8 @@ app.get('/api/health', (_req: Request, res: Response) => {
   res.json({
     status: 'ok',
     store: 'DAWOSTI Boutique Kathmandu',
-    officialPhone: '+977 9708251494',
-    whatsapp: 'https://wa.me/9779708251494',
+    officialPhone: '+977 9808251494',
+    whatsapp: 'https://wa.me/9779808251494',
     timestamp: new Date().toISOString(),
   });
 });
@@ -66,9 +66,9 @@ app.get('/api/health', (_req: Request, res: Response) => {
 app.get('/api/config', (_req: Request, res: Response) => {
   res.json({
     storeName: 'DAWOSTI',
-    officialPhone: '+977 9708251494',
-    helplinePhone: '9708251494',
-    whatsappNumber: '9779708251494',
+    officialPhone: '+977 9808251494',
+    helplinePhone: '9808251494',
+    whatsappNumber: '9779808251494',
     email: 'contact.dawosti@gmail.com',
     location: 'New Road (Opposite Bishal Bazar), Kathmandu, Nepal',
   });
@@ -278,6 +278,78 @@ app.post('/api/admin/update-pin', (req: Request, res: Response) => {
     return res.json({ success: true, message: 'Admin passcode updated successfully' });
   }
   return res.status(403).json({ success: false, error: 'Current passcode verification failed' });
+});
+
+// 4.1 Admin Whitelist & Staff/Owner Management API
+interface ServerWhitelistEntry {
+  id: string;
+  email: string;
+  role: string;
+  addedBy: string;
+  addedAt: string;
+  notes?: string;
+}
+
+const serverWhitelist: ServerWhitelistEntry[] = [
+  {
+    id: 'sagardawadi16_gmail_com',
+    email: 'sagardawadi16@gmail.com',
+    role: 'owner',
+    addedBy: 'System Root',
+    addedAt: new Date().toISOString(),
+    notes: 'Master Founder & Owner',
+  },
+  {
+    id: 'sagardawadi10_gmail_com',
+    email: 'sagardawadi10@gmail.com',
+    role: 'owner',
+    addedBy: 'System Root',
+    addedAt: new Date().toISOString(),
+    notes: 'Master Founder & Owner',
+  },
+];
+
+app.get('/api/admin/whitelist', (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    masterOwners: ['sagardawadi16@gmail.com', 'sagardawadi10@gmail.com'],
+    whitelist: serverWhitelist,
+  });
+});
+
+app.post('/api/admin/whitelist', (req: Request, res: Response) => {
+  const { email, role, notes, addedBy } = req.body;
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ success: false, error: 'Valid email required' });
+  }
+  const cleanEmail = email.trim().toLowerCase();
+  const existingIndex = serverWhitelist.findIndex((e) => e.email.toLowerCase() === cleanEmail);
+  const entry: ServerWhitelistEntry = {
+    id: cleanEmail.replace(/[^a-z0-9]/g, '_'),
+    email: cleanEmail,
+    role: role || 'staff',
+    addedBy: addedBy || 'Admin',
+    addedAt: new Date().toISOString(),
+    notes: notes || '',
+  };
+  if (existingIndex > -1) {
+    serverWhitelist[existingIndex] = entry;
+  } else {
+    serverWhitelist.unshift(entry);
+  }
+  return res.json({ success: true, entry, count: serverWhitelist.length });
+});
+
+app.delete('/api/admin/whitelist/:email', (req: Request, res: Response) => {
+  const email = req.params.email.toLowerCase();
+  if (['sagardawadi16@gmail.com', 'sagardawadi10@gmail.com'].includes(email)) {
+    return res.status(403).json({ success: false, error: 'Cannot remove Master Owner' });
+  }
+  const index = serverWhitelist.findIndex((e) => e.email.toLowerCase() === email);
+  if (index > -1) {
+    serverWhitelist.splice(index, 1);
+  }
+  return res.json({ success: true, count: serverWhitelist.length });
 });
 
 // 5. Subscribers API

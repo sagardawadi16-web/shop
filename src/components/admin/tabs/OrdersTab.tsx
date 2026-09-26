@@ -151,7 +151,9 @@ export const OrdersTab: React.FC = () => {
                     <span>Revenue: <strong>NPR {order.totalAmount.toLocaleString()}</strong></span>
                     <span>Cost: <strong style={{ color: '#8B3A3A' }}>−NPR {orderBuyingCost.toLocaleString()}</strong></span>
                     {order.referredByCode && (
-                      <span>Referral: <strong style={{ color: '#1B7F5E' }}>−NPR {orderTargetReferralFee}</strong></span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: order.referralCommissionCredited ? '#E0F3EA' : '#FFF3CD', color: order.referralCommissionCredited ? '#1B7F5E' : '#856404', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>
+                        🛍️ Creator {order.referredByCode}: NPR {orderTargetReferralFee} {order.referralCommissionCredited ? '(✓ Cut Credited)' : '(Auto-Credits on Verify)'}
+                      </span>
                     )}
                     <span>Est. Courier: <strong>−NPR 150</strong></span>
                   </div>

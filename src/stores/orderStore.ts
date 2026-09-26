@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Order, OrderStatus, CartItem, ShippingAddress, PaymentMethod, OrderVerificationStatus, OrderVerification } from '../types';
 import { listenOrders, saveOrder, updateOrder, deleteOrder } from '../services/firestoreOrders';
 import { creditAdvocateOrder } from '../services/firestoreReferrals';
+import { useReferralStore } from './referralStore';
 import { MOCK_PRODUCTS } from '../mockData';
 
 export const SEED_SHOWCASE_ORDERS: Order[] = [
@@ -398,13 +399,33 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     set({ orders: updated });
     updateOrder(orderId, updates);
 
-    // If order was delivered and was referred by an advocate, credit advocate exact 10% commission
-    if (status === 'delivered' && target && target.referredByCode) {
+    // If order was delivered and was referred by an advocate, credit advocate exact 10% commission (if not already credited)
+    if (status === 'delivered' && target && target.referredByCode && !target.referralCommissionCredited) {
       const commissionToCredit =
         target.referralCommissionAmount ||
         Math.round((target.subtotalAmount - (target.referralDiscountAmount || 0)) * 0.10) ||
         500;
+      updates.referralCommissionCredited = true;
+      updates.referralCommissionCreditedAt = new Date().toISOString();
+      updates.referralCommissionAmount = commissionToCredit;
+
       creditAdvocateOrder(target.referredByCode, commissionToCredit).catch(() => {});
+
+      try {
+        const { allAdvocates } = useReferralStore.getState();
+        const updatedAdvocates = (allAdvocates || []).map((adv) => {
+          if (adv.code.toUpperCase() === target.referredByCode!.toUpperCase()) {
+            return {
+              ...adv,
+              ordersDeliveredCount: (adv.ordersDeliveredCount || 0) + 1,
+              withdrawableBalance: (adv.withdrawableBalance || 0) + commissionToCredit,
+              lifetimeEarned: (adv.lifetimeEarned || 0) + commissionToCredit,
+            };
+          }
+          return adv;
+        });
+        useReferralStore.setState({ allAdvocates: updatedAdvocates });
+      } catch {}
     }
   },
 
@@ -434,6 +455,42 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       ...(verificationStatus === 'verified_genuine' ? { acknowledgedByAdmin: true, status: 'confirmed' } : {}),
       ...(verificationStatus === 'flagged_fake' ? { status: 'cancelled' } : {}),
     };
+
+    // If order was verified genuine and was referred by an advocate, automatically credit creator cut
+    if (
+      verificationStatus === 'verified_genuine' &&
+      target.referredByCode &&
+      !target.referralCommissionCredited
+    ) {
+      const commissionToCredit =
+        target.referralCommissionAmount ||
+        Math.round((target.subtotalAmount - (target.referralDiscountAmount || 0)) * 0.10) ||
+        500;
+
+      updates.referralCommissionCredited = true;
+      updates.referralCommissionCreditedAt = new Date().toISOString();
+      updates.referralCommissionAmount = commissionToCredit;
+
+      // Credit advocate in Firestore
+      creditAdvocateOrder(target.referredByCode, commissionToCredit).catch(() => {});
+
+      // Synchronize in-memory referralStore so creator dashboard immediately updates
+      try {
+        const { allAdvocates } = useReferralStore.getState();
+        const updatedAdvocates = (allAdvocates || []).map((adv) => {
+          if (adv.code.toUpperCase() === target.referredByCode!.toUpperCase()) {
+            return {
+              ...adv,
+              ordersDeliveredCount: (adv.ordersDeliveredCount || 0) + 1,
+              withdrawableBalance: (adv.withdrawableBalance || 0) + commissionToCredit,
+              lifetimeEarned: (adv.lifetimeEarned || 0) + commissionToCredit,
+            };
+          }
+          return adv;
+        });
+        useReferralStore.setState({ allAdvocates: updatedAdvocates });
+      } catch {}
+    }
 
     const updated = get().orders.map((o) => (o.id === orderId || o.orderNumber === orderId ? { ...o, ...updates } : o));
     const unackCount = updated.filter((o) => !o.acknowledgedByAdmin).length;

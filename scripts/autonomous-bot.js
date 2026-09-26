@@ -170,31 +170,31 @@ async function handlePromotion(userId, newTier) {
   }
 }
 
-// ─── Autonomous Weekly Challenge / Brief Pool ──────────────────────────────
+// ─── Weekly Challenge Pool (Simple, Inspiring Wording) ───────────────────────
 const CURATED_BRIEFS = [
   {
-    id: 'BRIEF-001',
-    title: 'The Himalayan Nomad 2085',
-    theme: 'Fusion of high-altitude Himalayan mountaineering wear (Bakhu, Sherpa wool, Palpali Dhaka geometry) with utilitarian cyberpunk streetwear.',
-    bounty: 'NPR 5,000 Cash or Featured Boutique Sample Drop',
+    id: 'CHALLENGE-01',
+    title: 'Himalayan Streetwear Hoodie or Jacket',
+    theme: 'Design a modern streetwear hoodie or jacket combining traditional Palpali Dhaka patterns with comfortable black oversized styling.',
+    bounty: 'NPR 5,000 Cash + Your design manufactured & sold on dawosti.com',
   },
   {
-    id: 'BRIEF-002',
-    title: 'Monastic Silence & Raw Himalayan Allo',
-    theme: 'Structural minimalist outerwear engineered from wild stinging nettle (Allo), bamboo silk, and asymmetric drapes inspired by high-monastery monastic robes.',
-    bounty: 'NPR 5,000 Cash + Official Inclusion in Dawosti Autumn Lookbook',
+    id: 'CHALLENGE-02',
+    title: 'Raw Nepali Nettle (Allo) Minimalist Coat',
+    theme: 'Create a clean, minimalist coat or cloak using natural Himalayan nettle (Allo) fabric and silk, inspired by mountain monks and Kathmandu winters.',
+    bounty: 'NPR 5,000 Cash + Featured in official Dawosti lookbook',
   },
   {
-    id: 'BRIEF-003',
-    title: 'Kathmandu Neon & Newari Geometry',
-    theme: 'Reimagining traditional Haku Patasi black-and-crimson border geometry into modern oversized architectural blazers and tailored cargo trousers.',
-    bounty: 'NPR 5,000 Cash + 10% Lifetime Designer Royalty on dawosti.com',
+    id: 'CHALLENGE-03',
+    title: 'Newari Crimson & Black Cargo Set',
+    theme: 'Turn classic Newari Haku Patasi black-and-red border patterns into modern tailored cargo pants or cropped utility blazers.',
+    bounty: 'NPR 5,000 Cash + 10% cash royalties on all sales',
   },
   {
-    id: 'BRIEF-004',
-    title: 'Deconstructed Banarasi Brocade',
-    theme: 'Transforming opulent wedding brocades, meenakari motifs, and gold zari into wearable avant-garde bomber jackets and corseted vests.',
-    bounty: 'NPR 5,000 Cash + Physical Sample Production at Kathmandu Atelier',
+    id: 'CHALLENGE-04',
+    title: 'Modern Banarasi Silk Bomber Jacket',
+    theme: 'Reinvent traditional wedding silk brocade into a luxury daily bomber jacket with gold details.',
+    bounty: 'NPR 5,000 Cash + Sample tailored in Kathmandu atelier',
   },
 ];
 
@@ -331,20 +331,20 @@ async function handleDispatch(eventType, data) {
           data: {
             embeds: [
               {
-                title: `🏛️ Fashion Standing: ${userName}`,
+                title: `⭐ Your Profile: ${userName}`,
                 color: user.tier === '🏛️ Couturier' ? 0x8a1c2e : 0xe5a93c,
                 fields: [
-                  { name: 'Current Tier', value: `**${user.tier}**`, inline: true },
-                  { name: 'Proof-of-Taste', value: `**${user.points} pts**`, inline: true },
-                  { name: 'Next Evolution', value: `${user.points}/${nextThreshold} pts`, inline: true },
-                  { name: 'Verified Submissions', value: `${user.submissions || 0}`, inline: true },
-                  { name: 'Critiques Endorsed', value: `${user.critiques || 0}`, inline: true },
+                  { name: 'Current Level', value: `**${user.tier}**`, inline: true },
+                  { name: 'Points', value: `**${user.points} pts**`, inline: true },
+                  { name: 'Next Level', value: `${user.points}/${nextThreshold} pts`, inline: true },
+                  { name: 'Designs Shared', value: `${user.submissions || 0}`, inline: true },
+                  { name: 'Helpful Reviews', value: `${user.critiques || 0}`, inline: true },
                   {
-                    name: 'How to Ascend',
-                    value: `• Post designs via \`/submit-design\` or in ${chMention('design-submissions')}\n• Provide detailed feedback in ${chMention('peer-critique')}`,
+                    name: 'How to Level Up',
+                    value: `• Post designs in ${chMention('design-submissions')} or use \`/submit-design\`\n• Share your fits in ${chMention('fit-checks-wdywt')}\n• Give helpful advice in ${chMention('peer-critique')}`,
                   },
                 ],
-                footer: { text: 'Dawosti Autonomous Meritocracy • Proof-of-Taste' },
+                footer: { text: 'Dawosti Fashion Guild • Kathmandu' },
               },
             ],
           },
@@ -363,20 +363,20 @@ async function handleDispatch(eventType, data) {
           data: {
             embeds: [
               {
-                title: `⚡ ACTIVE DESIGN BRIEF: ${brief.title}`,
+                title: `⚡ THIS WEEK'S DESIGN CHALLENGE: ${brief.title}`,
                 description: brief.theme,
                 color: 0x1b7f5e,
                 fields: [
-                  { name: 'Brief ID', value: `\`${brief.id}\``, inline: true },
-                  { name: 'Design Bounty', value: `💰 **${brief.bounty || 'NPR 5,000'}**`, inline: true },
-                  { name: 'Submission Command', value: '`/submit-design`', inline: true },
-                  { name: 'Where to Drop', value: chMention('design-submissions'), inline: true },
+                  { name: 'Challenge ID', value: `\`${brief.id}\``, inline: true },
+                  { name: 'Cash Prize', value: `💰 **${brief.bounty || 'NPR 5,000'}**`, inline: true },
+                  { name: 'How to Submit', value: 'Type `/submit-design`', inline: true },
+                  { name: 'Channel', value: chMention('design-submissions'), inline: true },
                   {
-                    name: 'Evolution Reward',
-                    value: 'Consensus designs (3+ 👑 Vanguard reactions) ascend directly to **🏛️ Couturier** with commercial manufacturing on `dawosti.com`.',
+                    name: 'How Winners are Chosen',
+                    value: 'Designs getting 3+ 👑 votes get manufactured and sold on `dawosti.com` with a **10% cash royalty**!',
                   },
                 ],
-                footer: { text: 'Autonomous Challenge Engine • Dawosti Guild' },
+                footer: { text: 'Dawosti Weekly Challenge' },
               },
             ],
           },
@@ -398,7 +398,7 @@ async function handleDispatch(eventType, data) {
           body: JSON.stringify({
             type: 4,
             data: {
-              content: '❌ Invalid wallet number. Please provide a 10-digit Nepali mobile number registered with eSewa or Khalti (e.g. `9801234567`).',
+              content: '❌ Invalid phone number. Please enter your 10-digit mobile number registered with eSewa or Khalti (e.g. `9801234567`).',
               flags: 64,
             },
           }),
@@ -434,22 +434,21 @@ async function handleDispatch(eventType, data) {
           data: {
             embeds: [
               {
-                title: '💳 AUTONOMOUS WALLET & CREATOR PIPELINE BOUND',
-                description: `Congratulations <@${userId}>! Your **${walletType.toUpperCase()}** account is now permanently connected to the Dawosti Autonomous Guild royalty engine.`,
+                title: '💳 Wallet Connected Successfully!',
+                description: `Hi <@${userId}>! Your **${walletType.toUpperCase()}** account is now connected. You can earn **10% cash** on every sale!`,
                 color: walletType === 'esewa' ? 0x60bb46 : 0x5c2d91,
                 fields: [
-                  { name: 'Your Referral Code', value: `\`${generatedCode}\``, inline: true },
-                  { name: 'Linked Wallet', value: `${walletType.toUpperCase()}: \`${cleanPhone.slice(0, 3)}****${cleanPhone.slice(-3)}\``, inline: true },
-                  { name: 'Customer Benefit', value: 'NPR 300 Instant Discount', inline: true },
-                  { name: 'Creator Royalty', value: '**10% Cash** on every verified order', inline: true },
-                  { name: 'Shareable Boutique Link', value: `https://dawosti.com?ref=${generatedCode}` },
-                  { name: 'Creator Web Portal', value: 'https://referral.dawosti.com' },
+                  { name: 'Your Promo Code', value: `\`${generatedCode}\``, inline: true },
+                  { name: 'Connected Wallet', value: `${walletType.toUpperCase()}: \`${cleanPhone.slice(0, 3)}****${cleanPhone.slice(-3)}\``, inline: true },
+                  { name: 'Discount for Friends', value: 'NPR 300 OFF', inline: true },
+                  { name: 'Your Commission', value: '**10% Cash** on each order', inline: true },
+                  { name: 'Store Link to Share', value: `https://dawosti.com?ref=${generatedCode}` },
                   {
-                    name: '📲 Ready-to-Copy Social Bio',
-                    value: `\`Authentic Kathmandu Couture. Use code ${generatedCode} for NPR 300 off on dawosti.com ✨\``,
+                    name: '📲 Ready-to-Copy Share Message',
+                    value: `\`Get NPR 300 off designer Nepali fashion at dawosti.com using code: ${generatedCode} ✨\``,
                   },
                 ],
-                footer: { text: 'Dawosti Autonomous Payout Engine • Encrypted Audit' },
+                footer: { text: 'Dawosti Cash Rewards • eSewa & Khalti' },
                 timestamp: new Date().toISOString(),
               },
             ],
@@ -464,10 +463,10 @@ async function handleDispatch(eventType, data) {
           body: JSON.stringify({
             embeds: [
               {
-                title: '⚡ NEW GUILD ADVOCATE ONBOARDED',
-                description: `<@${userId}> bound creator code \`${generatedCode}\` with **${walletType.toUpperCase()}** direct payouts!`,
+                title: '⚡ NEW CREATOR JOINED REWARDS',
+                description: `<@${userId}> activated promo code \`${generatedCode}\` with **${walletType.toUpperCase()}** payouts!`,
                 color: 0x1b7f5e,
-                footer: { text: '10% Lifetime Royalty Protocol' },
+                footer: { text: '10% Cash Commission' },
               },
             ],
           }),
@@ -488,7 +487,7 @@ async function handleDispatch(eventType, data) {
           body: JSON.stringify({
             type: 4,
             data: {
-              content: '⚠️ You have not linked your payout wallet yet. Run `/link-wallet` with your eSewa or Khalti number to activate your 10% royalty stream.',
+              content: '⚠️ You haven’t connected your wallet yet. Type `/link-wallet` with your eSewa or Khalti number to start earning!',
               flags: 64,
             },
           }),
@@ -509,24 +508,24 @@ async function handleDispatch(eventType, data) {
           data: {
             embeds: [
               {
-                title: `💰 CREATOR ROYALTIES & BALANCE: ${userName}`,
+                title: `💰 Your Earnings & Cashout: ${userName}`,
                 color: 0x1b7f5e,
                 fields: [
-                  { name: 'Affiliate Code', value: `\`${user.affiliateCode || 'N/A'}\``, inline: true },
-                  { name: 'Linked Wallet', value: `${wallet.type.toUpperCase()}: \`${wallet.number.slice(0, 3)}****${wallet.number.slice(-3)}\``, inline: true },
+                  { name: 'Your Code', value: `\`${user.affiliateCode || 'N/A'}\``, inline: true },
+                  { name: 'Connected Wallet', value: `${wallet.type.toUpperCase()}: \`${wallet.number.slice(0, 3)}****${wallet.number.slice(-3)}\``, inline: true },
                   { name: 'Total Earned', value: `NPR ${earned.toLocaleString()}`, inline: true },
-                  { name: 'Withdrawable Balance', value: `**NPR ${withdrawable.toLocaleString()}**`, inline: true },
-                  { name: 'Milestone Progress', value: `NPR 10,000 (${pct}% reached)`, inline: true },
-                  { name: 'Orders Attributed', value: `${user.ordersAttributed || 0}`, inline: true },
+                  { name: 'Ready to Withdraw', value: `**NPR ${withdrawable.toLocaleString()}**`, inline: true },
+                  { name: 'Cashout Goal', value: `NPR 10,000 (${pct}% completed)`, inline: true },
+                  { name: 'Orders Through Code', value: `${user.ordersAttributed || 0}`, inline: true },
                   {
-                    name: 'Disbursement Mechanics',
+                    name: 'How to Cash Out',
                     value:
                       withdrawable >= threshold
-                        ? '🎉 **Threshold Reached!** Type `/request-payout` to trigger immediate wallet disbursement.'
-                        : `Earn NPR ${(threshold - withdrawable).toLocaleString()} more with code \`${user.affiliateCode}\` to unlock automatic wallet transfer.`,
+                        ? '🎉 **Goal reached!** Type `/request-payout` to withdraw your money now.'
+                        : `Earn NPR ${(threshold - withdrawable).toLocaleString()} more with code \`${user.affiliateCode}\` to reach the NPR 10,000 cashout goal.`,
                   },
                 ],
-                footer: { text: 'Dawosti Autonomous Treasury • eSewa & Khalti' },
+                footer: { text: 'Dawosti Cash Rewards • eSewa & Khalti' },
               },
             ],
           },
@@ -547,7 +546,7 @@ async function handleDispatch(eventType, data) {
           body: JSON.stringify({
             type: 4,
             data: {
-              content: '⚠️ You must link your eSewa or Khalti wallet first using `/link-wallet`.',
+              content: '⚠️ Please link your eSewa or Khalti wallet first using `/link-wallet`.',
               flags: 64,
             },
           }),
@@ -565,7 +564,7 @@ async function handleDispatch(eventType, data) {
           body: JSON.stringify({
             type: 4,
             data: {
-              content: `ℹ️ Your withdrawable royalty balance is **NPR 0**. Share your boutique link \`https://dawosti.com?ref=${user.affiliateCode}\` to earn 10% on every customer purchase!`,
+              content: `ℹ️ Your current withdrawable balance is **NPR 0**. Share your link \`https://dawosti.com?ref=${user.affiliateCode}\` to earn 10% on every order!`,
               flags: 64,
             },
           }),
@@ -593,14 +592,14 @@ async function handleDispatch(eventType, data) {
           data: {
             embeds: [
               {
-                title: '💸 PAYOUT REQUEST DISPATCHED TO QUEUE',
-                description: `Your payout request \`${requestId}\` for **NPR ${withdrawable.toLocaleString()}** has been submitted to the merchant treasury desk.`,
+                title: '💸 Cashout Request Submitted!',
+                description: `Your payout request \`${requestId}\` for **NPR ${withdrawable.toLocaleString()}** has been received.`,
                 color: 0x1b7f5e,
                 fields: [
                   { name: 'Disbursement Method', value: `${wallet.type.toUpperCase()} (${wallet.number})`, inline: true },
-                  { name: 'Processing SLA', value: 'Direct batch transfer within 24h', inline: true },
+                  { name: 'Transfer Time', value: 'Sent to your wallet within 24 hours', inline: true },
                 ],
-                footer: { text: 'Dawosti Autonomous Treasury Engine' },
+                footer: { text: 'Dawosti Treasury Desk' },
               },
             ],
           },
@@ -614,10 +613,10 @@ async function handleDispatch(eventType, data) {
           body: JSON.stringify({
             embeds: [
               {
-                title: '💸 AUTONOMOUS PAYOUT DISPATCH QUEUED',
-                description: `<@${userId}> requested an eSewa/Khalti disbursement of **NPR ${withdrawable.toLocaleString()}** (Ref: \`${requestId}\`).`,
+                title: '💸 CASHOUT REQUESTED',
+                description: `<@${userId}> requested an eSewa/Khalti payout of **NPR ${withdrawable.toLocaleString()}** (Ref: \`${requestId}\`).`,
                 color: 0xe5a93c,
-                footer: { text: 'Merchant Audit Log Active' },
+                footer: { text: 'Pending review & transfer' },
               },
             ],
           }),
@@ -646,15 +645,15 @@ async function handleDispatch(eventType, data) {
       }
 
       const embed = {
-        title: `🏛️ ORIGINAL CONCEPT DROP: ${title}`,
+        title: `🎨 NEW DESIGN CONCEPT: ${title}`,
         description,
         color: 0x8a1c2e,
         fields: [
-          { name: 'Architect / Creator', value: `<@${userId}>`, inline: true },
-          { name: 'Textiles & Materials', value: materials, inline: true },
-          { name: 'Peer Appraisal Tokens', value: 'React: ⭐ Aesthetic | 🧵 Craft | 🔥 Vision | 👑 Vanguard Consensus' },
+          { name: 'Designer', value: `<@${userId}>`, inline: true },
+          { name: 'Fabrics & Textiles', value: materials, inline: true },
+          { name: 'Vote on this Design', value: 'React: ⭐ Nice Style | 🧵 Great Craft | 🔥 Fire | 👑 Produce this Piece!' },
         ],
-        footer: { text: 'Dawosti Atelier • Proof-of-Craft Submission' },
+        footer: { text: 'Dawosti Atelier • Kathmandu' },
         timestamp: new Date().toISOString(),
       };
       if (imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'))) {
@@ -678,20 +677,20 @@ async function handleDispatch(eventType, data) {
         await api(`/channels/${submissionsChId}/messages/${postedMsg.id}/threads`, {
           method: 'POST',
           body: JSON.stringify({
-            name: `Appraisal: ${title}`,
+            name: `Feedback: ${title}`,
             auto_archive_duration: 1440,
           }),
         });
       } catch {}
 
-      await awardPoints(userId, 10, `Original design drop: ${title}`);
+      await awardPoints(userId, 10, `Original design submission: ${title}`);
 
       await api(`/interactions/${data.id}/${data.token}/callback`, {
         method: 'POST',
         body: JSON.stringify({
           type: 4,
           data: {
-            content: `🎉 Concept **"${title}"** submitted to ${chMention('design-submissions')}! Appraisal thread opened and review tokens attached.`,
+            content: `🎉 Your design **"${title}"** was posted to ${chMention('design-submissions')}! A discussion thread is now open for feedback.`,
             flags: 64,
           },
         }),
@@ -708,18 +707,18 @@ async function handleDispatch(eventType, data) {
           data: {
             embeds: [
               {
-                title: 'DAWOSTI (दावोस्ती) — THE CULTURAL MANDATE',
+                title: 'DAWOSTI — Authentic Nepali Fashion, Made Modern',
                 description:
-                  'We lead fashion in Nepal not through claims, but through **demonstrable creative impact, aesthetic rigor, and community talent cultivation**.\n\n' +
-                  '• Inspired by **Apple’s design purity** & **Google’s developer meritocracy**.\n' +
-                  '• No arbitrary promotions; status is earned via Proof-of-Taste and Craft.\n' +
-                  '• Elevating Palpali Dhaka, Himalayan nettle (Allo), and Newari tailoring to the world stage.',
+                  'We take Nepal’s rich heritage — Palpali Dhaka, raw Himalayan silk, and traditional cuts — and bring them to life in modern streetwear.\n\n' +
+                  '✨ **No Gatekeeping**: Anyone can design, share ideas, and earn cash.\n' +
+                  '✨ **Real Cash Earnings**: Get 10% commission on orders with your promo code via eSewa or Khalti.\n' +
+                  '✨ **Honest Quality**: Pure fabrics, fair wages, modern design.',
                 color: 0x8a1c2e,
                 fields: [
-                  { name: 'Archive & Full Rules', value: chMention('manifesto-and-rules') },
-                  { name: 'Official Store & Platform', value: 'https://dawosti.com' },
+                  { name: 'Guild Rules', value: chMention('manifesto-and-rules') },
+                  { name: 'Official Website & Shop', value: 'https://dawosti.com' },
                 ],
-                footer: { text: 'Autonomous Fashion Guild • Kathmandu' },
+                footer: { text: 'Dawosti • Kathmandu, Nepal' },
               },
             ],
           },
@@ -738,7 +737,7 @@ async function handleDispatch(eventType, data) {
       const list =
         entries.length > 0
           ? entries.map(([id, u], i) => `${i + 1}. <@${id}> — **${u.tier}** (${u.points} pts)`).join('\n')
-          : `No recognized rankings yet. Post a design in ${chMention('design-submissions')} to begin!`;
+          : `No rankings yet. Post a design in ${chMention('design-submissions')} to be the first!`;
 
       await api(`/interactions/${data.id}/${data.token}/callback`, {
         method: 'POST',
@@ -747,10 +746,10 @@ async function handleDispatch(eventType, data) {
           data: {
             embeds: [
               {
-                title: '🏆 GUILD TASTEMAKER LEADERBOARD',
+                title: '🏆 TOP DESIGNERS & CREATORS LEADERBOARD',
                 description: list,
                 color: 0xe5a93c,
-                footer: { text: 'Evolution governed autonomously by peer signal' },
+                footer: { text: 'Earn points by sharing designs and giving helpful feedback' },
               },
             ],
           },
@@ -768,20 +767,20 @@ async function handleDispatch(eventType, data) {
           data: {
             embeds: [
               {
-                title: '🛍️ DAWOSTI EDITORIAL SHOWCASE & BOUTIQUE',
+                title: '🛍️ FEATURED DAWOSTI CLOTHING',
                 description:
-                  'The official home of Dawosti bespoke collections, seasonal drops, and vetted community apparel.\n\n' +
+                  'Handcrafted pieces made in Kathmandu, delivered across Nepal and worldwide:\n\n' +
                   '• **Crimson Heritage Silk Kurtha** — NPR 5,400\n' +
                   '• **Ivory Handloom Cotton Kurtha** — NPR 3,200\n' +
                   '• **Royal Banarasi Silk Saree** — NPR 12,500\n' +
                   '• **Antique Temple Gold Jhumka** — NPR 1,900',
                 color: 0x8a1c2e,
                 fields: [
-                  { name: 'Boutique URL', value: 'https://dawosti.com', inline: true },
-                  { name: 'Creator Portal', value: 'https://referral.dawosti.com', inline: true },
-                  { name: 'WhatsApp Concierge', value: '+977 9708251494', inline: true },
+                  { name: 'Visit Online Store', value: 'https://dawosti.com', inline: true },
+                  { name: 'Creator Code Portal', value: 'https://referral.dawosti.com', inline: true },
+                  { name: 'WhatsApp Orders', value: '+977 9708251494', inline: true },
                 ],
-                footer: { text: 'Kathmandu, Nepal • Nationwide & Global Delivery' },
+                footer: { text: 'Kathmandu, Nepal • Cash on Delivery Available' },
               },
             ],
           },
@@ -799,31 +798,35 @@ async function handleDispatch(eventType, data) {
           data: {
             embeds: [
               {
-                title: '🤖 DAWOSTI AUTONOMOUS CORE COMMANDS',
+                title: '🤖 DAWOSTI BOT COMMANDS',
                 description:
-                  'Welcome to the Dawosti Autonomous Fashion Guild. Here are your primary tools:\n\n' +
-                  '`/rank` — Check your fashion tier, points, and evolution milestone\n' +
-                  '`/challenge` — Inspect the active weekly design prompt & bounty\n' +
-                  '`/submit-design` — Upload your garment sketches to the Atelier\n' +
-                  '`/link-wallet` — Connect eSewa/Khalti to activate 10% cash royalties\n' +
-                  '`/payout` — Check real-time royalties & NPR 10k threshold progress\n' +
-                  '`/request-payout` — Dispatch an autonomous wallet payout request\n' +
-                  '`/manifesto` — Read Dawosti’s founding cultural values\n' +
-                  '`/leaderboard` — View the top tastemakers in the guild\n' +
-                  '`/catalog` — Browse current bespoke boutique collections\n' +
-                  '`/verify` — Verify your purchase order for Patron Circle status',
+                  'Welcome to the Dawosti Fashion Guild! Here are the commands you can use:\n\n' +
+                  '🎨 **Designs & Contests**\n' +
+                  '`/challenge` — View this week’s design contest & NPR 5,000 cash prize\n' +
+                  '`/submit-design` — Upload your fashion design or sketch\n\n' +
+                  '💰 **Earn Cash**\n' +
+                  '`/link-wallet` — Connect eSewa/Khalti to earn 10% cash on orders\n' +
+                  '`/payout` — Check how much money you have earned\n' +
+                  '`/request-payout` — Withdraw your cash to your wallet\n\n' +
+                  '⭐ **Your Status & Levels**\n' +
+                  '`/rank` — Check your points, level, and next milestone\n' +
+                  '`/leaderboard` — View the top designers in our community\n' +
+                  '`/manifesto` — Learn about Dawosti’s story\n\n' +
+                  '🛍️ **Shop & Perks**\n' +
+                  '`/catalog` — See featured clothes and prices\n' +
+                  '`/verify` — Enter your order number to get VIP member perks',
                 color: 0x1b7f5e,
                 fields: [
                   {
-                    name: '👑 Evolutionary Hierarchy',
+                    name: '👑 Community Roles',
                     value:
-                      '• **👑 Vanguard** (Lead Tastemakers & Council)\n' +
-                      '• **🏛️ Couturier** (Verified Creators & Designers, 100+ pts)\n' +
-                      '• **✂️ Artisan** (Stylists & Active Curators, 25+ pts)\n' +
-                      '• **🪡 Atelier** (Initiates & Fashion Explorers)',
+                      '• **👑 Vanguard**: Lead tastemakers who review & approve designs\n' +
+                      '• **🏛️ Couturier**: Verified designers whose clothes get made (100+ pts)\n' +
+                      '• **✂️ Artisan**: Active stylists and feedback providers (25+ pts)\n' +
+                      '• **🪡 Atelier**: Welcoming starting level for all members',
                   },
                 ],
-                footer: { text: 'Dawosti Autonomous Core • Proof-of-Taste Protocol' },
+                footer: { text: 'Dawosti Guild • Kathmandu' },
               },
             ],
           },
@@ -844,7 +847,7 @@ async function handleDispatch(eventType, data) {
           body: JSON.stringify({
             type: 4,
             data: {
-              content: `⚠️ Order **${orderNumber}** has already been authenticated to another member. Contact WhatsApp (+977 9708251494) for assistance.`,
+              content: `⚠️ Order **${orderNumber}** is already registered. If you need help, message us on WhatsApp (+977 9708251494).`,
               flags: 64,
             },
           }),
@@ -859,7 +862,7 @@ async function handleDispatch(eventType, data) {
           body: JSON.stringify({
             type: 4,
             data: {
-              content: `❌ Invalid order format. Dawosti order numbers start with \`DAW-\` or \`DW-\`. Check your checkout receipt or SMS confirmation.`,
+              content: `❌ Invalid order number. Dawosti order numbers start with \`DAW-\` or \`DW-\`. Check your receipt or SMS.`,
               flags: 64,
             },
           }),
@@ -889,18 +892,18 @@ async function handleDispatch(eventType, data) {
           data: {
             embeds: [
               {
-                title: '🛍️ VERIFIED PATRON ACCESS GRANTED',
-                description: `Welcome to the Dawosti Patron Circle, <@${userId}>! Your order **${orderNumber}** has been authenticated.`,
+                title: '🛍️ VIP Patron Status Unlocked!',
+                description: `Welcome to the Dawosti VIP Club, <@${userId}>! Your order **${orderNumber}** has been confirmed.`,
                 color: 0xc49746,
                 fields: [
-                  { name: 'Patron Bonus', value: '+50 Proof-of-Taste Points', inline: true },
-                  { name: 'Storefront Portal', value: 'https://dawosti.com', inline: true },
+                  { name: 'Bonus Points', value: '+50 Points Added', inline: true },
+                  { name: 'Online Store', value: 'https://dawosti.com', inline: true },
                   {
-                    name: 'Unlocked Privileges',
-                    value: '• Early access to seasonal limited drops\n• VIP bespoke sizing support\n• Direct dialogue with Dawosti design team',
+                    name: 'Your VIP Perks',
+                    value: '• Early access to limited new collections\n• Free custom sizing assistance\n• Direct support on WhatsApp',
                   },
                 ],
-                footer: { text: 'Dawosti Boutique & Atelier • Kathmandu' },
+                footer: { text: 'Dawosti VIP Club • Kathmandu' },
               },
             ],
           },

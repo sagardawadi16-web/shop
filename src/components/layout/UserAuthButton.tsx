@@ -1,10 +1,11 @@
 import React, { useRef, useEffect } from 'react';
-import { User, LogOut, PackageCheck, Award, ShieldCheck, ChevronDown } from 'lucide-react';
+import { LogOut, PackageCheck, Award, ShieldCheck, ChevronDown, Crown, Scissors, Briefcase, Shield } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useReferralStore } from '../../stores/referralStore';
 import { useAdminStore } from '../../stores/adminStore';
-import { checkIsEmailWhitelisted } from '../../services/firestoreWhitelist';
+import { getUserRole } from '../../services/firestoreWhitelist';
+import { AdminRole } from '../../types';
 
 export const UserAuthButton: React.FC<{ isMobile?: boolean }> = ({ isMobile = false }) => {
   const { user, isLoading, loginGoogle, logout, isUserMenuOpen, setIsUserMenuOpen } = useAuthStore();
@@ -26,13 +27,44 @@ export const UserAuthButton: React.FC<{ isMobile?: boolean }> = ({ isMobile = fa
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [isUserMenuOpen, setIsUserMenuOpen]);
 
-  const isWhitelisted = user ? checkIsEmailWhitelisted(user.email, whitelistEntries) : false;
+  const userRole: AdminRole | null = user ? getUserRole(user.email, whitelistEntries) : null;
+  const isWhitelisted = userRole !== null;
+
+  const renderRoleBadge = (role: AdminRole) => {
+    switch (role) {
+      case 'owner':
+        return (
+          <span style={{ background: '#FFF3CD', color: '#856404', padding: '1px 6px', borderRadius: 4, fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+            <Crown size={10} color="#D4AF37" /> Owner
+          </span>
+        );
+      case 'super_admin':
+        return (
+          <span style={{ background: '#F8D7DA', color: '#721C24', padding: '1px 6px', borderRadius: 4, fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+            <Shield size={10} color="#721C24" /> Super Admin
+          </span>
+        );
+      case 'manager':
+        return (
+          <span style={{ background: '#CCE5FF', color: '#004085', padding: '1px 6px', borderRadius: 4, fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+            <Briefcase size={10} color="#004085" /> Manager
+          </span>
+        );
+      case 'staff':
+      default:
+        return (
+          <span style={{ background: '#E0F3EA', color: '#1B7F5E', padding: '1px 6px', borderRadius: 4, fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+            <Scissors size={10} color="#1B7F5E" /> Staff
+          </span>
+        );
+    }
+  };
 
   if (isMobile) {
     if (!user) {
       return (
         <button
-          onClick={loginGoogle}
+          onClick={() => loginGoogle()}
           disabled={isLoading}
           style={{
             display: 'flex',
@@ -67,8 +99,9 @@ export const UserAuthButton: React.FC<{ isMobile?: boolean }> = ({ isMobile = fa
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <img src={user.avatar} alt={user.name} style={{ width: 34, height: 34, borderRadius: '50%', border: '1.5px solid #D4AF37' }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: 13, color: '#2B1810', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {user.name}
+            <div style={{ fontWeight: 700, fontSize: 13, color: '#2B1810', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</span>
+              {userRole && renderRoleBadge(userRole)}
             </div>
             <div style={{ fontSize: 11, color: '#777', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user.email}
@@ -81,24 +114,29 @@ export const UserAuthButton: React.FC<{ isMobile?: boolean }> = ({ isMobile = fa
               onClick={openAdmin}
               style={{
                 flex: 1,
-                padding: '6px 10px',
+                padding: '7px 10px',
                 borderRadius: 6,
                 background: '#8B3A3A',
                 color: '#FFF',
                 border: 'none',
                 fontSize: 12,
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
               }}
             >
-              Admin
+              <ShieldCheck size={14} />
+              <span>Admin Console</span>
             </button>
           )}
           <button
             onClick={logout}
             style={{
               flex: 1,
-              padding: '6px 10px',
+              padding: '7px 10px',
               borderRadius: 6,
               background: '#FAF2E9',
               color: '#8B3A3A',
@@ -124,7 +162,7 @@ export const UserAuthButton: React.FC<{ isMobile?: boolean }> = ({ isMobile = fa
   if (!user) {
     return (
       <button
-        onClick={loginGoogle}
+        onClick={() => loginGoogle()}
         disabled={isLoading}
         className="hide-mobile"
         title="Sign in with Google"
@@ -170,7 +208,7 @@ export const UserAuthButton: React.FC<{ isMobile?: boolean }> = ({ isMobile = fa
     <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }}>
       <button
         onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-        title={user.name}
+        title={`${user.name} (${userRole || 'Customer'})`}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -178,12 +216,12 @@ export const UserAuthButton: React.FC<{ isMobile?: boolean }> = ({ isMobile = fa
           padding: '3px 8px 3px 3px',
           borderRadius: 99,
           background: '#FFFFFF',
-          border: '1.5px solid #D4AF37',
+          border: isWhitelisted ? '1.5px solid #8B3A3A' : '1.5px solid #D4AF37',
           color: '#2B1810',
           cursor: 'pointer',
           fontSize: 12,
           fontWeight: 700,
-          boxShadow: '0 2px 6px rgba(212,175,55,0.15)',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
           flexShrink: 0,
         }}
       >
@@ -195,6 +233,7 @@ export const UserAuthButton: React.FC<{ isMobile?: boolean }> = ({ isMobile = fa
         <span className="hide-mobile" style={{ maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {user.name.split(' ')[0]}
         </span>
+        {userRole && <span className="hide-mobile">{renderRoleBadge(userRole)}</span>}
         <ChevronDown size={13} color="#666" className="hide-mobile" />
       </button>
 
@@ -205,7 +244,7 @@ export const UserAuthButton: React.FC<{ isMobile?: boolean }> = ({ isMobile = fa
             position: 'absolute',
             top: 'calc(100% + 8px)',
             right: 0,
-            width: 220,
+            width: 230,
             background: '#FFF8F0',
             border: '1.5px solid #D4AF37',
             borderRadius: 12,
@@ -219,7 +258,10 @@ export const UserAuthButton: React.FC<{ isMobile?: boolean }> = ({ isMobile = fa
         >
           {/* User Details */}
           <div style={{ padding: '8px 10px', borderBottom: '1px solid #EADCCE', marginBottom: 4 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#2B1810' }}>{user.name}</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#2B1810' }}>{user.name}</span>
+              {userRole && renderRoleBadge(userRole)}
+            </div>
             <div style={{ fontSize: 11, color: '#777', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user.email}
             </div>
@@ -303,7 +345,7 @@ export const UserAuthButton: React.FC<{ isMobile?: boolean }> = ({ isMobile = fa
               }}
             >
               <ShieldCheck size={15} color="#8B3A3A" />
-              <span>Admin Management</span>
+              <span>Admin Console ({userRole === 'owner' ? 'Owner' : userRole === 'staff' ? 'Staff' : 'Console'})</span>
             </button>
           )}
 

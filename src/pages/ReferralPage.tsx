@@ -10,6 +10,8 @@ import { useOrderStore } from '../stores/orderStore';
 import { useAuthStore } from '../stores/authStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { toast } from '../components/common/Toast';
+import { saveAdvocate } from '../services/firestoreReferrals';
+import { ReferralAdvocate } from '../types';
 
 export const ReferralPage: React.FC = () => {
   const { user, loginGoogle } = useAuthStore();
@@ -39,9 +41,18 @@ export const ReferralPage: React.FC = () => {
     }
   }, [referralCode]);
 
-  const currentMatchedAdvocate = (allAdvocates || []).find(
-    (a) => a?.code && a.code.toUpperCase() === (analyticsCode || '').toUpperCase()
-  );
+  // Match advocate by email if user is signed in with Google, or by analyticsCode/referralCode
+  const advocateByEmail = user?.email
+    ? (allAdvocates || []).find(
+        (a) => a?.email && a.email.toLowerCase() === user.email.toLowerCase()
+      )
+    : null;
+
+  const currentMatchedAdvocate =
+    advocateByEmail ||
+    (allAdvocates || []).find(
+      (a) => a?.code && a.code.toUpperCase() === (analyticsCode || '').toUpperCase()
+    );
 
   const matchedCreatorOrders = (orders || []).filter(
     (o) => o?.referredByCode && o.referredByCode.toUpperCase() === (analyticsCode || '').toUpperCase()
@@ -79,14 +90,31 @@ export const ReferralPage: React.FC = () => {
     }
   };
 
-  // Autofill when user signs in
+  // Synchronize Google user with Creator profile automatically (No need to sign in twice!)
   useEffect(() => {
-    if (user) {
+    if (advocateByEmail) {
+      if (!referralCode || referralCode !== advocateByEmail.code) {
+        setReferralCode(advocateByEmail.code);
+        setAnalyticsCode(advocateByEmail.code);
+      }
+      if (advocateByEmail.fullName && !creatorName) setCreatorName(advocateByEmail.fullName);
+      if (advocateByEmail.email && !email) setEmail(advocateByEmail.email);
+      if (advocateByEmail.esewaId && !esewaId) setEsewaId(advocateByEmail.esewaId);
+      if (advocateByEmail.khaltiNumber && !khaltiNumber) setKhaltiNumber(advocateByEmail.khaltiNumber);
+      if (advocateByEmail.socialHandle && !socialHandle) setSocialHandle(advocateByEmail.socialHandle);
+      if (advocateByEmail.fullName && !accountHolderName) setAccountHolderName(advocateByEmail.fullName);
+    } else if (user) {
       if (!creatorName) setCreatorName(user.name);
       if (!email) setEmail(user.email);
       if (!accountHolderName) setAccountHolderName(user.name);
+      if (!referralCode) {
+        const cleanName = user.name.trim().toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6) || 'CREATOR';
+        const suffix = Math.floor(10 + Math.random() * 89);
+        setReferralCode(`${cleanName}-${suffix}`);
+        setAnalyticsCode(`${cleanName}-${suffix}`);
+      }
     }
-  }, [user]);
+  }, [user, advocateByEmail]);
 
   // Load existing saved profile from localStorage if present
   useEffect(() => {
@@ -97,17 +125,19 @@ export const ReferralPage: React.FC = () => {
         if (parsed.creatorName && !creatorName) setCreatorName(parsed.creatorName);
         if (parsed.email && !email) setEmail(parsed.email);
         if (parsed.referralCode && !referralCode) setReferralCode(parsed.referralCode);
-        if (parsed.esewaId) setEsewaId(parsed.esewaId);
-        if (parsed.khaltiNumber) setKhaltiNumber(parsed.khaltiNumber);
-        if (parsed.accountHolderName) setAccountHolderName(parsed.accountHolderName);
-        if (parsed.socialHandle) setSocialHandle(parsed.socialHandle);
+        if (parsed.esewaId && !esewaId) setEsewaId(parsed.esewaId);
+        if (parsed.khaltiNumber && !khaltiNumber) setKhaltiNumber(parsed.khaltiNumber);
+        if (parsed.accountHolderName && !accountHolderName) setAccountHolderName(parsed.accountHolderName);
+        if (parsed.socialHandle && !socialHandle) setSocialHandle(parsed.socialHandle);
       }
     } catch (e) {}
   }, []);
 
-  const shareableUrl = referralCode
-    ? `https://dawosti.com?ref=${encodeURIComponent(referralCode.trim().toUpperCase())}`
-    : 'https://dawosti.com';
+  const hostOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://dawosti.com';
+  const effectiveCode = referralCode || currentMatchedAdvocate?.code || '';
+  const shareableUrl = effectiveCode
+    ? `${hostOrigin}?ref=${encodeURIComponent(effectiveCode.trim().toUpperCase())}`
+    : hostOrigin;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareableUrl);
@@ -181,31 +211,39 @@ export const ReferralPage: React.FC = () => {
         console.warn('Edge payout proxy notice:', edgeErr);
       }
 
-      // 2. Also register into client store for instantaneous local stats
-      registerCreator(referralCode.trim().toUpperCase(), creatorName.trim(), email.trim());
-
-      // 3. Cache securely in local storage
-      const profileData = {
-        creatorName: creatorName.trim(),
+      // 4. Save to Firestore referral_advocates collection
+      const cleanCode = referralCode.trim().toUpperCase();
+      const advocateObj: ReferralAdvocate = {
+        id: currentMatchedAdvocate?.id || `adv_${Date.now()}_${cleanCode.toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+        code: cleanCode,
+        fullName: creatorName.trim(),
+        phone: esewaId.trim() || khaltiNumber.trim() || '9800000000',
         email: email.trim(),
-        referralCode: referralCode.trim().toUpperCase(),
+        socialHandle: socialHandle.trim(),
+        clicksCount: currentMatchedAdvocate?.clicksCount || 0,
+        sharesCount: currentMatchedAdvocate?.sharesCount || 0,
+        ordersDeliveredCount: currentMatchedAdvocate?.ordersDeliveredCount || 0,
+        pendingBalance: currentMatchedAdvocate?.pendingBalance || 0,
+        withdrawableBalance: currentMatchedAdvocate?.withdrawableBalance || 0,
+        lifetimeEarned: currentMatchedAdvocate?.lifetimeEarned || 0,
+        createdAt: currentMatchedAdvocate?.createdAt || new Date().toISOString(),
+        status: 'active',
+        payoutPreferredMethod: esewaId.trim() ? 'esewa' : 'khalti',
+        payoutAccountIdentifier: esewaId.trim() || khaltiNumber.trim(),
         esewaId: esewaId.trim(),
         khaltiNumber: khaltiNumber.trim(),
-        accountHolderName: accountHolderName.trim(),
-        socialHandle: socialHandle.trim(),
-        updatedAt: new Date().toISOString(),
       };
+      await saveAdvocate(advocateObj);
 
+      // 5. Update local Zustand state
       try {
-        localStorage.setItem('dawosti_creator_payout_profile', JSON.stringify(profileData));
+        const existingList = useReferralStore.getState().allAdvocates || [];
+        const idx = existingList.findIndex((a) => a.code.toUpperCase() === cleanCode);
+        const updated = idx >= 0
+          ? existingList.map((a, i) => (i === idx ? advocateObj : a))
+          : [advocateObj, ...existingList];
+        useReferralStore.setState({ allAdvocates: updated, currentAdvocate: advocateObj });
       } catch {}
-
-      setSubmittedData({
-        creatorName: creatorName.trim(),
-        referralCode: referralCode.trim().toUpperCase(),
-        esewaId: esewaId ? `${esewaId.slice(0, 3)}****${esewaId.slice(-3)}` : 'Not Set',
-        khaltiNumber: khaltiNumber ? `${khaltiNumber.slice(0, 3)}****${khaltiNumber.slice(-3)}` : 'Not Set',
-      });
 
       toast('🎉 Payout account registered securely! Linked to eSewa & Khalti.');
     } catch (err: any) {
@@ -486,8 +524,8 @@ export const ReferralPage: React.FC = () => {
               boxShadow: '0 8px 30px rgba(43,24,16,0.08)',
             }}
           >
-            {/* Success State */}
-            {submittedData && (
+            {/* Active Creator Card & Referral Link Box */}
+            {(submittedData || currentMatchedAdvocate) && (
               <div
                 style={{
                   background: 'linear-gradient(135deg, rgba(27,127,94,0.08) 0%, rgba(212,175,55,0.08) 100%)',
@@ -500,15 +538,25 @@ export const ReferralPage: React.FC = () => {
                   gap: 12,
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#1B7F5E', fontWeight: 700, fontSize: 16 }}>
-                  <CheckCircle2 size={22} color="#1B7F5E" />
-                  <span>{language === 'np' ? 'वालेट विवरण सुरक्षित रूपमा सक्रिय गरियो!' : 'Payout Profile Activated & Edge-Secured!'}</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#1B7F5E', fontWeight: 700, fontSize: 16 }}>
+                    <CheckCircle2 size={22} color="#1B7F5E" />
+                    <span>
+                      {language === 'np'
+                        ? `सिर्जनाकर्ता खाता सक्रिय: ${effectiveCode}`
+                        : `Creator Account Active: ${effectiveCode}`}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#1B7F5E', background: '#D8F3E5', padding: '4px 12px', borderRadius: 99 }}>
+                    {language === 'np' ? 'प्रत्यक्ष भुक्तानी सुरक्षित' : 'Edge-Secured'}
+                  </div>
                 </div>
-                <p style={{ fontSize: 13.5, color: '#4A3B32', lineHeight: 1.5 }}>
+
+                <p style={{ fontSize: 13.5, color: '#4A3B32', lineHeight: 1.5, margin: 0 }}>
                   {language === 'np' ? (
-                    <>तपाईंको ईसेवा (<strong>{submittedData.esewaId}</strong>) र खल्ती (<strong>{submittedData.khaltiNumber}</strong>) विवरण सुरक्षित दर्ता भइसकेको छ। न्यूनतम रु. १०,००० पुगेपछि स्वतः भुक्तानी हुनेछ।</>
+                    <>ईसेवा: <strong>{submittedData?.esewaId || currentMatchedAdvocate?.esewaId || esewaId || '९८०१२३४५६७'}</strong> • खल्ती: <strong>{submittedData?.khaltiNumber || currentMatchedAdvocate?.khaltiNumber || khaltiNumber || '९८०१२३४५६७'}</strong>। ग्राहकले अर्डर प्रमाणित गर्नासाथ कमिसन स्वतः जम्मा हुनेछ।</>
                   ) : (
-                    <>Your eSewa (<strong>{submittedData.esewaId}</strong>) and Khalti (<strong>{submittedData.khaltiNumber}</strong>) details are registered on our encrypted Cloudflare Edge cluster and logged directly to our merchant payout register.</>
+                    <>eSewa: <strong>{submittedData?.esewaId || currentMatchedAdvocate?.esewaId || esewaId || '9801234567'}</strong> • Khalti: <strong>{submittedData?.khaltiNumber || currentMatchedAdvocate?.khaltiNumber || khaltiNumber || '9801234567'}</strong>. Creator commission is credited automatically upon admin order verification.</>
                   )}
                 </p>
 
@@ -523,14 +571,14 @@ export const ReferralPage: React.FC = () => {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     gap: 10,
-                    marginTop: 6,
+                    marginTop: 4,
                   }}
                 >
-                  <div style={{ overflow: 'hidden' }}>
+                  <div style={{ overflow: 'hidden', minWidth: 0 }}>
                     <div style={{ fontSize: 11, color: '#777', fontWeight: 600 }}>
-                      {language === 'np' ? 'तपाईंको व्यक्तिगत सिफारिस लिङ्क:' : 'Your Personalized Affiliate URL:'}
+                      {language === 'np' ? 'तपाईंको व्यक्तिगत सिफारिस लिङ्क (ग्राहकले रु. ३०० छुट पाउनेछन्):' : 'Your Personalized Referral Link (Buyers get NPR 300 Off):'}
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1B7F5E', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: '#1B7F5E', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       {shareableUrl}
                     </div>
                   </div>
@@ -558,8 +606,45 @@ export const ReferralPage: React.FC = () => {
               </div>
             )}
 
-            {/* Google Fast Auth Banner if not signed in */}
-            {!user && (
+            {/* Google Authentication Status */}
+            {user ? (
+              <div
+                style={{
+                  background: '#F0F9F5',
+                  border: '1.5px solid #1B7F5E',
+                  borderRadius: 14,
+                  padding: '14px 20px',
+                  marginBottom: 24,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid #1B7F5E' }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: 13.5, color: '#1B7F5E', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <CheckCircle2 size={16} />
+                      <span>{language === 'np' ? 'गुगल खाता जोडिएको छ' : 'Linked with Google'}</span>
+                    </div>
+                    <div style={{ fontSize: 12.5, color: '#2B1810', marginTop: 1 }}>
+                      <strong>{user.name}</strong> • {user.email}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#1B7F5E', background: '#D8F3E5', padding: '4px 12px', borderRadius: 99 }}>
+                  {currentMatchedAdvocate
+                    ? (language === 'np' ? 'सक्रिय सिर्जनाकर्ता प्रोफाइल' : 'Active Creator Account')
+                    : (language === 'np' ? '१-ट्याप दर्ता तयार' : 'Ready to Activate')}
+                </div>
+              </div>
+            ) : (
               <div
                 style={{
                   background: '#FFF8F0',
@@ -581,12 +666,12 @@ export const ReferralPage: React.FC = () => {
                   <div style={{ fontSize: 12, color: '#6B564C', marginTop: 2 }}>
                     {language === 'np'
                       ? 'आफ्नो नाम, इमेल स्वतः भर्न र प्रत्यक्ष कमिसन हेर्न गुगलबाट लगइन गर्नुहोस्।'
-                      : 'Sign in to autofill your name, email, and view real-time commission tracking.'}
+                      : 'Sign in with Google to link your creator account across the entire shop.'}
                   </div>
                 </div>
                 <button
                   type="button"
-                  onClick={loginGoogle}
+                  onClick={() => loginGoogle()}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1313,7 +1398,7 @@ export const ReferralPage: React.FC = () => {
             <span>•</span>
             <a href="https://referral.dawosti.com" style={{ color: '#1B7F5E', textDecoration: 'none', fontWeight: 600 }}>referral.dawosti.com</a>
             <span>•</span>
-            <a href="https://wa.me/9779708251494" target="_blank" rel="noreferrer" style={{ color: '#1B7F5E', textDecoration: 'none', fontWeight: 600 }}>
+            <a href="https://wa.me/9779808251494" target="_blank" rel="noreferrer" style={{ color: '#1B7F5E', textDecoration: 'none', fontWeight: 600 }}>
               {language === 'np' ? 'ह्वाट्सएप कन्सिएर्ज' : 'WhatsApp Concierge'}
             </a>
           </div>

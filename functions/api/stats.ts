@@ -17,8 +17,8 @@ export const onRequestGet: PagesFunction = async (context) => {
         agentBypassSupported: true,
       },
       merchantContact: {
-        phone: '+977 9708251494',
-        whatsapp: 'https://wa.me/9779708251494',
+        phone: '+977 9808251494',
+        whatsapp: 'https://wa.me/9779808251494',
       },
       time: new Date().toISOString(),
     }),

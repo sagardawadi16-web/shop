@@ -1,10 +1,27 @@
-import React, { useEffect } from 'react';
-import { X, Lock, ShieldAlert, LogOut, Calculator, ShoppingBag, Award, Users, ShieldCheck } from 'lucide-react';
-import { useAdminStore, AdminTab } from '../../stores/adminStore';
+import React, { useEffect, useState } from 'react';
+import {
+  X,
+  Lock,
+  ShieldAlert,
+  LogOut,
+  Calculator,
+  ShoppingBag,
+  Award,
+  Users,
+  ShieldCheck,
+  QrCode,
+  Crown,
+  Shield,
+  Briefcase,
+  Scissors,
+} from 'lucide-react';
+import { useAdminStore, AdminTab, isTabAllowedForRole } from '../../stores/adminStore';
 import { ProfitSimulatorTab } from './tabs/ProfitSimulatorTab';
 import { OrdersTab } from './tabs/OrdersTab';
 import { ReferralsTab } from './tabs/ReferralsTab';
 import { WhitelistTab } from './tabs/WhitelistTab';
+import { PaymentQRTab } from './tabs/PaymentQRTab';
+import { AdminRole } from '../../types';
 
 export const AdminModal: React.FC = () => {
   const {
@@ -13,12 +30,16 @@ export const AdminModal: React.FC = () => {
     adminActiveTab,
     setAdminTab,
     currentUser,
+    currentRole,
     isAuthorizedAdmin,
     authError,
     isAuthLoading,
     loginGoogle,
     logout,
   } = useAdminStore();
+
+  const [devEmailInput, setDevEmailInput] = useState('');
+  const [showDevLogin, setShowDevLogin] = useState(false);
 
   // Escape key closes modal
   useEffect(() => {
@@ -30,6 +51,104 @@ export const AdminModal: React.FC = () => {
   }, [isAdminModalOpen, closeAdmin]);
 
   if (!isAdminModalOpen) return null;
+
+  const renderRoleBadge = (role: AdminRole | null) => {
+    if (!role) return null;
+    switch (role) {
+      case 'owner':
+        return (
+          <span
+            style={{
+              background: '#FFF3CD',
+              color: '#856404',
+              border: '1px solid #FFEEBA',
+              padding: '2px 8px',
+              borderRadius: 4,
+              fontSize: 11,
+              fontWeight: 800,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <Crown size={12} color="#D4AF37" />
+            OWNER
+          </span>
+        );
+      case 'super_admin':
+        return (
+          <span
+            style={{
+              background: '#F8D7DA',
+              color: '#721C24',
+              border: '1px solid #F5C6CB',
+              padding: '2px 8px',
+              borderRadius: 4,
+              fontSize: 11,
+              fontWeight: 800,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <Shield size={12} color="#721C24" />
+            SUPER ADMIN
+          </span>
+        );
+      case 'manager':
+        return (
+          <span
+            style={{
+              background: '#CCE5FF',
+              color: '#004085',
+              border: '1px solid #B8DAFF',
+              padding: '2px 8px',
+              borderRadius: 4,
+              fontSize: 11,
+              fontWeight: 800,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <Briefcase size={12} color="#004085" />
+            MANAGER
+          </span>
+        );
+      case 'staff':
+      default:
+        return (
+          <span
+            style={{
+              background: '#E0F3EA',
+              color: '#1B7F5E',
+              border: '1px solid #C3E6CB',
+              padding: '2px 8px',
+              borderRadius: 4,
+              fontSize: 11,
+              fontWeight: 800,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <Scissors size={12} color="#1B7F5E" />
+            STAFF
+          </span>
+        );
+    }
+  };
+
+  const allTabs: { id: AdminTab; label: string; icon: any }[] = [
+    { id: 'orders', label: 'Orders & Dispatch', icon: ShoppingBag },
+    { id: 'referrals', label: 'Creator Payouts', icon: Award },
+    { id: 'profit', label: 'Unit Economics & Margins', icon: Calculator },
+    { id: 'payment-qr', label: 'Payment QR Terminal', icon: QrCode },
+    { id: 'whitelist', label: 'Staff & Owner Roles', icon: Users },
+  ];
+
+  // Filter tabs strictly by user's assigned role
+  const availableTabs = allTabs.filter((tab) => isTabAllowedForRole(tab.id, currentRole));
 
   return (
     <div
@@ -48,7 +167,7 @@ export const AdminModal: React.FC = () => {
       <div
         style={{
           width: '100%',
-          maxWidth: 1040,
+          maxWidth: 1060,
           maxHeight: '92vh',
           backgroundColor: '#FFF8F0',
           borderRadius: 12,
@@ -73,8 +192,16 @@ export const AdminModal: React.FC = () => {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ width: 8, height: 8, transform: 'rotate(45deg)', backgroundColor: '#D4AF37' }} />
-            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-              DAWOSTI Admin & Profit Operations
+            <h2
+              style={{
+                margin: 0,
+                fontSize: 16,
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+              }}
+            >
+              DAWOSTI Boutique Management Console
             </h2>
           </div>
 
@@ -84,9 +211,10 @@ export const AdminModal: React.FC = () => {
                 <img
                   src={currentUser.avatar}
                   alt={currentUser.name}
-                  style={{ width: 24, height: 24, borderRadius: '50%', border: '1px solid #D4AF37' }}
+                  style={{ width: 24, height: 24, borderRadius: '50%', border: '1.5px solid #D4AF37' }}
                 />
-                <span style={{ color: 'rgba(255,255,255,0.85)' }}>{currentUser.email}</span>
+                <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}>{currentUser.email}</span>
+                {renderRoleBadge(currentRole)}
                 <button
                   onClick={logout}
                   title="Sign Out"
@@ -107,27 +235,58 @@ export const AdminModal: React.FC = () => {
 
         {/* Auth Gate: Not Logged In */}
         {!currentUser ? (
-          <div style={{ padding: '60px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-            <div style={{ width: 56, height: 56, borderRadius: '50%', backgroundColor: '#FAF2E9', border: '1px solid #EADCCE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div
+            style={{
+              padding: '60px 24px',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 16,
+            }}
+          >
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                backgroundColor: '#FAF2E9',
+                border: '1px solid #EADCCE',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <Lock size={26} color="#8B3A3A" />
             </div>
             <div>
               <h3 style={{ margin: '0 0 6px 0', fontSize: 20, fontWeight: 700, color: '#2B1810' }}>
-                Dawosti Store Management Console
+                Store Staff & Owner Sign-In
               </h3>
-              <p style={{ margin: 0, fontSize: 13, color: '#666', maxWidth: 420 }}>
-                Sign in with an authorized Google Workspace / Gmail account to access unit economics, order approvals, and creator payouts.
+              <p style={{ margin: 0, fontSize: 13, color: '#666', maxWidth: 460 }}>
+                Sign in with an authorized Google Workspace or Gmail account to access order management,
+                payout dispatch, and catalog administration.
               </p>
             </div>
 
             {authError && (
-              <div style={{ padding: '8px 16px', background: '#FFF0F0', border: '1px solid #F5C2C7', color: '#B02A37', borderRadius: 6, fontSize: 13 }}>
+              <div
+                style={{
+                  padding: '10px 18px',
+                  background: '#FFF0F0',
+                  border: '1px solid #F5C2C7',
+                  color: '#B02A37',
+                  borderRadius: 6,
+                  fontSize: 13,
+                  maxWidth: 500,
+                }}
+              >
                 {authError}
               </div>
             )}
 
             <button
-              onClick={loginGoogle}
+              onClick={() => loginGoogle()}
               disabled={isAuthLoading}
               style={{
                 marginTop: 8,
@@ -148,11 +307,82 @@ export const AdminModal: React.FC = () => {
               <ShieldCheck size={18} />
               <span>{isAuthLoading ? 'Authenticating...' : 'Sign In with Authorized Google Account'}</span>
             </button>
+
+            {/* Quick manual email sign-in for dev testing / domain bypass */}
+            <div style={{ marginTop: 8 }}>
+              <button
+                onClick={() => setShowDevLogin(!showDevLogin)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#888',
+                  fontSize: 11,
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                }}
+              >
+                {showDevLogin ? 'Hide quick email access' : 'Authorized email direct access'}
+              </button>
+              {showDevLogin && (
+                <div style={{ marginTop: 10, display: 'flex', gap: 6, justifyContent: 'center' }}>
+                  <input
+                    type="email"
+                    value={devEmailInput}
+                    onChange={(e) => setDevEmailInput(e.target.value)}
+                    placeholder="e.g. sagardawadi16@gmail.com"
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 6,
+                      border: '1px solid #D4C5B9',
+                      fontSize: 12,
+                      width: 220,
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      if (devEmailInput.trim()) loginGoogle(devEmailInput.trim());
+                    }}
+                    style={{
+                      padding: '6px 12px',
+                      background: '#8B3A3A',
+                      color: '#FFF',
+                      border: 'none',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Enter
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         ) : !isAuthorizedAdmin ? (
           /* Auth Gate: Logged In, but NOT on Whitelist (Strict 403 Lockout) */
-          <div style={{ padding: '60px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-            <div style={{ width: 56, height: 56, borderRadius: '50%', backgroundColor: '#FFF0F0', border: '1px solid #F5C2C7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div
+            style={{
+              padding: '60px 24px',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 16,
+            }}
+          >
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                backgroundColor: '#FFF0F0',
+                border: '1px solid #F5C2C7',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <ShieldAlert size={26} color="#B02A37" />
             </div>
             <div>
@@ -160,8 +390,8 @@ export const AdminModal: React.FC = () => {
                 403 Access Denied: Unauthorized Account
               </h3>
               <p style={{ margin: 0, fontSize: 13, color: '#666', maxWidth: 450, lineHeight: 1.6 }}>
-                Account <strong>{currentUser.email}</strong> is not present on the Dawosti Admin Whitelist.
-                To access this console, contact Sagar to grant whitelist privileges.
+                Account <strong>{currentUser.email}</strong> is not assigned an active Staff or Owner role.
+                Contact Sagar Dawadi to be granted access.
               </p>
             </div>
 
@@ -198,12 +428,7 @@ export const AdminModal: React.FC = () => {
                 overflowX: 'auto',
               }}
             >
-              {[
-                { id: 'profit' as AdminTab, label: 'Profit Formula Engine', icon: Calculator },
-                { id: 'orders' as AdminTab, label: 'Orders & Verification', icon: ShoppingBag },
-                { id: 'referrals' as AdminTab, label: 'Creator Referrals & Payouts', icon: Award },
-                { id: 'whitelist' as AdminTab, label: 'Gmail Access Whitelist', icon: Users },
-              ].map((tab) => {
+              {availableTabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = adminActiveTab === tab.id;
                 return (
@@ -235,10 +460,11 @@ export const AdminModal: React.FC = () => {
 
             {/* Tab Body */}
             <div style={{ padding: 24, overflowY: 'auto', flex: 1 }}>
-              {adminActiveTab === 'profit' && <ProfitSimulatorTab />}
               {adminActiveTab === 'orders' && <OrdersTab />}
               {adminActiveTab === 'referrals' && <ReferralsTab />}
-              {adminActiveTab === 'whitelist' && <WhitelistTab />}
+              {adminActiveTab === 'profit' && isTabAllowedForRole('profit', currentRole) && <ProfitSimulatorTab />}
+              {adminActiveTab === 'payment-qr' && isTabAllowedForRole('payment-qr', currentRole) && <PaymentQRTab />}
+              {adminActiveTab === 'whitelist' && isTabAllowedForRole('whitelist', currentRole) && <WhitelistTab />}
             </div>
           </>
         )}

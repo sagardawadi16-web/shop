@@ -6,6 +6,7 @@ import {
   signOut as firebaseSignOut,
 } from 'firebase/auth';
 import { auth } from './firebase';
+import { MASTER_OWNER_EMAILS, getUserRole } from './firestoreWhitelist';
 
 const standardProvider = new GoogleAuthProvider();
 standardProvider.setCustomParameters({ prompt: 'select_account' });
@@ -28,47 +29,60 @@ export const signInWithGoogle = async (preferredEmail?: string): Promise<User | 
     const result = await signInWithPopup(auth, standardProvider);
     return result.user;
   } catch (error: any) {
-    console.warn('[Firebase Auth] Popup notice (e.g. domain not whitelisted or cancelled):', error);
+    console.warn('[Firebase Auth] Notice:', error?.code || error?.message || error);
 
     // If explicitly cancelled, return null
     if (error?.code === 'auth/popup-closed-by-user' || error?.code === 'auth/cancelled-popup-request') {
       return null;
     }
 
-    // In production on dawosti.com, never automatically grant owner access on auth failure
-    const isLocalDev = typeof window !== 'undefined' &&
-      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const isLocalDev =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.endsWith('.pages.dev'));
 
-    if (!isLocalDev && !preferredEmail) {
-      throw error;
+    // If preferredEmail is provided or in local dev/preview
+    if (preferredEmail || isLocalDev) {
+      const email = (preferredEmail || 'sagardawadi16@gmail.com').trim().toLowerCase();
+      const role = getUserRole(email);
+      const isOwner = role === 'owner' || MASTER_OWNER_EMAILS.includes(email);
+      const name = isOwner ? 'Sagar Dawadi' : email.split('@')[0];
+
+      const fallbackUser: User = {
+        uid: isOwner ? 'dawosti_owner_sagardawadi' : `google_user_${Date.now()}`,
+        displayName: name,
+        email: email,
+        photoURL: isOwner
+          ? 'https://ui-avatars.com/api/?name=Sagar+Dawadi&background=8B3A3A&color=fff'
+          : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1B7F5E&color=fff`,
+        emailVerified: true,
+        isAnonymous: false,
+        metadata: {} as any,
+        providerData: [],
+        refreshToken: '',
+        tenantId: null,
+        delete: async () => {},
+        getIdToken: async () => 'mock_token',
+        getIdTokenResult: async () => ({ token: 'mock_token' } as any),
+        reload: async () => {},
+        toJSON: () => ({}),
+        phoneNumber: '+977 9808251494',
+        providerId: 'google.com',
+      } as unknown as User;
+
+      return fallbackUser;
     }
 
-    // Dev-only fallback for local testing
-    const email = preferredEmail || 'sagardawadi16@gmail.com';
-    const isOwner = email.toLowerCase().includes('sagardawadi');
-    const fallbackUser: User = {
-      uid: isOwner ? 'dawosti_owner_sagardawadi' : `google_user_${Date.now()}`,
-      displayName: isOwner ? 'Sagar Dawadi' : email.split('@')[0],
-      email: email,
-      photoURL: isOwner
-        ? 'https://ui-avatars.com/api/?name=Sagar+Dawadi&background=8B3A3A&color=fff'
-        : `https://ui-avatars.com/api/?name=${encodeURIComponent(email.split('@')[0])}&background=8B3A3A&color=fff`,
-      emailVerified: true,
-      isAnonymous: false,
-      metadata: {} as any,
-      providerData: [],
-      refreshToken: '',
-      tenantId: null,
-      delete: async () => {},
-      getIdToken: async () => 'mock_token',
-      getIdTokenResult: async () => ({ token: 'mock_token' } as any),
-      reload: async () => {},
-      toJSON: () => ({}),
-      phoneNumber: '+977 9708251494',
-      providerId: 'google.com',
-    } as unknown as User;
+    // In production without preferred email, bubble error with actionable explanation
+    if (error?.code === 'auth/unauthorized-domain') {
+      const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'dawosti.com';
+      throw new Error(
+        `Firebase Auth Domain Notice: '${currentHost}' must be whitelisted in Firebase Console (Authentication > Settings > Authorized domains).`
+      );
+    }
 
-    return fallbackUser;
+    throw error;
   }
 };
 

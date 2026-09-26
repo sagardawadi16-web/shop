@@ -101,10 +101,14 @@ export interface Order {
   referredByCode?: string;
   referralDiscountAmount?: number;
   referralCommissionAmount?: number;
+  referralCommissionCredited?: boolean;
+  referralCommissionCreditedAt?: string;
   costPriceTotal?: number;
   shippingCostActual?: number;
   netProfitCalculated?: number;
 }
+
+export type AdminRole = 'owner' | 'super_admin' | 'manager' | 'staff';
 
 export interface GoogleUser {
   id: string;
@@ -112,6 +116,7 @@ export interface GoogleUser {
   email: string;
   avatar: string;
   isLoggedIn: boolean;
+  role?: AdminRole | 'customer';
 }
 
 export interface MerchantSettings {
@@ -124,7 +129,9 @@ export interface MerchantSettings {
   fonepayMerchantId?: string;
   fonepayQrDataUri?: string;
   esewaId?: string;
+  esewaQrDataUri?: string;
   khaltiId?: string;
+  khaltiQrDataUri?: string;
   freeDeliveryThreshold: number;
   deliveryFee: number;
 }
@@ -240,7 +247,7 @@ export interface PayoutRequest {
 export interface AdminWhitelistEntry {
   id: string;
   email: string;
-  role: 'super_admin' | 'manager' | 'staff';
+  role: AdminRole;
   addedBy: string;
   addedAt: string;
   notes?: string;

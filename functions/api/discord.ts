@@ -225,7 +225,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
               color: 0x8a1c2e,
               fields: [
                 { name: '🌐 Shop Online', value: '[dawosti.com](https://dawosti.com)', inline: true },
-                { name: '💬 WhatsApp Concierge', value: '[+977 9708251494](https://wa.me/9779708251494)', inline: true },
+                { name: '💬 WhatsApp Concierge', value: '[+977 9808251494](https://wa.me/9779808251494)', inline: true },
                 { name: '💎 Verified Patrons', value: 'Use `/verify <order>` to enter private lounges', inline: false },
               ],
               footer: { text: 'Kathmandu, Nepal • Nationwide & Global Delivery' },

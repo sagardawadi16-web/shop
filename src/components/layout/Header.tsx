@@ -23,6 +23,33 @@ export const Header: React.FC = () => {
   const [hideCategory, setHideCategory] = useState(false);
   const hideCategoryRef = useRef(false);
 
+  // Lock background scroll and handle Escape/back when mobile menu is open
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    const handlePopState = () => {
+      setMobileMenuOpen(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [mobileMenuOpen]);
+
   // Smoothly collapse category sub-nav on sustained downward scroll, reveal on upward scroll
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -457,146 +484,203 @@ export const Header: React.FC = () => {
         </div>
       </nav>
 
-      {/* Mobile Drawer Navigation */}
+      {/* Mobile Drawer Navigation (3-Dash Hamburger Menu) */}
       {mobileMenuOpen && (
         <div
+          className="drawer-overlay animate-fadeIn"
           style={{
             position: 'fixed',
             inset: 0,
-            top: 60,
-            zIndex: 45,
-            backgroundColor: 'rgba(43,24,16,0.6)',
+            zIndex: 70,
+            backgroundColor: 'rgba(43, 24, 16, 0.55)',
+            backdropFilter: 'blur(3px)',
             display: 'flex',
           }}
           onClick={() => setMobileMenuOpen(false)}
         >
           <div
+            className="animate-slideInLeft"
             style={{
-              width: 280,
+              width: 'min(85vw, 320px)',
               backgroundColor: '#FAF2E9',
               height: '100%',
-              padding: 24,
+              maxHeight: '100dvh',
               display: 'flex',
               flexDirection: 'column',
-              gap: 16,
-              boxShadow: '4px 0 20px rgba(0,0,0,0.2)',
+              boxShadow: '4px 0 25px rgba(0, 0, 0, 0.25)',
+              position: 'relative',
+              zIndex: 75,
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Google Account Sign-In / Profile */}
-            <UserAuthButton isMobile />
-
-            {/* Track Order CTA in mobile drawer */}
-            <button
-              onClick={() => {
-                setIsOrderTrackingOpen(true);
-                setMobileMenuOpen(false);
-              }}
+            {/* Drawer Top Header */}
+            <div
               style={{
+                padding: '16px 20px',
+                borderBottom: '1px solid #EADCCE',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                padding: '11px 14px',
-                borderRadius: 12,
-                background: 'white',
-                border: '1px solid #EADCCE',
-                color: '#2B1810',
-                fontWeight: 600,
-                fontSize: 13,
-                cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(43,24,16,0.05)',
+                justifyContent: 'space-between',
+                backgroundColor: '#FAF2E9',
+                flexShrink: 0,
               }}
             >
-              <PackageCheck size={16} color="#8B3A3A" />
-              <span>{language === 'np' ? 'आफ्नो अर्डर ट्र्याक गर्नुहोस्' : 'Track Your Order'}</span>
-            </button>
-
-            {/* Wholesale B2B in mobile drawer */}
-            <button
-              onClick={() => {
-                openWholesaleModal();
-                setMobileMenuOpen(false);
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                padding: '11px 14px',
-                borderRadius: 12,
-                background: 'rgba(212, 175, 55, 0.15)',
-                border: '1.5px solid rgba(212, 175, 55, 0.5)',
-                color: '#561F1F',
-                fontWeight: 700,
-                fontSize: 13,
-                cursor: 'pointer',
-              }}
-            >
-              <Building2 size={16} color="#8B3A3A" />
-              <span>{language === 'np' ? 'थोक तथा खुद्रा साझेदार बन्नुहोस्' : 'Become a Retail Stockist (B2B)'}</span>
-            </button>
-
-            {/* Creator / Referral Hub in mobile drawer */}
-            <button
-              onClick={() => {
-                openCreatorPortal();
-                setMobileMenuOpen(false);
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                padding: '11px 14px',
-                borderRadius: 12,
-                background: '#E0F3EA',
-                border: '1.5px solid #1B7F5E',
-                color: '#1B7F5E',
-                fontWeight: 700,
-                fontSize: 13,
-                cursor: 'pointer',
-              }}
-            >
-              <Award size={16} color="#1B7F5E" />
-              <span>{language === 'np' ? 'इन्फ्लुएन्सर पार्टनर (कमाउनुहोस्)' : 'Creator Hub (Earn NPR 10k)'}</span>
-            </button>
-
-            <div style={{ fontWeight: 700, fontSize: 13, color: '#8B3A3A', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              {language === 'np' ? 'फेसन संग्रह' : 'Collections'}
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => handleCategoryClick(cat.id)}
-                  style={{
-                    border: 'none',
-                    background: selectedCategory === cat.id ? '#8B3A3A' : 'white',
-                    color: selectedCategory === cat.id ? 'white' : '#2B1810',
-                    padding: '10px 14px',
-                    borderRadius: 10,
-                    textAlign: 'left',
-                    fontWeight: 600,
-                    fontSize: 14,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {language === 'np' ? cat.name.np : cat.name.en}
-                </button>
-              ))}
-            </div>
-
-            <div style={{ borderTop: '1px solid #EADCCE', paddingTop: 16, marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
-
-              <button
-                onClick={toggleLanguage}
-                className="btn btn-outline"
-                style={{ width: '100%', fontSize: 13 }}
+              <div
+                onClick={() => {
+                  handleLogoClick();
+                  setMobileMenuOpen(false);
+                }}
+                style={{ cursor: 'pointer' }}
               >
-                <Globe size={16} /> {language === 'en' ? 'नेपाली भाषा' : 'English'}
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 700, color: '#2B1810', letterSpacing: '0.08em' }}>
+                  DAWOSTI
+                </div>
+                <div style={{ fontSize: 9, letterSpacing: '0.18em', color: '#8B3A3A', fontWeight: 600 }}>
+                  {language === 'np' ? 'काठमाडौं मौलिक फेसन' : 'HERITAGE COUTURE'}
+                </div>
+              </div>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="btn btn-ghost btn-icon"
+                style={{ width: 38, height: 38, padding: 8 }}
+                aria-label="Close menu"
+              >
+                <X size={20} />
               </button>
+            </div>
+
+            {/* Scrollable Drawer Content */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch',
+                overscrollBehavior: 'contain',
+                padding: '18px 20px 36px 20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 16,
+              }}
+            >
+              {/* Google Account Sign-In / Profile */}
+              <UserAuthButton isMobile />
+
+              {/* Track Order CTA in mobile drawer */}
+              <button
+                onClick={() => {
+                  setIsOrderTrackingOpen(true);
+                  setMobileMenuOpen(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  padding: '11px 14px',
+                  borderRadius: 12,
+                  background: 'white',
+                  border: '1px solid #EADCCE',
+                  color: '#2B1810',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(43,24,16,0.05)',
+                }}
+              >
+                <PackageCheck size={16} color="#8B3A3A" />
+                <span>{language === 'np' ? 'आफ्नो अर्डर ट्र्याक गर्नुहोस्' : 'Track Your Order'}</span>
+              </button>
+
+              {/* Wholesale B2B in mobile drawer */}
+              <button
+                onClick={() => {
+                  openWholesaleModal();
+                  setMobileMenuOpen(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  padding: '11px 14px',
+                  borderRadius: 12,
+                  background: 'rgba(212, 175, 55, 0.15)',
+                  border: '1.5px solid rgba(212, 175, 55, 0.5)',
+                  color: '#561F1F',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                <Building2 size={16} color="#8B3A3A" />
+                <span>{language === 'np' ? 'थोक तथा खुद्रा साझेदार बन्नुहोस्' : 'Become a Retail Stockist (B2B)'}</span>
+              </button>
+
+              {/* Creator / Referral Hub in mobile drawer */}
+              <button
+                onClick={() => {
+                  openCreatorPortal();
+                  setMobileMenuOpen(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  padding: '11px 14px',
+                  borderRadius: 12,
+                  background: '#E0F3EA',
+                  border: '1.5px solid #1B7F5E',
+                  color: '#1B7F5E',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                <Award size={16} color="#1B7F5E" />
+                <span>{language === 'np' ? 'इन्फ्लुएन्सर पार्टनर (कमाउनुहोस्)' : 'Creator Hub (Earn NPR 10k)'}</span>
+              </button>
+
+              <div style={{ fontWeight: 700, fontSize: 13, color: '#8B3A3A', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                {language === 'np' ? 'फेसन संग्रह' : 'Collections'}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleCategoryClick(cat.id)}
+                    style={{
+                      border: 'none',
+                      background: selectedCategory === cat.id ? '#8B3A3A' : 'white',
+                      color: selectedCategory === cat.id ? 'white' : '#2B1810',
+                      padding: '10px 14px',
+                      borderRadius: 10,
+                      textAlign: 'left',
+                      fontWeight: 600,
+                      fontSize: 14,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      boxShadow: '0 1px 3px rgba(43,24,16,0.04)',
+                    }}
+                  >
+                    {cat.id === 'cat-festive' && <Sparkles size={14} color={selectedCategory === cat.id ? '#FFD700' : '#8B3A3A'} />}
+                    <span>{language === 'np' ? cat.name.np : cat.name.en}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ borderTop: '1px solid #EADCCE', paddingTop: 16, marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <button
+                  onClick={toggleLanguage}
+                  className="btn btn-outline"
+                  style={{ width: '100%', fontSize: 13, background: 'white' }}
+                >
+                  <Globe size={16} /> {language === 'en' ? 'नेपाली भाषा' : 'English'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

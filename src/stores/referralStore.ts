@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { ReferralAdvocate, PayoutRequest } from '../types';
+import { useSettingsStore } from './settingsStore';
 import {
   saveAdvocate,
   getAdvocateByCode,
@@ -218,9 +219,23 @@ export const useReferralStore = create<ReferralState>((set, get) => ({
 
   initAttribution: () => {
     try {
-      // 1. Check URL parameters (?ref=CODE or ?invite=CODE)
+      // 1. Check URL parameters (?ref=CODE, ?invite=CODE, ?creator=CODE, ?code=CODE, or hash / path)
       const urlParams = new URLSearchParams(window.location.search);
-      const refParam = urlParams.get('ref') || urlParams.get('invite');
+      let refParam = urlParams.get('ref') || urlParams.get('invite') || urlParams.get('creator') || urlParams.get('code');
+
+      // Check hash parameters (e.g., #ref=SAGAR-82)
+      if (!refParam && window.location.hash.includes('ref=')) {
+        const hashMatch = window.location.hash.match(/[#&]ref=([^&]+)/);
+        if (hashMatch) refParam = decodeURIComponent(hashMatch[1]);
+      }
+
+      // Check URL path (e.g. /r/SAGAR-82 or /ref/SAGAR-82)
+      if (!refParam) {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        if ((segments[0] === 'r' || segments[0] === 'c' || segments[0] === 'ref') && segments[1]) {
+          refParam = decodeURIComponent(segments[1]);
+        }
+      }
 
       if (refParam && refParam.trim().length >= 3) {
         const cleanCode = refParam.trim().toUpperCase();
@@ -242,6 +257,8 @@ export const useReferralStore = create<ReferralState>((set, get) => ({
         try {
           urlParams.delete('ref');
           urlParams.delete('invite');
+          urlParams.delete('creator');
+          urlParams.delete('code');
           const cleanQuery = urlParams.toString() ? `?${urlParams.toString()}` : '';
           const newUrl = `${window.location.pathname}${cleanQuery}${window.location.hash}`;
           window.history.replaceState({}, document.title, newUrl);
@@ -273,15 +290,14 @@ export const useReferralStore = create<ReferralState>((set, get) => ({
   },
 
   openCreatorPortal: () => {
-    if (typeof window !== 'undefined') {
-      const host = window.location.hostname;
-      if (host.endsWith('dawosti.com') && !host.startsWith('referral.') && !host.startsWith('creator.')) {
-        const savedLang = localStorage.getItem('dawosti_lang') || 'en';
-        window.location.href = `https://referral.dawosti.com?lang=${savedLang}`;
-        return;
+    // Open in-app referral view without external subdomain redirects so auth session is preserved
+    try {
+      useSettingsStore.getState().setPageView('referral');
+      if (typeof window !== 'undefined' && window.location.hash !== '#referral') {
+        window.history.pushState({ page: 'referral' }, '', '#referral');
       }
-    }
-    set({ isCreatorPortalOpen: true });
+    } catch {}
+    set({ isCreatorPortalOpen: false });
   },
   closeCreatorPortal: () => set({ isCreatorPortalOpen: false }),
   openTosModal: () => set({ isTosModalOpen: true }),

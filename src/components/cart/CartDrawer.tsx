@@ -20,9 +20,9 @@ export const CartDrawer: React.FC = () => {
   };
 
   const waCartMsg = encodeURIComponent(
-    `🛍️ *Boutique Order Inquiry via Cart — DAWOSTI*\n\n` +
-    items.map((it) => `• ${it.product.title.en} (${it.selectedSize}) × ${it.quantity} = NPR ${(it.product.price * it.quantity).toLocaleString()}`).join('\n') +
-    `\n\n💰 Total: NPR ${total.toLocaleString()}\n📍 Please confirm delivery options to my address!`
+    `🛍️ *दावोस्ती फेसन — सपिङ झोला अर्डर सोधपुछ*\n\n` +
+    items.map((it) => `• ${(language === 'np' ? it.product.title.np : it.product.title.en) || it.product.title.en} (${it.selectedSize}) × ${it.quantity} = रु ${(it.product.price * it.quantity).toLocaleString()}`).join('\n') +
+    `\n\n💰 जम्मा रकम: NPR ${total.toLocaleString()}\n📍 कृपया डेलिभरी प्रक्रिया अगाडि बढाइदिनुहोला। धन्यवाद!`
   );
 
   return (
@@ -214,13 +214,13 @@ export const CartDrawer: React.FC = () => {
                   gap: 8,
                 }}
               >
-                <span>{language === 'np' ? 'अर्डर अगाडि बढाउनुहोस्' : 'Proceed to Checkout'}</span>
+                <span>{language === 'np' ? 'डेलिभरी फारम भर्नुहोस् (अर्डर गर्नुहोस्)' : 'Proceed to Order (सजिलो खरिद)'}</span>
                 <ArrowRight size={16} />
               </button>
 
               {/* WhatsApp Fast Order */}
               <a
-                href={`https://wa.me/${merchant.whatsappNumber}?text=${waCartMsg}`}
+                href={`https://wa.me/9779808251494?text=${waCartMsg}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -238,7 +238,7 @@ export const CartDrawer: React.FC = () => {
                 }}
               >
                 <MessageCircle size={15} />
-                <span>{language === 'np' ? 'ह्वाट्सएप मार्फत सिधै अर्डर' : 'Quick Order via WhatsApp'}</span>
+                <span>{language === 'np' ? 'ह्वाट्सएप मार्फत सिधै अर्डर (९८०८२५१४९४)' : 'Quick Order via WhatsApp (9808251494)'}</span>
               </a>
             </div>
 

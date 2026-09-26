@@ -99,7 +99,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       success: true,
       partnerProgram: {
         name: 'Dawosti Boutique Fashion Stockist Network',
-        officialWholesalePhone: '+977 9708251494',
+        officialWholesalePhone: '+977 9808251494',
         standardMoq: 15,
         wholesaleDiscountRange: '35% - 45%',
         consignmentAvailableKathmandu: true,

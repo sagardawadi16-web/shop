@@ -154,7 +154,7 @@ export default function App() {
         >
           <Sparkles size={16} color="#D4AF37" />
           <span>
-            Welcome to Dawosti! <strong>NPR 300 discount</strong> courtesy of {activeReferralCode} has been applied to your checkout.
+            दावोस्तीमा स्वागत छ! <strong>NPR ३०० छुट</strong> ({activeReferralCode}) तपाईंको अर्डरमा लागू भएको छ।
           </span>
           <button
             onClick={() => setShowReferralWelcome(false)}

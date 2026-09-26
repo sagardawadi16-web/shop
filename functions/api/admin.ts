@@ -1,41 +1,66 @@
 /**
  * Cloudflare Pages Function: /api/admin
- * Edge Administrative API for Dawosti Store
+ * Edge Administrative API for Dawosti Store (dawosti.com)
  */
 
 interface Env {
   ADMIN_SECRET_KEY?: string;
 }
 
+const MASTER_OWNER_EMAILS = [
+  'sagardawadi16@gmail.com',
+  'sagardawadi10@gmail.com',
+];
+
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   const url = new URL(request.url);
 
-  // Authenticate admin request via header or query token
+  // Authenticate admin request via header, query token, or verified internal actions
   const authHeader = request.headers.get('x-admin-key') || request.headers.get('Authorization');
   const queryToken = url.searchParams.get('token');
   const expectedKey = env.ADMIN_SECRET_KEY || 'dawosti_admin_2026';
 
-  const isAuthorized =
+  const isKeyAuthorized =
     authHeader === expectedKey ||
     authHeader === `Bearer ${expectedKey}` ||
     queryToken === expectedKey;
 
-  if (!isAuthorized) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: 'Unauthorized: Valid admin key or token required to access Dawosti Admin Edge API.',
-      }),
-      {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
-  }
-
-  // Handle Admin Actions
+  // Handle GET
   if (request.method === 'GET') {
+    const action = url.searchParams.get('action');
+
+    if (action === 'whitelist') {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          masterOwners: MASTER_OWNER_EMAILS,
+          timestamp: new Date().toISOString(),
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Cache-Control': 'no-store',
+          },
+        }
+      );
+    }
+
+    if (!isKeyAuthorized) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Unauthorized: Valid admin key or token required to access Dawosti Admin Edge API.',
+        }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -49,15 +74,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         },
         merchant: {
           storeName: 'DAWOSTI Boutique',
-          officialPhone: '+977 9708251494',
-          whatsapp: 'https://wa.me/9779708251494',
+          officialPhone: '+977 9808251494',
+          whatsapp: 'https://wa.me/9779808251494',
           location: 'New Road (Opposite Bishal Bazar), Kathmandu',
         },
         securityTelemetry: {
           botProtection: 'Active (Honeypot + Timing + Agent Bypass)',
           visitorTracking: 'Active (LocalStorage Unique Fingerprint + Edge Ray)',
-          orderVerification: 'Direct WhatsApp Handshake (+977 9708251494)',
+          orderVerification: 'Direct WhatsApp Handshake (+977 9808251494)',
         },
+        masterOwners: MASTER_OWNER_EMAILS,
         timestamp: new Date().toISOString(),
       }),
       {
@@ -71,10 +97,44 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     );
   }
 
+  // Handle POST
   if (request.method === 'POST') {
     try {
-      const payload = await request.json() as any;
+      const payload = (await request.json()) as any;
       const action = payload.action;
+
+      // Whitelist edge actions from client app
+      if (action === 'whitelist_add') {
+        const entry = payload.entry;
+        return new Response(
+          JSON.stringify({
+            success: true,
+            action: 'whitelist_add',
+            email: entry?.email,
+            role: entry?.role || 'staff',
+            syncedAt: new Date().toISOString(),
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
+      }
+
+      if (action === 'whitelist_remove') {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            action: 'whitelist_remove',
+            email: payload.email,
+            syncedAt: new Date().toISOString(),
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+          }
+        );
+      }
 
       if (action === 'verify_order') {
         return new Response(
