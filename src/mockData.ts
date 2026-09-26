@@ -239,6 +239,7 @@ export const DEFAULT_THEME: ThemeSettings = {
   },
   accentColor: '#8B3A3A',
   showAnnouncementBar: true,
+  showGuildSection: false,
 };
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {

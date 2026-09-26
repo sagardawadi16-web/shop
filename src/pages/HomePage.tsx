@@ -75,8 +75,8 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Autonomous Fashion Guild & AI Art Category Section */}
-      <GuildCategoryShowcase />
+      {/* Dawosti Fashion Guild & AI Art Category Section */}
+      {theme.showGuildSection && <GuildCategoryShowcase />}
 
       {/* Products section */}
       <section ref={productsRef} style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 16px 60px' }}>

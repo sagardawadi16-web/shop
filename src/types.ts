@@ -143,6 +143,7 @@ export interface ThemeSettings {
   bannerText: BilingualText;
   accentColor: string;
   showAnnouncementBar: boolean;
+  showGuildSection: boolean; // Toggle to show/hide the Fashion Guild & Discord section on homepage
 }
 
 export interface SiteContent {

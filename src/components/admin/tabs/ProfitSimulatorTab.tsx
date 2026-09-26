@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Calculator, TrendingUp, AlertTriangle, CheckCircle, DollarSign, Package } from 'lucide-react';
+import { Calculator, TrendingUp, AlertTriangle, CheckCircle, DollarSign, Package, LayoutTemplate, Eye, EyeOff } from 'lucide-react';
 import { useProductStore } from '../../../stores/productStore';
 import { calculateProfit, DEFAULT_SHIPPING_ESTIMATE } from '../../../services/profitCalculator';
+import { useSettingsStore } from '../../../stores/settingsStore';
 
 export const ProfitSimulatorTab: React.FC = () => {
   const { products, updateProduct } = useProductStore();
+  const { theme, updateTheme } = useSettingsStore();
 
   // Active simulator parameters
   const [selectedProductId, setSelectedProductId] = useState<string>(products[0]?.id || '');
@@ -47,12 +49,47 @@ export const ProfitSimulatorTab: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* Store Display Settings */}
+      <div style={{ background: '#FFF8F0', padding: '16px 20px', borderRadius: 8, border: '1.5px solid #D4AF37' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <LayoutTemplate size={18} color="#8B3A3A" />
+          <h3 style={{ margin: 0, fontSize: 16, color: '#2B1810', fontWeight: 700 }}>
+            Store Display Settings
+          </h3>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: '#FAF2E9', borderRadius: 8, border: '1px solid #EADCCE' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontWeight: 700, fontSize: 14, color: '#2B1810' }}>
+              Fashion Guild &amp; Discord Showcase
+            </span>
+            <span style={{ fontSize: 12, color: '#888', lineHeight: 1.4 }}>
+              Show the Dawosti Fashion Guild section on the homepage (cards, Discord link, categories)
+            </span>
+          </div>
+          <button
+            onClick={() => updateTheme({ showGuildSection: !theme.showGuildSection })}
+            title={theme.showGuildSection ? 'Click to hide Guild section' : 'Click to show Guild section'}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 16px', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 13,
+              border: theme.showGuildSection ? '1.5px solid #1B7F5E' : '1.5px solid #EADCCE',
+              background: theme.showGuildSection ? '#E8F5F0' : '#F0F0F0',
+              color: theme.showGuildSection ? '#1B7F5E' : '#888',
+              transition: 'all 0.2s',
+            }}
+          >
+            {theme.showGuildSection ? <Eye size={15} /> : <EyeOff size={15} />}
+            {theme.showGuildSection ? 'Visible' : 'Hidden'}
+          </button>
+        </div>
+      </div>
+
       {/* Header Banner */}
       <div style={{ background: '#FAF2E9', padding: '16px 20px', borderRadius: 8, border: '1px solid #EADCCE' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
           <Calculator size={20} color="#8B3A3A" />
           <h3 style={{ margin: 0, fontSize: 18, color: '#2B1810', fontWeight: 700 }}>
-            Unit Economics & Profit Margin Formula
+            Unit Economics &amp; Profit Margin Formula
           </h3>
         </div>
         <p style={{ margin: 0, fontSize: 13, color: '#666', lineHeight: 1.5 }}>
@@ -60,6 +97,7 @@ export const ProfitSimulatorTab: React.FC = () => {
           Adjust variables to ensure you maintain safe margins before authorizing affiliate commissions.
         </p>
       </div>
+
 
       {/* Simulator Section */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
