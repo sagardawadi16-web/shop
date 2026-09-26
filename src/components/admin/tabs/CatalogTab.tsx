@@ -21,12 +21,13 @@ import { Product, Category } from '../../../types';
 import { toast } from '../../common/Toast';
 
 export const CatalogTab: React.FC = () => {
-  const { products, categories, addProduct, updateProduct, deleteProduct } = useProductStore();
+  const { products, categories, addProduct, updateProduct, deleteProduct, clearAllProducts } = useProductStore();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   const filtered = products.filter((p) => {
     if (selectedCategory !== 'all' && p.categoryId !== selectedCategory) return false;
@@ -132,11 +133,16 @@ export const CatalogTab: React.FC = () => {
     setEditingProduct(null);
   };
 
-  const handleDeleteProduct = (id: string, name: string) => {
-    if (window.confirm(`Are you sure you want to permanently delete "${name}" from store catalog?`)) {
-      deleteProduct(id);
-      toast(`Deleted product "${name}"`);
-    }
+  const handleRequestDelete = (product: Product) => {
+    setProductToDelete(product);
+  };
+
+  const executeDeleteProduct = () => {
+    if (!productToDelete) return;
+    const name = productToDelete.title.en;
+    deleteProduct(productToDelete.id);
+    toast(`Permanently deleted: "${name}"`, 'success');
+    setProductToDelete(null);
   };
 
   const handleToggleStock = (product: Product) => {
@@ -190,26 +196,59 @@ export const CatalogTab: React.FC = () => {
           </div>
         </div>
 
-        <button
-          onClick={handleOpenAdd}
-          style={{
-            padding: '9px 18px',
-            backgroundColor: '#8B3A3A',
-            color: '#FFFFFF',
-            border: 'none',
-            borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            boxShadow: '0 3px 10px rgba(139,58,58,0.25)',
-          }}
-        >
-          <Plus size={16} />
-          <span>Add New Garment</span>
-        </button>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          {products.length > 0 && (
+            <button
+              onClick={async () => {
+                if (
+                  window.confirm(
+                    `Are you sure you want to permanently delete all ${products.length} garments from the store catalog? This will completely empty the catalog and cannot be undone.`
+                  )
+                ) {
+                  await clearAllProducts();
+                  toast('All garments deleted from catalog. The catalog is now empty.', 'success');
+                }
+              }}
+              style={{
+                padding: '9px 14px',
+                backgroundColor: '#FFF0F0',
+                color: '#B02A37',
+                border: '1px solid #F5C2C7',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <Trash2 size={15} />
+              <span>Delete Entire Catalog ({products.length})</span>
+            </button>
+          )}
+
+          <button
+            onClick={handleOpenAdd}
+            style={{
+              padding: '9px 18px',
+              backgroundColor: '#8B3A3A',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: '0 3px 10px rgba(139,58,58,0.25)',
+            }}
+          >
+            <Plus size={16} />
+            <span>Add New Garment</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter & Search Bar */}
@@ -278,8 +317,37 @@ export const CatalogTab: React.FC = () => {
       </div>
 
       {/* Product List Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
-        {filtered.map((product) => {
+      {filtered.length === 0 ? (
+        <div style={{ padding: 48, textAlign: 'center', background: '#FFF8F0', borderRadius: 12, border: '1px solid #EADCCE' }}>
+          <Package size={42} color="#8B3A3A" style={{ opacity: 0.35, margin: '0 auto 12px' }} />
+          <h4 style={{ margin: '0 0 6px', color: '#2B1810', fontSize: 16, fontWeight: 700 }}>Store Catalog is Empty</h4>
+          <p style={{ margin: '0 0 16px', fontSize: 13, color: '#666', maxWidth: 450, marginInline: 'auto' }}>
+            {products.length === 0
+              ? 'There are currently no products in the catalog. Click "Add New Garment" to list your first authentic collection item.'
+              : 'No garments match your current search or category filter.'}
+          </p>
+          <button
+            onClick={handleOpenAdd}
+            style={{
+              padding: '9px 18px',
+              backgroundColor: '#8B3A3A',
+              color: '#FFF',
+              border: 'none',
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <Plus size={15} /> Add New Garment
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
+          {filtered.map((product) => {
           const margin = product.costPrice
             ? Math.round(((product.price - product.costPrice) / product.price) * 100)
             : 50;
@@ -424,21 +492,31 @@ export const CatalogTab: React.FC = () => {
                       <Edit2 size={12} /> Edit
                     </button>
                     <button
-                      onClick={() => handleDeleteProduct(product.id, product.title.en)}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRequestDelete(product);
+                      }}
                       title="Delete Product"
                       style={{
-                        padding: '4px 8px',
+                        padding: '6px 12px',
                         background: '#FFF0F0',
-                        border: '1px solid #F5C2C7',
-                        borderRadius: 4,
+                        border: '1.5px solid #F5C2C7',
+                        borderRadius: 6,
                         color: '#B02A37',
                         cursor: 'pointer',
-                        display: 'flex',
+                        display: 'inline-flex',
                         alignItems: 'center',
-                        fontSize: 11,
+                        gap: 5,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        minHeight: '34px',
+                        touchAction: 'manipulation',
+                        boxShadow: '0 1px 3px rgba(176,42,55,0.08)',
                       }}
                     >
-                      <Trash2 size={12} />
+                      <Trash2 size={13} />
+                      <span>Delete</span>
                     </button>
                   </div>
                 </div>
@@ -447,6 +525,7 @@ export const CatalogTab: React.FC = () => {
           );
         })}
       </div>
+      )}
 
       {/* Add / Edit Product Modal */}
       {isEditing && editingProduct && (
@@ -687,6 +766,138 @@ export const CatalogTab: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Touch-Friendly Delete Confirmation Modal */}
+      {productToDelete && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+            zIndex: 999999,
+          }}
+        >
+          <div
+            style={{
+              background: '#FFFFFF',
+              borderRadius: 16,
+              maxWidth: 440,
+              width: '100%',
+              padding: 22,
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              border: '2px solid #F5C2C7',
+              animation: 'fadeIn 0.15s ease-out',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div
+                style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: '50%',
+                  background: '#FEE2E2',
+                  color: '#DC2626',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Trash2 size={24} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#2B1810' }}>
+                  Delete Garment from Catalog?
+                </h3>
+                <p style={{ margin: '3px 0 0', fontSize: 12, color: '#6B564C' }}>
+                  हटाएपछि यो पोशाक स्टोर र ग्राहकको दृश्यबाट सधैंका लागि हट्नेछ।
+                </p>
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                gap: 12,
+                padding: 12,
+                background: '#FAF2E9',
+                borderRadius: 10,
+                border: '1px solid #EADCCE',
+                marginBottom: 18,
+                alignItems: 'center',
+              }}
+            >
+              <img
+                src={productToDelete.images[0] || 'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=400&q=80'}
+                alt={productToDelete.title.en}
+                style={{ width: 50, height: 60, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }}
+              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: '#2B1810', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {productToDelete.title.en}
+                </div>
+                <div style={{ fontSize: 12, color: '#8B3A3A', fontWeight: 600 }}>
+                  {productToDelete.title.np} • NPR {productToDelete.price.toLocaleString()}
+                </div>
+                <div style={{ fontSize: 11, color: '#888' }}>
+                  ID: {productToDelete.id}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button
+                type="button"
+                onClick={executeDeleteProduct}
+                style={{
+                  width: '100%',
+                  height: 48,
+                  borderRadius: 10,
+                  background: '#DC2626',
+                  color: '#FFF',
+                  border: 'none',
+                  fontSize: 14.5,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  boxShadow: '0 4px 12px rgba(220, 38, 38, 0.25)',
+                  touchAction: 'manipulation',
+                }}
+              >
+                <Trash2 size={18} />
+                <span>Permanently Delete (सधैंका लागि हटाउनुहोस्)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setProductToDelete(null)}
+                style={{
+                  width: '100%',
+                  height: 44,
+                  borderRadius: 10,
+                  background: '#FFF',
+                  color: '#6B564C',
+                  border: '1.5px solid #D1D5DB',
+                  fontSize: 13.5,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  touchAction: 'manipulation',
+                }}
+              >
+                Cancel (रद्द गर्नुहोस्)
+              </button>
+            </div>
           </div>
         </div>
       )}

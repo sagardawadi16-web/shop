@@ -60,6 +60,28 @@ const saveLatestOrder = (order: Order | null) => {
   } catch {}
 };
 
+const DELETED_ORDERS_KEY = 'dawosti_deleted_order_ids_v2';
+
+const getDeletedOrderIds = (): Set<string> => {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = localStorage.getItem(DELETED_ORDERS_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+};
+
+const addDeletedOrderId = (id: string, orderNumber?: string) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const set = getDeletedOrderIds();
+    if (id) set.add(id);
+    if (orderNumber) set.add(orderNumber);
+    localStorage.setItem(DELETED_ORDERS_KEY, JSON.stringify(Array.from(set)));
+  } catch {}
+};
+
 const isDemoPurged = (): boolean => {
   if (typeof window === 'undefined') return false;
   try {
@@ -74,10 +96,15 @@ const loadLocalOrders = (): Order[] => {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     const parsed: Order[] = raw ? JSON.parse(raw) : [];
-    if (isDemoPurged()) {
-      return parsed.filter((o) => !o.id.startsWith('seed_order_') && !o.id.startsWith('demo_'));
-    }
-    return parsed;
+    const deleted = getDeletedOrderIds();
+    const isPurged = isDemoPurged();
+
+    return parsed.filter((o) => {
+      if (!o || !o.id) return false;
+      if (deleted.has(o.id) || (o.orderNumber && deleted.has(o.orderNumber))) return false;
+      if (o.id.startsWith('seed_order_') || o.id.startsWith('demo_')) return false;
+      return true;
+    });
   } catch {
     return [];
   }
@@ -86,22 +113,29 @@ const loadLocalOrders = (): Order[] => {
 const saveLocalOrders = (orders: Order[]) => {
   if (typeof window === 'undefined') return;
   try {
-    const toSave = isDemoPurged()
-      ? orders.filter((o) => !o.id.startsWith('seed_order_') && !o.id.startsWith('demo_'))
-      : orders;
+    const deleted = getDeletedOrderIds();
+    const toSave = orders.filter((o) => {
+      if (!o || !o.id) return false;
+      if (deleted.has(o.id) || (o.orderNumber && deleted.has(o.orderNumber))) return false;
+      if (o.id.startsWith('seed_order_') || o.id.startsWith('demo_')) return false;
+      return true;
+    });
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave));
   } catch {}
 };
 
 const mergeOrdersLists = (...lists: Order[][]): Order[] => {
   const map = new Map<string, Order>();
-  const purged = isDemoPurged();
+  const deleted = getDeletedOrderIds();
 
   // Merge all lists — later arrays override earlier entries
   lists.forEach((list) => {
     (list || []).forEach((o) => {
       if (o && o.id) {
-        if (purged && (o.id.startsWith('seed_order_') || o.id.startsWith('demo_'))) {
+        if (deleted.has(o.id) || (o.orderNumber && deleted.has(o.orderNumber))) {
+          return;
+        }
+        if (o.id.startsWith('seed_order_') || o.id.startsWith('demo_')) {
           return;
         }
         map.set(o.id, o);
@@ -120,7 +154,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   unacknowledgedCount: 0,
 
   initFirestoreSync: () => {
-    // 1. Initial hydration from local cache
+    // 1. Initial hydration from local cache & purge any demo seed orders
+    deleteAllSeedOrders().catch(() => {});
     const initialLocal = loadLocalOrders();
     const initialUnack = initialLocal.filter((o) => !o.acknowledgedByAdmin).length;
     set({ orders: initialLocal, unacknowledgedCount: initialUnack });
@@ -372,6 +407,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
   deleteOrder: (orderId) => {
     const target = get().orders.find((o) => o.id === orderId || o.orderNumber === orderId);
+    addDeletedOrderId(orderId, target?.orderNumber);
     const updated = get().orders.filter((o) => o.id !== orderId && o.orderNumber !== orderId);
     const unackCount = updated.filter((o) => !o.acknowledgedByAdmin).length;
     set({ orders: updated, unacknowledgedCount: unackCount });

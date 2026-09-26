@@ -5,6 +5,7 @@ import {
   listenProducts,
   saveProduct,
   deleteProduct as deleteProductFromFirestore,
+  deleteAllProducts,
 } from '../services/firestoreProducts';
 
 interface ProductState {
@@ -34,6 +35,7 @@ interface ProductState {
   addProduct: (product: Product) => void;
   updateProduct: (id: string, updates: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
+  clearAllProducts: () => Promise<void>;
   resetProducts: () => void;
 
   // Actions — Filters
@@ -86,8 +88,56 @@ const applyFilters = (
   });
 };
 
+const DELETED_PRODUCT_IDS_KEY = 'dawosti_deleted_product_ids_v2';
+const LOCAL_PRODUCTS_KEY = 'dawosti_local_products_v2';
+
+const getDeletedProductIds = (): Set<string> => {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = localStorage.getItem(DELETED_PRODUCT_IDS_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+};
+
+const addDeletedProductId = (id: string) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const set = getDeletedProductIds();
+    set.add(id);
+    localStorage.setItem(DELETED_PRODUCT_IDS_KEY, JSON.stringify(Array.from(set)));
+  } catch {}
+};
+
+const loadLocalProducts = (): Product[] | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(LOCAL_PRODUCTS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveLocalProducts = (products: Product[]) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(LOCAL_PRODUCTS_KEY, JSON.stringify(products));
+  } catch {}
+};
+
+const getInitialProducts = (): Product[] => {
+  const deletedSet = getDeletedProductIds();
+  const local = loadLocalProducts();
+  const base = local && local.length > 0 ? local : MOCK_PRODUCTS;
+  return base.filter((p) => !deletedSet.has(p.id));
+};
+
+const initialProducts = getInitialProducts();
+
 export const useProductStore = create<ProductState>((set, get) => ({
-  products: MOCK_PRODUCTS,
+  products: initialProducts,
   categories: CATEGORIES,
   isLoaded: false,
   selectedCategory: 'all',
@@ -96,7 +146,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
   selectedSize: 'ALL',
   sortBy: 'featured',
   inStockOnly: false,
-  filteredProducts: applyFilters(MOCK_PRODUCTS, 'all', '', { min: 0, max: 100000 }, 'ALL', 'featured', false),
+  filteredProducts: applyFilters(initialProducts, 'all', '', { min: 0, max: 100000 }, 'ALL', 'featured', false),
   activeDetailProduct: null,
   activeQuickViewProduct: null,
   isProductGridLoading: false,
@@ -104,25 +154,37 @@ export const useProductStore = create<ProductState>((set, get) => ({
   initFirestoreSync: () => {
     const unsubscribe = listenProducts((remoteProducts) => {
       const { selectedCategory, searchQuery, priceRange, selectedSize, sortBy, inStockOnly } = get();
-      const activeProducts = remoteProducts && remoteProducts.length > 0 ? remoteProducts : MOCK_PRODUCTS;
+      const deletedSet = getDeletedProductIds();
+
+      // If remote products exist in Firestore, use them; if not, use cached/initial
+      let pool = remoteProducts && remoteProducts.length > 0 ? remoteProducts : get().products;
+      if (!pool || pool.length === 0) {
+        pool = getInitialProducts();
+      }
+
+      // Strictly purge any deleted product IDs
+      const activeProducts = pool.filter((p) => !deletedSet.has(p.id));
+
       set({
         products: activeProducts,
         isLoaded: true,
         isProductGridLoading: false,
         filteredProducts: applyFilters(activeProducts, selectedCategory, searchQuery, priceRange, selectedSize, sortBy, inStockOnly),
       });
+      saveLocalProducts(activeProducts);
     });
 
     return unsubscribe;
   },
 
   addProduct: (product) => {
-    const updated = [product, ...get().products];
+    const updated = [product, ...get().products.filter((p) => p.id !== product.id)];
     const { selectedCategory, searchQuery, priceRange, selectedSize, sortBy, inStockOnly } = get();
     set({
       products: updated,
       filteredProducts: applyFilters(updated, selectedCategory, searchQuery, priceRange, selectedSize, sortBy, inStockOnly),
     });
+    saveLocalProducts(updated);
     saveProduct(product);
   },
 
@@ -133,25 +195,39 @@ export const useProductStore = create<ProductState>((set, get) => ({
       products: updated,
       filteredProducts: applyFilters(updated, selectedCategory, searchQuery, priceRange, selectedSize, sortBy, inStockOnly),
     });
+    saveLocalProducts(updated);
     const target = updated.find((p) => p.id === id);
     if (target) saveProduct(target);
   },
 
   deleteProduct: (id) => {
+    addDeletedProductId(id);
     const updated = get().products.filter((p) => p.id !== id);
     const { selectedCategory, searchQuery, priceRange, selectedSize, sortBy, inStockOnly } = get();
     set({
       products: updated,
       filteredProducts: applyFilters(updated, selectedCategory, searchQuery, priceRange, selectedSize, sortBy, inStockOnly),
     });
+    saveLocalProducts(updated);
     deleteProductFromFirestore(id);
+  },
+
+  clearAllProducts: async () => {
+    get().products.forEach((p) => addDeletedProductId(p.id));
+    set({
+      products: [],
+      filteredProducts: [],
+      isProductGridLoading: false,
+    });
+    saveLocalProducts([]);
+    await deleteAllProducts();
   },
 
   resetProducts: () => {
     const { selectedCategory, searchQuery, priceRange, selectedSize, sortBy, inStockOnly } = get();
     set({
-      products: MOCK_PRODUCTS,
-      filteredProducts: applyFilters(MOCK_PRODUCTS, selectedCategory, searchQuery, priceRange, selectedSize, sortBy, inStockOnly),
+      products: [],
+      filteredProducts: applyFilters([], selectedCategory, searchQuery, priceRange, selectedSize, sortBy, inStockOnly),
     });
   },
 

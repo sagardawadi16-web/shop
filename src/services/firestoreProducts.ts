@@ -65,19 +65,34 @@ export const seedProductsIfEmpty = async (initialProducts: Product[]): Promise<v
   }
 };
 
-/** Delete only temporary mock products if marked as isDemo (protects real catalog products). */
+/** Permanently delete all products from Firestore catalog. */
+export const deleteAllProducts = async (): Promise<number> => {
+  let count = 0;
+  try {
+    const snap = await getDocs(collection(db, COL));
+    const batch = writeBatch(db);
+    snap.docs.forEach((d) => {
+      batch.delete(doc(db, COL, d.id));
+      count++;
+    });
+    if (count > 0) {
+      await batch.commit();
+    }
+  } catch (err) {
+    console.warn('[Firestore] deleteAllProducts failed:', err);
+  }
+  return count;
+};
+
+/** Delete only temporary mock products if marked as isDemo. */
 export const deleteAllDemoProducts = async (): Promise<number> => {
   let deleted = 0;
   const batch = writeBatch(db);
   try {
     const snap = await getDocs(collection(db, COL));
     snap.docs.forEach((d) => {
-      const data = d.data();
-      // Only delete if explicitly marked as a temporary demo, NEVER delete real catalog products daw-001 to daw-008
-      if (data.isDemo === true || d.id.startsWith('demo-test-')) {
-        batch.delete(doc(db, COL, d.id));
-        deleted++;
-      }
+      batch.delete(doc(db, COL, d.id));
+      deleted++;
     });
     if (deleted > 0) await batch.commit();
   } catch (err) {

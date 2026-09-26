@@ -44,6 +44,7 @@ export const OrdersTab: React.FC = () => {
   const [customSupplierForms, setCustomSupplierForms] = useState<Record<string, { name: string; phone: string; location: string }>>({});
   const [activeDropdownOrder, setActiveDropdownOrder] = useState<string | null>(null);
   const [copiedOrderId, setCopiedOrderId] = useState<string | null>(null);
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
 
   const buildDispatchSlipText = (order: Order, supplier: DropshipSupplier, buyCost: number) => {
     const customerName = order.shippingAddress?.fullName || 'Customer';
@@ -931,26 +932,31 @@ ${itemsList}
 
                   {/* Delete Order */}
                   <button
-                    onClick={() => {
-                      if (window.confirm(`Are you sure you want to delete order #${order.orderNumber}?`)) {
-                        deleteOrder(order.id);
-                      }
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOrderToDelete(order);
                     }}
                     title="Delete Order"
                     style={{
-                      padding: '7px 10px',
-                      backgroundColor: 'transparent',
-                      color: '#999',
-                      border: '1px solid #EADCCE',
+                      padding: '6px 12px',
+                      backgroundColor: '#FFF0F0',
+                      color: '#B02A37',
+                      border: '1.5px solid #F5C2C7',
                       borderRadius: 6,
                       fontSize: 12,
+                      fontWeight: 700,
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
+                      gap: 4,
                       marginLeft: 'auto',
+                      minHeight: '34px',
+                      touchAction: 'manipulation',
                     }}
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={13} />
+                    <span>Delete</span>
                   </button>
                 </div>
               </div>
@@ -958,6 +964,126 @@ ${itemsList}
           })
         )}
       </div>
+
+      {/* Touch-Friendly Order Delete Confirmation Modal */}
+      {orderToDelete && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+            zIndex: 999999,
+          }}
+        >
+          <div
+            style={{
+              background: '#FFFFFF',
+              borderRadius: 16,
+              maxWidth: 420,
+              width: '100%',
+              padding: 22,
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              border: '2px solid #F5C2C7',
+              animation: 'fadeIn 0.15s ease-out',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  background: '#FEE2E2',
+                  color: '#DC2626',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Trash2 size={22} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#2B1810' }}>
+                  Delete Order #{orderToDelete.orderNumber}?
+                </h3>
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6B564C' }}>
+                  यो अर्डर स्टोर डेटाबेसबाट सधैंका लागि हट्नेछ।
+                </p>
+              </div>
+            </div>
+
+            <div
+              style={{
+                padding: '12px 14px',
+                background: '#FAF2E9',
+                borderRadius: 10,
+                border: '1px solid #EADCCE',
+                marginBottom: 16,
+                fontSize: 12.5,
+                color: '#2B1810',
+                lineHeight: 1.5,
+              }}
+            >
+              <div><strong>ग्राहक:</strong> {orderToDelete.customerName || orderToDelete.shippingAddress?.fullName || 'N/A'} ({orderToDelete.shippingAddress?.phone || 'No phone'})</div>
+              <div><strong>रकम:</strong> NPR {(orderToDelete.totalAmount || 0).toLocaleString()} • {orderToDelete.items?.length || 0} items</div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteOrder(orderToDelete.id);
+                  setOrderToDelete(null);
+                }}
+                style={{
+                  width: '100%',
+                  height: 46,
+                  borderRadius: 10,
+                  background: '#DC2626',
+                  color: '#FFF',
+                  border: 'none',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  touchAction: 'manipulation',
+                }}
+              >
+                <Trash2 size={16} />
+                <span>Permanently Delete Order</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setOrderToDelete(null)}
+                style={{
+                  width: '100%',
+                  height: 42,
+                  borderRadius: 10,
+                  background: '#FFF',
+                  color: '#6B564C',
+                  border: '1.5px solid #D1D5DB',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  touchAction: 'manipulation',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

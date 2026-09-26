@@ -31,7 +31,7 @@ export const ReferralPage: React.FC = () => {
   const [submittedData, setSubmittedData] = useState<any>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [activeTab, setActiveTab] = useState<'payout' | 'analytics' | 'guide'>('payout');
-  const [analyticsCode, setAnalyticsCode] = useState(referralCode || activeReferralCode || 'SAGAR-82');
+  const [analyticsCode, setAnalyticsCode] = useState(referralCode || activeReferralCode || '');
   const [isRequestingPayout, setIsRequestingPayout] = useState(false);
 
   // Synchronize analytics code when user fills referralCode
@@ -67,12 +67,12 @@ export const ReferralPage: React.FC = () => {
     }, 0);
 
   const withdrawableCash = currentMatchedAdvocate?.withdrawableBalance ||
-    (totalCreatorEarned >= 10000 ? totalCreatorEarned : Math.min(totalCreatorEarned, 8400));
+    (totalCreatorEarned >= 10000 ? totalCreatorEarned : 0);
 
   const isThresholdReached = withdrawableCash >= 10000;
   const thresholdPercent = Math.min(100, Math.round((withdrawableCash / 10000) * 100));
 
-  const totalClicksCount = currentMatchedAdvocate?.clicksCount || (analyticsCode === 'SAGAR-82' ? 248 : 42);
+  const totalClicksCount = currentMatchedAdvocate?.clicksCount || 0;
   const computedRate = totalClicksCount > 0
     ? Math.round((matchedCreatorOrders.length / totalClicksCount) * 1000) / 10
     : 0;
@@ -188,8 +188,16 @@ export const ReferralPage: React.FC = () => {
       toast('eSewa mobile number must be 10 digits starting with 98 or 97');
       return;
     }
-    if (khaltiNumber.trim() && !phoneRegex.test(khaltiNumber.trim())) {
-      toast('Khalti mobile number must be 10 digits starting with 98 or 97');
+    // Enforce referral code uniqueness: two people cannot use the same reference code
+    const cleanCode = referralCode.trim().toUpperCase();
+    const userPhone = (esewaId.trim() || khaltiNumber.trim() || '').replace(/[^0-9]/g, '');
+    const existingWithCode = (allAdvocates || []).find((a) => a.code.toUpperCase() === cleanCode);
+    if (
+      existingWithCode &&
+      existingWithCode.phone !== userPhone &&
+      existingWithCode.email?.toLowerCase() !== email.trim().toLowerCase()
+    ) {
+      toast(`⚠️ Referral code "${cleanCode}" is already taken by another creator. Two people cannot use the same reference code. Please pick a different unique code.`, 'error');
       return;
     }
 
@@ -1037,7 +1045,11 @@ export const ReferralPage: React.FC = () => {
               <span style={{ fontSize: 12, color: '#888' }}>
                 {language === 'np' ? 'द्रुत चयन:' : 'Quick Select:'}
               </span>
-              {['SAGAR-82', 'PRASHANT-10', 'ANUSHA-24', referralCode].filter(Boolean).map((code) => (
+              {Array.from(
+                new Set([(allAdvocates || []).map((a) => a.code), referralCode, activeReferralCode].flat())
+              )
+                .filter(Boolean)
+                .map((code) => (
                 <button
                   key={code}
                   onClick={() => setAnalyticsCode(code)}
