@@ -4,12 +4,21 @@ import {
   onAuthStateChanged,
   User,
   signOut as firebaseSignOut,
+  setPersistence,
+  browserLocalPersistence,
 } from 'firebase/auth';
 import { auth } from './firebase';
 import { MASTER_OWNER_EMAILS, getUserRole } from './firestoreWhitelist';
 
 const standardProvider = new GoogleAuthProvider();
 standardProvider.setCustomParameters({ prompt: 'select_account' });
+
+// Ensure Firebase Auth always persists across tab/browser closes
+if (typeof window !== 'undefined' && auth) {
+  setPersistence(auth, browserLocalPersistence).catch((err) => {
+    console.warn('[Firebase Auth] Persistence initialization notice:', err);
+  });
+}
 
 export const onAuthChange = (
   onSuccess: (user: User) => void,
@@ -26,6 +35,9 @@ export const onAuthChange = (
 
 export const signInWithGoogle = async (preferredEmail?: string): Promise<User | null> => {
   try {
+    if (typeof window !== 'undefined' && auth) {
+      await setPersistence(auth, browserLocalPersistence).catch(() => {});
+    }
     const result = await signInWithPopup(auth, standardProvider);
     return result.user;
   } catch (error: any) {

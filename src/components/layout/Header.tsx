@@ -20,6 +20,10 @@ export const Header: React.FC = () => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [isCategoryHidden, setIsCategoryHidden] = useState(false);
+  const isCategoryHiddenRef = useRef(false);
+  const isTransitioningRef = useRef(false);
+  const isProgrammaticScrollRef = useRef(false);
 
   // Lock background scroll and handle Escape/back when mobile menu is open
   useEffect(() => {
@@ -48,6 +52,69 @@ export const Header: React.FC = () => {
     };
   }, [mobileMenuOpen]);
 
+  // Jitter-proof, butter-smooth category subnav scroll listener
+  useEffect(() => {
+    let lastScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+    let accumulatedDelta = 0;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (ticking) return;
+
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        const currentScrollY = Math.max(0, window.scrollY);
+        const delta = currentScrollY - lastScrollY;
+        lastScrollY = currentScrollY;
+        ticking = false;
+
+        // Ignore while programmatic smooth scrolling is running
+        if (isProgrammaticScrollRef.current) return;
+
+        // Ignore during active CSS transition to prevent layout shift feedback loops
+        if (isTransitioningRef.current) return;
+
+        // Near top of page: always reveal category bar
+        if (currentScrollY <= 60) {
+          if (isCategoryHiddenRef.current) {
+            isCategoryHiddenRef.current = false;
+            setIsCategoryHidden(false);
+            isTransitioningRef.current = true;
+            setTimeout(() => { isTransitioningRef.current = false; }, 350);
+          }
+          accumulatedDelta = 0;
+          return;
+        }
+
+        // Reset accumulator on scroll direction change
+        if ((delta > 0 && accumulatedDelta < 0) || (delta < 0 && accumulatedDelta > 0)) {
+          accumulatedDelta = 0;
+        }
+        accumulatedDelta += delta;
+
+        // Sustained DOWNWARD scroll (>65px past 150px depth): smoothly hide category distraction
+        if (accumulatedDelta > 65 && currentScrollY > 150 && !isCategoryHiddenRef.current) {
+          isCategoryHiddenRef.current = true;
+          setIsCategoryHidden(true);
+          accumulatedDelta = 0;
+          isTransitioningRef.current = true;
+          setTimeout(() => { isTransitioningRef.current = false; }, 350);
+        }
+        // Sustained UPWARD scroll (<-45px): smoothly reveal categories for easy navigation
+        else if (accumulatedDelta < -45 && isCategoryHiddenRef.current) {
+          isCategoryHiddenRef.current = false;
+          setIsCategoryHidden(false);
+          accumulatedDelta = 0;
+          isTransitioningRef.current = true;
+          setTimeout(() => { isTransitioningRef.current = false; }, 350);
+        }
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const handleCategoryClick = (catId: string) => {
     setSelectedCategory(catId);
     if (pageView !== 'home') {
@@ -55,7 +122,12 @@ export const Header: React.FC = () => {
     }
     setMobileMenuOpen(false);
 
-    // Smooth scroll directly to catalog with precise sticky header offset
+    // Lock scroll listener during smooth programmatic scroll
+    isProgrammaticScrollRef.current = true;
+    setTimeout(() => {
+      isProgrammaticScrollRef.current = false;
+    }, 850);
+
     requestAnimationFrame(() => {
       const catalogEl = document.getElementById('product-catalog');
       if (catalogEl) {
@@ -73,6 +145,10 @@ export const Header: React.FC = () => {
   const handleLogoClick = () => {
     setPageView('home');
     setSelectedCategory('all');
+    isProgrammaticScrollRef.current = true;
+    setTimeout(() => {
+      isProgrammaticScrollRef.current = false;
+    }, 600);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -371,12 +447,18 @@ export const Header: React.FC = () => {
         </div>
       )}
 
-      {/* Bottom Sub-Nav: Categories Bar (Stable, zero-jitter architecture) */}
+      {/* Bottom Sub-Nav: Categories Bar (Smooth hide on scroll down, reveal on scroll up) */}
       <nav
         style={{
-          borderTop: '1px solid #EADCCE',
+          borderTop: isCategoryHidden ? '1px solid transparent' : '1px solid #EADCCE',
           backgroundColor: '#FFFFFF',
+          maxHeight: isCategoryHidden ? 0 : 44,
+          opacity: isCategoryHidden ? 0 : 1,
+          transform: isCategoryHidden ? 'translateY(-8px)' : 'translateY(0)',
           overflow: 'hidden',
+          transition: 'max-height 0.28s cubic-bezier(0.25, 1, 0.5, 1), transform 0.28s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s ease, border-color 0.2s ease',
+          pointerEvents: isCategoryHidden ? 'none' : 'auto',
+          willChange: 'max-height, transform, opacity',
         }}
       >
         <div
