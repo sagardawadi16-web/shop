@@ -40,12 +40,33 @@ const detectLanguage = (): Language => {
   return 'en';
 };
 
+const detectInitialPageView = (): PageView => {
+  try {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname || '';
+      const path = window.location.pathname || '';
+      const hash = window.location.hash || '';
+      if (
+        host.startsWith('referral.') ||
+        host.startsWith('creator.') ||
+        path.startsWith('/referral') ||
+        path.startsWith('/creator') ||
+        hash === '#referral' ||
+        hash === '#creator'
+      ) {
+        return 'referral';
+      }
+    }
+  } catch {}
+  return 'home';
+};
+
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   language: detectLanguage(),
   merchant: DEFAULT_MERCHANT,
   theme: DEFAULT_THEME,
   siteContent: DEFAULT_SITE_CONTENT,
-  pageView: 'home',
+  pageView: detectInitialPageView(),
   isOrderTrackingOpen: false,
 
   initFirestoreSync: () => {

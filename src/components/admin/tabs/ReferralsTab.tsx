@@ -602,9 +602,9 @@ export const ReferralsTab: React.FC = () => {
                   </thead>
                   <tbody>
                     {filteredReferralOrders.map((order) => {
-                      const cleanPhone = (order.shippingAddress.phone || '').replace(/[^0-9]/g, '');
+                      const cleanPhone = (order.shippingAddress?.phone || '').replace(/[^0-9]/g, '');
                       const waLink = `https://wa.me/977${cleanPhone}?text=${encodeURIComponent(
-                        `Namaste ${order.shippingAddress.fullName}! This is Dawosti Boutique Kathmandu regarding your order #${order.orderNumber}. We have verified your referral discount.`
+                        `Namaste ${order.shippingAddress?.fullName || 'Customer'}! This is Dawosti Boutique Kathmandu regarding your order #${order.orderNumber}. We have verified your referral discount.`
                       )}`;
 
                       // Calculate profit for row
@@ -615,21 +615,21 @@ export const ReferralsTab: React.FC = () => {
                       const shipping = order.shippingCostActual ?? (order.deliveryFee || 150);
                       const netProfit = order.netProfitCalculated ?? (order.totalAmount - cost - shipping - commission);
 
-                      const advocate = allAdvocates.find((a) => a.code === order.referredByCode);
+                      const advocate = (allAdvocates || []).find((a) => a?.code === order.referredByCode);
 
                       return (
                         <tr key={order.id} style={{ borderBottom: '1px solid #F0E6D8' }}>
                           {/* Customer */}
                           <td style={{ padding: '12px 14px' }}>
                             <div style={{ fontWeight: 700, color: '#2B1810' }}>
-                              {order.shippingAddress.fullName}
+                              {order.shippingAddress?.fullName || 'Customer'}
                             </div>
                             <div style={{ fontSize: 11, color: '#777' }}>
-                              {order.shippingAddress.city}
+                              {order.shippingAddress?.city || 'Nepal'}
                             </div>
                             <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
                               <span style={{ fontFamily: 'monospace', fontSize: 11, color: '#555' }}>
-                                {order.shippingAddress.phone}
+                                {order.shippingAddress?.phone || 'N/A'}
                               </span>
                               <a
                                 href={waLink}
@@ -695,9 +695,9 @@ export const ReferralsTab: React.FC = () => {
                           {/* Items */}
                           <td style={{ padding: '12px 14px', maxWidth: 220 }}>
                             <div style={{ fontSize: 12, color: '#333', lineHeight: 1.4 }}>
-                              {order.items.map((item, idx) => (
+                              {(order.items || []).map((item, idx) => (
                                 <div key={idx} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                  • {item.product.title.en} ({item.selectedSize}) × {item.quantity}
+                                  • {item?.product?.title?.en || (typeof item?.product?.title === 'string' ? item.product.title : 'Boutique Piece')} ({item?.selectedSize || 'M'}) × {item?.quantity || 1}
                                 </div>
                               ))}
                             </div>
