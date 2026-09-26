@@ -34,6 +34,76 @@ const commands = [
     description: 'Browse premier Dawosti collections, bespoke silhouettes, and drop links',
   },
   {
+    name: 'link-wallet',
+    description: 'Link your eSewa or Khalti account to earn 10% cash royalties on community orders',
+    options: [
+      {
+        name: 'wallet_type',
+        description: 'Choose payment provider (eSewa or Khalti)',
+        type: 3, // STRING
+        required: true,
+        choices: [
+          { name: 'eSewa', value: 'esewa' },
+          { name: 'Khalti', value: 'khalti' },
+        ],
+      },
+      {
+        name: 'wallet_number',
+        description: 'Your 10-digit mobile wallet ID (e.g., 9801234567)',
+        type: 3, // STRING
+        required: true,
+      },
+      {
+        name: 'custom_code',
+        description: 'Optional custom affiliate code (e.g., SAGAR, ANUSHA)',
+        type: 3, // STRING
+        required: false,
+      },
+    ],
+  },
+  {
+    name: 'payout',
+    description: 'Check your real-time 10% royalty balance and NPR 10,000 disbursement milestone',
+  },
+  {
+    name: 'request-payout',
+    description: 'Dispatch an autonomous payout request to your linked eSewa / Khalti wallet',
+  },
+  {
+    name: 'submit-design',
+    description: 'Submit an original garment sketch or tech-pack to the Dawosti Atelier',
+    options: [
+      {
+        name: 'title',
+        description: 'Title of the garment or collection piece',
+        type: 3,
+        required: true,
+      },
+      {
+        name: 'materials',
+        description: 'Key textiles (e.g., Palpali Dhaka, Himalayan Hemp, Raw Mulberry Silk)',
+        type: 3,
+        required: true,
+      },
+      {
+        name: 'description',
+        description: 'Design concept, silhouette details, and cultural story',
+        type: 3,
+        required: true,
+      },
+      {
+        name: 'image_url',
+        description: 'Direct link to sketch, CAD render, or lookbook image',
+        type: 3,
+        required: false,
+      },
+    ],
+  },
+  {
+    name: 'challenge',
+    description: 'View the active weekly fashion design brief and the NPR 5,000 bounty criteria',
+  },
+  {
     name: 'verify',
     description: 'Verify your Dawosti purchase order to unlock exclusive Patron Suite access',
     options: [
