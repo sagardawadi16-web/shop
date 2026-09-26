@@ -82,9 +82,23 @@ const detectInitialPageView = (): PageView => {
   return 'home';
 };
 
+const STORAGE_MERCHANT_KEY = 'dawosti_merchant_settings_v1';
+
+const getInitialMerchant = (): MerchantSettings => {
+  try {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_MERCHANT_KEY);
+      if (saved) {
+        return { ...DEFAULT_MERCHANT, ...JSON.parse(saved) };
+      }
+    }
+  } catch {}
+  return DEFAULT_MERCHANT;
+};
+
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   language: detectLanguage(),
-  merchant: DEFAULT_MERCHANT,
+  merchant: getInitialMerchant(),
   theme: DEFAULT_THEME,
   siteContent: DEFAULT_SITE_CONTENT,
   pageView: detectInitialPageView(),
@@ -96,6 +110,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       if (e.key === 'dawosti_lang_v3' && (e.newValue === 'en' || e.newValue === 'np')) {
         set({ language: e.newValue as Language });
       }
+      if (e.key === STORAGE_MERCHANT_KEY && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          set((s) => ({ merchant: { ...s.merchant, ...parsed } }));
+        } catch {}
+      }
     };
 
     if (typeof window !== 'undefined') {
@@ -103,11 +123,19 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
 
     const unsubscribe = listenSettings((data) => {
-      set((s) => ({
-        merchant: data.merchant ? { ...s.merchant, ...data.merchant } : s.merchant,
-        theme: data.theme ? { ...s.theme, ...data.theme } : s.theme,
-        siteContent: data.siteContent ? { ...s.siteContent, ...data.siteContent } : s.siteContent,
-      }));
+      set((s) => {
+        const nextMerchant = data.merchant ? { ...s.merchant, ...data.merchant } : s.merchant;
+        if (data.merchant && typeof window !== 'undefined') {
+          try {
+            localStorage.setItem(STORAGE_MERCHANT_KEY, JSON.stringify(nextMerchant));
+          } catch {}
+        }
+        return {
+          merchant: nextMerchant,
+          theme: data.theme ? { ...s.theme, ...data.theme } : s.theme,
+          siteContent: data.siteContent ? { ...s.siteContent, ...data.siteContent } : s.siteContent,
+        };
+      });
     });
 
     return () => {
@@ -132,8 +160,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   updateMerchant: (updates) => {
-    set((s) => ({ merchant: { ...s.merchant, ...updates } }));
-    publishSettings({ merchant: { ...get().merchant, ...updates } });
+    const updated = { ...get().merchant, ...updates };
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_MERCHANT_KEY, JSON.stringify(updated));
+      }
+    } catch {}
+    set({ merchant: updated });
+    publishSettings({ merchant: updated });
   },
 
   updateTheme: (updates) => {

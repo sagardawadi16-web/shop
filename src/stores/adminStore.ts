@@ -41,7 +41,7 @@ export const isTabAllowedForRole = (tab: AdminTab, role: AdminRole | null): bool
   if (!role) return false;
   if (role === 'owner' || role === 'super_admin') return true;
   if (role === 'manager') return tab !== 'whitelist';
-  if (role === 'staff') return tab === 'orders' || tab === 'referrals';
+  if (role === 'staff') return tab === 'orders' || tab === 'referrals' || tab === 'payment-qr';
   return false;
 };
 

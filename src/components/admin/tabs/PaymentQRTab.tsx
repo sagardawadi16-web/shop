@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   QrCode,
   Upload,
@@ -69,6 +69,19 @@ export const PaymentQRTab: React.FC = () => {
   const [fonepayMerchantId, setFonepayMerchantId] = useState<string>(merchant.fonepayMerchantId || '');
   const [esewaId, setEsewaId] = useState<string>(merchant.esewaId || '');
   const [khaltiId, setKhaltiId] = useState<string>(merchant.khaltiId || '');
+
+  // Synchronize draft state whenever merchant settings update from Firestore or LocalStorage
+  useEffect(() => {
+    if (merchant.fonepayQrDataUri !== undefined) setFonepayQr(merchant.fonepayQrDataUri || '');
+    if (merchant.esewaQrDataUri !== undefined) setEsewaQr(merchant.esewaQrDataUri || '');
+    if (merchant.khaltiQrDataUri !== undefined) setKhaltiQr(merchant.khaltiQrDataUri || '');
+    if (merchant.shopPhone) setShopPhone(merchant.shopPhone);
+    if (merchant.shopName?.en) setShopNameEn(merchant.shopName.en);
+    if (merchant.shopName?.np) setShopNameNp(merchant.shopName.np);
+    if (merchant.fonepayMerchantId !== undefined) setFonepayMerchantId(merchant.fonepayMerchantId || '');
+    if (merchant.esewaId !== undefined) setEsewaId(merchant.esewaId || '');
+    if (merchant.khaltiId !== undefined) setKhaltiId(merchant.khaltiId || '');
+  }, [merchant]);
 
   // Preview simulator selection
   const [simulatedMethod, setSimulatedMethod] = useState<'fonepay' | 'esewa' | 'khalti'>('fonepay');

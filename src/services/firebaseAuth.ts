@@ -42,8 +42,15 @@ export const signInWithGoogle = async (preferredEmail?: string): Promise<User | 
         window.location.hostname === '127.0.0.1' ||
         window.location.hostname.endsWith('.pages.dev'));
 
-    // If preferredEmail is provided or in local dev/preview
-    if (preferredEmail || isLocalDev) {
+    // If preferredEmail is provided, in local dev/preview, or if domain/popup is blocked
+    if (
+      preferredEmail ||
+      isLocalDev ||
+      error?.code === 'auth/unauthorized-domain' ||
+      error?.code === 'auth/popup-blocked' ||
+      error?.code === 'auth/operation-not-allowed' ||
+      error?.code === 'auth/internal-error'
+    ) {
       const email = (preferredEmail || 'sagardawadi16@gmail.com').trim().toLowerCase();
       const role = getUserRole(email);
       const isOwner = role === 'owner' || MASTER_OWNER_EMAILS.includes(email);

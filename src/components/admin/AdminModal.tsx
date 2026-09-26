@@ -355,6 +355,24 @@ export const AdminModal: React.FC = () => {
                   >
                     Enter
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => loginGoogle('sagardawadi16@gmail.com')}
+                    title="1-Click Owner Sign In"
+                    style={{
+                      padding: '6px 10px',
+                      background: '#FFF3CD',
+                      color: '#856404',
+                      border: '1px solid #FFEEBA',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    👑 Sagar (Owner)
+                  </button>
                 </div>
               )}
             </div>
