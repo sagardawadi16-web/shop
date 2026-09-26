@@ -59,6 +59,17 @@ export interface ShippingAddress {
   addressLine: string;
   city: string;
   province?: string;
+  district?: string;
+  municipality?: string;
+  ward?: string;
+  tole?: string;
+  landmark?: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+    accuracy?: number;
+  };
+  mapUrl?: string;
 }
 
 export type OrderVerificationStatus = 'unverified' | 'verified_genuine' | 'suspicious' | 'flagged_fake';

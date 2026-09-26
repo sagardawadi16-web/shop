@@ -23,6 +23,7 @@ import { useReferralStore } from '../stores/referralStore';
 import { useAuthStore } from '../stores/authStore';
 import { ShippingAddress, PaymentMethod } from '../types';
 import { verifyHumanOrAgent } from '../services/botProtection';
+import { DynamicLocationSelector } from '../components/checkout/DynamicLocationSelector';
 
 export const CheckoutPage: React.FC = () => {
   const { items, subtotal, clearCart } = useCartStore();
@@ -49,8 +50,13 @@ export const CheckoutPage: React.FC = () => {
     fullName: user?.name || '',
     phone: '',
     addressLine: '',
-    city: 'Kathmandu',
-    province: 'Bagmati',
+    city: 'Chitwan',
+    province: 'Bagmati Province',
+    district: 'Chitwan',
+    municipality: 'Bharatpur Metropolitan',
+    ward: '10',
+    tole: 'Lions Chowk',
+    landmark: '',
   });
 
   // Automatically sync full name if user signs in with Google
@@ -71,11 +77,8 @@ export const CheckoutPage: React.FC = () => {
     if (!cleanPhone || cleanPhone.length < 10) {
       e.phone = language === 'np' ? '१० अंकको वैध फोन नम्बर आवश्यक छ (उदा: 9808251494)' : '10-digit valid phone required (e.g. 9808251494)';
     }
-    if (!form.addressLine.trim()) {
-      e.addressLine = language === 'np' ? 'डेलिभरीको लागि टोल वा नजिकको ठाउँ लेख्नुहोस्' : 'Street address / area required';
-    }
-    if (!form.city.trim()) {
-      e.city = language === 'np' ? 'सहर वा जिल्ला छान्नुहोस् वा लेख्नुहोस्' : 'City is required';
+    if (!form.addressLine.trim() && !form.tole?.trim()) {
+      e.addressLine = language === 'np' ? 'डेलिभरीको लागि टोल वा सडकको नाम लेख्नुहोस्' : 'Street address / area required';
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -98,12 +101,22 @@ export const CheckoutPage: React.FC = () => {
       )
       .join('\n');
 
+    const detailedAddress = [
+      form.tole,
+      form.landmark ? `(ल्यान्डमार्क: ${form.landmark})` : '',
+      form.ward ? `वडा-${form.ward}` : '',
+      form.municipality,
+      form.district || form.city,
+      form.province,
+    ].filter(Boolean).join(', ') || form.addressLine;
+
     return encodeURIComponent(
       `🛍️ *दावोस्ती फेसन — नयाँ अनलाइन अर्डर #${orderNumber}*\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `👤 *ग्राहकको नाम (Customer):* ${form.fullName}\n` +
       `📞 *सम्पर्क फोन (Phone):* ${form.phone}\n` +
-      `📍 *डेलिभरी ठेगाना:* ${form.addressLine}, ${form.city} (${form.province})\n` +
+      `📍 *डेलिभरी ठेगाना:* ${detailedAddress}\n` +
+      `${form.mapUrl ? `🗺️ *Google Maps GPS पिन:* ${form.mapUrl}\n` : ''}` +
       `${deliveryNote ? `📝 *डेलिभरी निर्देशन:* ${deliveryNote}\n` : ''}` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `📦 *अर्डर गरिएका वस्त्रहरू (Items):*\n${itemsSummary}\n\n` +
@@ -466,63 +479,21 @@ export const CheckoutPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* City Quick Select & Custom input */}
-                  <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#2B1810', marginBottom: 5 }}>
-                      {language === 'np' ? 'सहर / जिल्ला' : 'City / District (सहर वा जिल्ला)'} *
-                    </label>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-                      {popularCities.map((c) => (
-                        <button
-                          type="button"
-                          key={c}
-                          onClick={() => {
-                            setForm((f) => ({ ...f, city: c }));
-                            setErrors((er) => ({ ...er, city: undefined }));
-                          }}
-                          style={{
-                            padding: '5px 12px',
-                            borderRadius: 8,
-                            fontSize: 12,
-                            fontWeight: form.city === c ? 700 : 500,
-                            border: `1.5px solid ${form.city === c ? '#8B3A3A' : '#EADCCE'}`,
-                            background: form.city === c ? '#FAF2E9' : 'white',
-                            color: form.city === c ? '#8B3A3A' : '#2B1810',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          {c}
-                        </button>
-                      ))}
-                    </div>
-                    <input
-                      style={inputStyle(errors.city)}
-                      value={form.city}
-                      placeholder={language === 'np' ? 'आफ्नो सहर वा जिल्ला लेख्नुहोस्' : 'Enter city / district'}
-                      onChange={(e) => {
-                        setForm((f) => ({ ...f, city: e.target.value }));
-                        setErrors((er) => ({ ...er, city: undefined }));
-                      }}
-                    />
-                    {errors.city && <p style={{ fontSize: 11, color: '#DC2626', margin: '4px 0 0' }}>{errors.city}</p>}
-                  </div>
-
-                  {/* Detailed Street Address */}
-                  <div>
-                    <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#2B1810', marginBottom: 5 }}>
-                      {language === 'np' ? 'टोल, सडक वा नजिकको ठाउँ (Landmark)' : 'Street Address / Area Landmark'} *
-                    </label>
-                    <input
-                      style={inputStyle(errors.addressLine)}
-                      value={form.addressLine}
-                      placeholder={language === 'np' ? 'उदा: नयाँ सडक, विशाल बजार अगाडि / लाजिम्पाट' : 'e.g. Lazimpat, Near Embassy gate'}
-                      onChange={(e) => {
-                        setForm((f) => ({ ...f, addressLine: e.target.value }));
-                        setErrors((er) => ({ ...er, addressLine: undefined }));
-                      }}
-                    />
-                    {errors.addressLine && <p style={{ fontSize: 11, color: '#DC2626', margin: '4px 0 0' }}>{errors.addressLine}</p>}
-                  </div>
+                  {/* Dynamic Cascade Nepal Location & GPS Component */}
+                  <DynamicLocationSelector
+                    value={form}
+                    onChange={(updated) => {
+                      setForm(updated);
+                      setErrors((er) => ({
+                        ...er,
+                        addressLine: undefined,
+                        city: undefined,
+                        province: undefined,
+                      }));
+                    }}
+                    errors={errors}
+                    language={language}
+                  />
 
                   {/* Optional Delivery Instructions */}
                   <div>
