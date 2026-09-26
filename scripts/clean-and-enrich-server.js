@@ -99,10 +99,10 @@ async function main() {
         body: JSON.stringify({
           embeds: [
             {
-              title: '🔥 OFFICIAL DROP: DAWOSTI HAUTE COUTURE & AUTONOMOUS GUILD',
+              title: '🔥 OFFICIAL DROP: DAWOSTI HAUTE COUTURE & FASHION GUILD',
               description:
                 'Welcome to the official drops channel of **DAWOSTI (दावोस्ती)** — Kathmandu’s benchmark for bespoke fashion, traditional textile innovation, and avant-garde streetwear.\n\n' +
-                'This server is not a promotional billboard; it is an **autonomous design guild** where talent is verified by community critique and original garment drops.',
+                'This server is not a promotional billboard; it is a **design guild** where talent is verified by community critique and original garment drops.',
               color: 0x8a1c2e,
               fields: [
                 {
@@ -179,7 +179,7 @@ async function main() {
                   inline: false,
                 },
               ],
-              footer: { text: 'Autonomous Meritocracy Protocol • Dawosti Guild' },
+              footer: { text: 'Dawosti Meritocracy Protocol • Dawosti Guild' },
               timestamp: new Date().toISOString(),
             },
           ],

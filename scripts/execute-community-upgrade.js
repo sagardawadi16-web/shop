@@ -107,7 +107,7 @@ async function main() {
               '• Every quality fit check earns **+2 Proof-of-Taste points** towards Artisan tier!\n' +
               '• Top-rated fit every Friday gets featured on Dawosti’s official editorial channels.',
             color: 0xe5a93c,
-            footer: { text: 'Dawosti Autonomous Fashion Guild • Street & Runway Division' },
+            footer: { text: 'Dawosti Fashion Guild • Street & Runway Division' },
           },
         ],
       }),
@@ -151,7 +151,7 @@ async function main() {
               '• **Social / Portfolio:** (Instagram, Behance, or TikTok handle)\n\n' +
               'Posting your introduction gives you entry recognition as an **🪡 Atelier** member!',
             color: 0x1b7f5e,
-            footer: { text: 'Dawosti Autonomous Guild • Initiates Welcome' },
+            footer: { text: 'Dawosti Fashion Guild • Initiates Welcome' },
           },
         ],
       }),
@@ -203,14 +203,14 @@ async function main() {
           {
             title: '🚀 GUILD EVOLUTION: SPRING/FESTIVE ARCHITECTURE UPGRADE',
             description:
-              'The Dawosti Autonomous Guild is expanding its infrastructure to bridge community creativity directly with **dawosti.com** manufacturing.\n\n' +
+              'The Dawosti Fashion Guild is expanding its infrastructure to bridge community creativity directly with **dawosti.com** manufacturing.\n\n' +
               '### What’s New:\n' +
               '• 📸 **New Hub: <#' + (fitChecksCh?.id || 'fit-checks-wdywt') + '>** — Share your daily fits and street style around Kathmandu. Low barrier, immediate peer feedback (+2 pts).\n' +
               '• 👋 **New Hub: <#' + (introCh?.id || 'introductions-and-vibe') + '>** — Introduce your aesthetic vibe and connect with fellow creators.\n' +
               '• ⚡ **Upcoming Brief 002: "Himalayan Monastic x Cyberpunk"** — Top community submission receives sample production and a 10% commercial royalty on `dawosti.com`.\n' +
               '• 🛍️ **Patron Suite** — Own a piece from Dawosti? Type `/verify <order_number>` in <#' + (channels.find(c=>c.name==='guild-commands')?.id || 'guild-commands') + '> to claim VIP early-access drops.',
             color: 0x8a1c2e,
-            footer: { text: 'Dawosti • Kathmandu, Nepal • Autonomous Meritocracy' },
+            footer: { text: 'Dawosti • Kathmandu, Nepal • Meritocracy' },
             timestamp: new Date().toISOString(),
           },
         ],

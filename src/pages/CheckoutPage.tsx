@@ -205,17 +205,15 @@ export const CheckoutPage: React.FC = () => {
     }
   };
 
-  const handleDirectWhatsAppOrder = () => {
+  const handleDirectWhatsAppOrder = async () => {
     if (!validate()) {
       window.scrollTo({ top: 180, behavior: 'smooth' });
       return;
     }
 
-    const orderNumber = `DAW-${Math.floor(100000 + Math.random() * 900000)}`;
-    const waText = buildWhatsAppMessage(orderNumber);
-
+    setIsPlacing(true);
     try {
-      placeOrder({
+      const order = placeOrder({
         items,
         subtotal,
         deliveryFee,
@@ -228,9 +226,42 @@ export const CheckoutPage: React.FC = () => {
         referredByCode: activeReferralCode || undefined,
         referralDiscountAmount: referralDiscount,
       });
-    } catch {}
 
-    window.open(`https://wa.me/9779808251494?text=${waText}`, '_blank');
+      setLatestOrder(order);
+
+      // Best-effort Edge API logging
+      fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: order.id,
+          orderNumber: order.orderNumber,
+          items: order.items,
+          subtotalAmount: order.subtotalAmount,
+          deliveryFee: order.deliveryFee,
+          discountAmount: order.discountAmount,
+          totalAmount: order.totalAmount,
+          shippingAddress: order.shippingAddress,
+          paymentMethod: order.paymentMethod,
+          paymentDetails: txnRef || undefined,
+          deliveryNote: deliveryNote || undefined,
+          referredByCode: activeReferralCode || undefined,
+          renderTimestamp: renderTimestamp.current,
+          honeypot,
+        }),
+      }).catch(() => {});
+
+      const waText = buildWhatsAppMessage(order.orderNumber);
+      try {
+        window.open(`https://wa.me/9779808251494?text=${waText}`, '_blank');
+      } catch {}
+
+      clearCart();
+      setPageView('order-confirmation');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } finally {
+      setIsPlacing(false);
+    }
   };
 
   const paymentOptions: { id: PaymentMethod; label: string; badge?: string; icon: React.ReactNode; description: string }[] = [

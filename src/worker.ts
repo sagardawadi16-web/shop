@@ -38,6 +38,8 @@ function jsonResponse(data: any, status = 200, extraHeaders: Record<string, stri
 
 const MASTER_OWNERS = ['sagardawadi16@gmail.com', 'sagardawadi10@gmail.com'];
 
+const edgeOrdersList: any[] = [];
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -147,20 +149,42 @@ export default {
             const phoneClean = (shipping.phone || '').replace(/[^0-9]/g, '');
             const isStandardNepalPhone = /^(98|97|96)[0-9]{8}$/.test(phoneClean);
             const orderNumber = body.orderNumber || `DAW-${Math.floor(100000 + Math.random() * 900000)}`;
+            const orderId = body.id || `order_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
-            const verifiedOrder = {
+            const fullOrderObject = {
+              id: orderId,
               orderNumber,
-              customerName: shipping.fullName,
-              phone: shipping.phone,
-              address: `${shipping.addressLine || ''}, ${shipping.city || 'Kathmandu'}`,
-              itemCount: items.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0),
+              items,
+              subtotalAmount: body.subtotalAmount || totalAmount,
+              discountAmount: body.discountAmount || 0,
+              deliveryFee: body.deliveryFee || 0,
               totalAmount,
+              shippingAddress: shipping,
               paymentMethod,
-              isPhoneValid: isStandardNepalPhone,
-              timestamp: new Date().toISOString(),
-              cloudflareRay: request.headers.get('cf-ray') || 'edge-direct',
-              country: request.headers.get('cf-ipcountry') || 'NP',
+              paymentDetails: body.paymentDetails,
+              status: 'pending',
+              createdAt: new Date().toISOString(),
+              notes: body.deliveryNote,
+              acknowledgedByAdmin: false,
+              customerLoginName: shipping.fullName,
+              courierPartner: 'Sundar Express Logistics',
+              referredByCode: body.referredByCode,
+              verification: {
+                status: 'unverified',
+                fraudScore: isStandardNepalPhone ? 10 : 50,
+                fraudRisk: isStandardNepalPhone ? 'low' : 'high',
+                verificationNotes: isStandardNepalPhone ? 'Nepal phone valid' : 'Check phone format',
+              },
             };
+
+            // Save order to worker edge memory list (keep max 100)
+            const existingIdx = edgeOrdersList.findIndex((o) => o.id === orderId || o.orderNumber === orderNumber);
+            if (existingIdx > -1) {
+              edgeOrdersList[existingIdx] = fullOrderObject;
+            } else {
+              edgeOrdersList.unshift(fullOrderObject);
+              if (edgeOrdersList.length > 100) edgeOrdersList.pop();
+            }
 
             // WhatsApp Message Generator
             const itemsList = items
@@ -203,7 +227,7 @@ export default {
             return jsonResponse({
               success: true,
               message: 'Order verified and recorded at Cloudflare edge. Forwarding customer details to WhatsApp 9808251494.',
-              order: verifiedOrder,
+              order: fullOrderObject,
               targetPhone: '9808251494',
               whatsappUrl,
             });
@@ -216,6 +240,8 @@ export default {
             store: 'DAWOSTI Boutique Kathmandu',
             helpline: '+977 9808251494',
             whatsapp: 'https://wa.me/9779808251494',
+            orders: edgeOrdersList,
+            count: edgeOrdersList.length,
             query: orderNumber ? { orderNumber, status: 'confirmed' } : null,
             timestamp: new Date().toISOString(),
           });

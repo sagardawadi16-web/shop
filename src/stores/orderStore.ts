@@ -269,23 +269,86 @@ interface OrderState {
   trackByNumber: (search: string) => Order | null;
 }
 
+const LOCAL_STORAGE_KEY = 'dawosti_local_orders_v2';
+
+const loadLocalOrders = (): Order[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveLocalOrders = (orders: Order[]) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const realOnly = orders.filter((o) => !o.id.startsWith('seed_order_'));
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(realOnly));
+  } catch {}
+};
+
+const mergeOrdersLists = (...lists: Order[][]): Order[] => {
+  const map = new Map<string, Order>();
+
+  // Default seed showcase orders as lowest priority fallback
+  SEED_SHOWCASE_ORDERS.forEach((o) => map.set(o.id, o));
+
+  // Later arrays in arguments override earlier entries
+  lists.forEach((list) => {
+    (list || []).forEach((o) => {
+      if (o && o.id) {
+        map.set(o.id, o);
+      }
+    });
+  });
+
+  const merged = Array.from(map.values());
+  merged.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  return merged;
+};
+
 export const useOrderStore = create<OrderState>((set, get) => ({
-  orders: SEED_SHOWCASE_ORDERS,
+  orders: mergeOrdersLists(loadLocalOrders()),
   latestOrder: null,
   unacknowledgedCount: 0,
 
   initFirestoreSync: () => {
+    // 1. Initial hydration from local cache
+    const initialLocal = loadLocalOrders();
+    const initialMerged = mergeOrdersLists(get().orders, initialLocal);
+    const initialUnack = initialMerged.filter((o) => !o.acknowledgedByAdmin).length;
+    set({ orders: initialMerged, unacknowledgedCount: initialUnack });
+
+    // 2. Real-time Firestore sync
     const unsubscribe = listenOrders((remoteOrders) => {
-      if (remoteOrders && remoteOrders.length > 0) {
-        const unackCount = remoteOrders.filter((o) => !o.acknowledgedByAdmin).length;
-        set({ orders: remoteOrders, unacknowledgedCount: unackCount });
-      } else {
-        set((state) => ({
-          orders: state.orders.length > 0 ? state.orders : SEED_SHOWCASE_ORDERS,
-          unacknowledgedCount: (state.orders.length > 0 ? state.orders : SEED_SHOWCASE_ORDERS).filter((o) => !o.acknowledgedByAdmin).length,
-        }));
-      }
+      const currentLocal = loadLocalOrders();
+      const currentOrders = get().orders;
+      const updated = mergeOrdersLists(SEED_SHOWCASE_ORDERS, currentOrders, currentLocal, remoteOrders);
+      const unackCount = updated.filter((o) => !o.acknowledgedByAdmin).length;
+      set({ orders: updated, unacknowledgedCount: unackCount });
+      saveLocalOrders(updated);
     });
+
+    // 3. One-shot Edge API /api/orders fallback sync for real orders recorded at edge
+    if (typeof window !== 'undefined') {
+      fetch('/api/orders')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && Array.isArray(data.orders) && data.orders.length > 0) {
+            const edgeOrders: Order[] = data.orders;
+            const currentLocal = loadLocalOrders();
+            const currentOrders = get().orders;
+            const updated = mergeOrdersLists(SEED_SHOWCASE_ORDERS, currentOrders, currentLocal, edgeOrders);
+            const unackCount = updated.filter((o) => !o.acknowledgedByAdmin).length;
+            set({ orders: updated, unacknowledgedCount: unackCount });
+            saveLocalOrders(updated);
+          }
+        })
+        .catch(() => {});
+    }
+
     return unsubscribe;
   },
 
@@ -331,7 +394,6 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const wholesaleReason = wholesaleReasons.join(' • ');
 
     // Calculate Unit Economics & Referral Profit Margin Formula
-    // Buying price / COGS: sum of each product's costPrice or ~42% of retail price
     const costPriceTotal = params.items.reduce((acc, item) => {
       const unitCost = item.product.costPrice || Math.round(item.product.price * 0.42);
       return acc + unitCost * item.quantity;
@@ -340,7 +402,6 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const netMerchandise = Math.max(0, params.subtotal - (params.referralDiscountAmount || 0));
     const referralCommissionAmount = params.referredByCode ? Math.round(netMerchandise * 0.10) : 0;
     const shippingCostActual = params.deliveryFee || 150;
-    // Formula: Net Profit = Total - Buying Cost - Actual Shipping - Creator Commission
     const netProfitCalculated = params.totalAmount - costPriceTotal - shippingCostActual - referralCommissionAmount;
 
     const newOrder: Order = {
@@ -376,9 +437,11 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       },
     };
 
-    // Optimistic local update
-    const updated = [newOrder, ...get().orders];
-    set({ orders: updated, latestOrder: newOrder, unacknowledgedCount: get().unacknowledgedCount + 1 });
+    // Optimistic local update & LocalStorage save
+    const updated = mergeOrdersLists(get().orders, [newOrder]);
+    const unackCount = updated.filter((o) => !o.acknowledgedByAdmin).length;
+    set({ orders: updated, latestOrder: newOrder, unacknowledgedCount: unackCount });
+    saveLocalOrders(updated);
 
     // Persist to Firestore (source of truth)
     saveOrder(newOrder);
@@ -396,8 +459,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const updated = get().orders.map((o) =>
       o.id === orderId || o.orderNumber === orderId ? { ...o, ...updates } : o
     );
-    set({ orders: updated });
-    updateOrder(orderId, updates);
+    const unackCount = updated.filter((o) => !o.acknowledgedByAdmin).length;
+    set({ orders: updated, unacknowledgedCount: unackCount });
+    saveLocalOrders(updated);
+    if (target) updateOrder(target.id, updates);
 
     // If order was delivered and was referred by an advocate, credit advocate exact 10% commission (if not already credited)
     if (status === 'delivered' && target && target.referredByCode && !target.referralCommissionCredited) {
@@ -436,6 +501,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     );
     const unackCount = updated.filter((o) => !o.acknowledgedByAdmin).length;
     set({ orders: updated, unacknowledgedCount: unackCount });
+    saveLocalOrders(updated);
     updateOrder(orderId, updates);
   },
 
@@ -495,17 +561,23 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const updated = get().orders.map((o) => (o.id === orderId || o.orderNumber === orderId ? { ...o, ...updates } : o));
     const unackCount = updated.filter((o) => !o.acknowledgedByAdmin).length;
     set({ orders: updated, unacknowledgedCount: unackCount });
+    saveLocalOrders(updated);
     updateOrder(target.id, updates);
   },
 
   deleteOrder: (orderId) => {
+    const target = get().orders.find((o) => o.id === orderId || o.orderNumber === orderId);
     const updated = get().orders.filter((o) => o.id !== orderId && o.orderNumber !== orderId);
     const unackCount = updated.filter((o) => !o.acknowledgedByAdmin).length;
     set({ orders: updated, unacknowledgedCount: unackCount });
-    deleteOrder(orderId);
+    saveLocalOrders(updated);
+    if (target) deleteOrder(target.id);
   },
 
-  clearAllOrders: () => set({ orders: [], unacknowledgedCount: 0 }),
+  clearAllOrders: () => {
+    set({ orders: [], unacknowledgedCount: 0 });
+    saveLocalOrders([]);
+  },
 
   setLatestOrder: (order) => set({ latestOrder: order }),
 

@@ -47,11 +47,11 @@ async function main() {
     await api(`/guilds/${GUILD_ID}`, {
       method: 'PATCH',
       body: JSON.stringify({
-        name: 'DAWOSTI | Autonomous Fashion Guild',
-        description: 'The premier autonomous ecosystem for Nepalese high fashion, avant-garde design, and creative meritocracy.',
+        name: 'DAWOSTI | Fashion Guild',
+        description: 'The premier ecosystem for Nepalese high fashion, avant-garde design, and creative meritocracy.',
       }),
     });
-    console.log('✅ Server renamed to "DAWOSTI | Autonomous Fashion Guild"');
+    console.log('✅ Server renamed to "DAWOSTI | Fashion Guild"');
   } catch (err) {
     console.warn('⚠️ Could not update guild settings (may require specific ownership permissions):', err.message);
   }
@@ -142,11 +142,11 @@ async function main() {
       ],
     },
     {
-      name: '⚡ ── AUTONOMOUS CORE ──',
+      name: '⚡ ── GUILD CORE ──',
       type: 4,
       channels: [
-        { name: 'autonomous-briefs', type: 0, topic: 'Weekly algorithmic design prompts and community design challenges.' },
-        { name: 'evolution-feed', type: 0, topic: 'Autonomous logs of member promotions, prestige milestones, and spotlight drops.' },
+        { name: 'design-briefs', type: 0, topic: 'Weekly design prompts and community design challenges.' },
+        { name: 'evolution-feed', type: 0, topic: 'Guild logs of member promotions, prestige milestones, and spotlight drops.' },
         { name: 'guild-commands', type: 0, topic: 'Bot commands: check taste rank, submit portfolio, explore briefs.' },
       ],
     },
@@ -269,11 +269,11 @@ async function main() {
         body: JSON.stringify({
           embeds: [
             {
-              title: 'DAWOSTI (दावोस्ती) — THE AUTONOMOUS FASHION GUILD',
+              title: 'DAWOSTI (दावोस्ती) — THE FASHION GUILD',
               description:
                 '**Fashion is not marketing; it is cultural architecture.**\n\n' +
                 'Dawosti was founded on an uncompromising principle: Nepal holds some of the deepest textile traditions and most visionary young aesthetic minds in South Asia, yet the industry has been suffocated by dropshipping, derivative Western copies, and fast-fashion mediocrity.\n\n' +
-                'We operate on the ethos of **Google’s meritocracy** (where builders rise by their verifiable code) and **Apple’s industrial design purity** (where taste and craftsmanship are non-negotiable). Here, status is earned through Proof-of-Taste and Proof-of-Craft.',
+                'We operate on the ethos of **developer meritocracy** (where builders rise by their verifiable work) and **design purity** (where taste and craftsmanship are non-negotiable). Here, status is earned through Proof-of-Taste and Proof-of-Craft.',
               color: 0x8a1c2e, // Velvet Burgundy
               fields: [
                 {
@@ -289,7 +289,7 @@ async function main() {
                   value:
                     '1. **High-Signal Critique**: Giving deep feedback on fit, drape, and concept earns endorsements.\n' +
                     '2. **Design Submissions**: Drop sketches, prototypes, or rendered garments in <#design-submissions>.\n' +
-                    '3. **Autonomous Endorsements**: Reactions from higher-tier members carry exponential weight. The bot calculates your taste score in real-time.\n' +
+                    '3. **Community Endorsements**: Reactions from higher-tier members carry exponential weight. The bot calculates your taste score in real-time.\n' +
                     '4. **Zero Spam Tolerance**: Chat spam earns 0 points. Value comes solely from constructive contribution.',
                 },
                 {
@@ -299,7 +299,7 @@ async function main() {
                 },
               ],
               footer: {
-                text: 'Dawosti Autonomous Core • dawosti.com • Established Kathmandu',
+                text: 'Dawosti Fashion Guild • dawosti.com • Established Kathmandu',
               },
             },
           ],
@@ -322,7 +322,7 @@ async function main() {
             {
               title: '📐 THE CRAFT SUBMISSION PROTOCOL',
               description:
-                'This channel is the proving ground. Submissions here are reviewed by the autonomous engine and evaluated by the Vanguard and Couturier tiers.',
+                'This channel is the proving ground. Submissions here are reviewed by the guild engine and evaluated by the Vanguard and Couturier tiers.',
               color: 0xe5a93c, // Gold
               fields: [
                 {
@@ -356,9 +356,9 @@ async function main() {
     }
   }
 
-  // C. Autonomous Design Brief #001 in #autonomous-briefs
-  if (createdChannelMap['autonomous-briefs']) {
-    const cid = createdChannelMap['autonomous-briefs'];
+  // C. Design Brief #001 in #design-briefs
+  if (createdChannelMap['design-briefs']) {
+    const cid = createdChannelMap['design-briefs'];
     const existing = await api(`/channels/${cid}/messages?limit=1`);
     if (existing.length === 0) {
       await api(`/channels/${cid}/messages`, {
@@ -366,9 +366,9 @@ async function main() {
         body: JSON.stringify({
           embeds: [
             {
-              title: '⚡ AUTONOMOUS DESIGN BRIEF #001: "THE HIMALAYAN NOMAD 2085"',
+              title: '⚡ DESIGN BRIEF #001: "THE HIMALAYAN NOMAD 2085"',
               description:
-                'The autonomous engine has generated the inaugural design challenge for the Dawosti community.',
+                'The guild engine has generated the inaugural design challenge for the Dawosti community.',
               color: 0x1b7f5e, // Emerald
               fields: [
                 {
@@ -389,7 +389,7 @@ async function main() {
           ],
         }),
       });
-      console.log('  ✅ Published Autonomous Brief #001 embed.');
+      console.log('  ✅ Published Design Brief #001 embed.');
       await sleep(600);
     }
   }
@@ -404,12 +404,12 @@ async function main() {
         body: JSON.stringify({
           embeds: [
             {
-              title: '🤖 DAWOSTI AUTONOMOUS CORE COMMANDS',
+              title: '🤖 DAWOSTI GUILD COMMANDS',
               description: 'Use the following commands to check your standing and interact with the guild engine:',
               color: 0xd4c5b9,
               fields: [
                 { name: '!taste or !rank', value: 'Displays your current role, Proof-of-Taste score, and evolution progress.' },
-                { name: '!brief', value: 'Fetches the currently active autonomous fashion design brief.' },
+                { name: '!brief', value: 'Fetches the currently active fashion design brief.' },
                 { name: '!manifesto', value: 'Re-sends the Dawosti philosophy and guild principles.' },
                 { name: '!vanguard', value: 'Displays the active members of the Vanguard Council.' },
               ],

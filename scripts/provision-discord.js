@@ -29,7 +29,7 @@ async function api(path, options = {}) {
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function main() {
-  console.log('🔮 Connecting to Discord API as Dawosti Autonomous Core...');
+  console.log('🔮 Connecting to Discord API as Dawosti Guild Core...');
   const me = await api('/users/@me');
   console.log(`✅ Authenticated as: ${me.username}#${me.discriminator} (ID: ${me.id})`);
 
@@ -104,11 +104,11 @@ async function main() {
       ],
     },
     {
-      name: '⚡ ── AUTONOMOUS CORE ──',
+      name: '⚡ ── GUILD CORE ──',
       type: 4,
       channels: [
         { name: 'bot-commands', type: 0, topic: 'Check taste score, submit portfolio, and view active design briefs.' },
-        { name: 'evolution-log', type: 0, topic: 'Autonomous audit log of member promotions and community design highlights.' },
+        { name: 'evolution-log', type: 0, topic: 'Guild audit log of member promotions and community design highlights.' },
       ],
     },
   ];
@@ -162,10 +162,10 @@ async function main() {
         body: JSON.stringify({
           embeds: [
             {
-              title: 'DAWOSTI (दावोस्ती) — THE AUTONOMOUS FASHION GUILD',
+              title: 'DAWOSTI (दावोस्ती) — THE FASHION GUILD',
               description:
                 'Welcome to Dawosti. We are not just a label; we are an institution for high fashion, craftsmanship, and creative sovereignty in Nepal.\n\n' +
-                'Inspired by Apple’s obsessive design standards and Google’s meritocratic developer communities, Dawosti exists to elevate those who create, refine, and champion real aesthetic power.',
+                'Inspired by Apple’s obsessive design standards and developer meritocracies, Dawosti exists to elevate those who create, refine, and champion real aesthetic power.',
               color: 0x8a1c2e, // Velvet Burgundy
               fields: [
                 {
@@ -193,7 +193,7 @@ async function main() {
                 },
               ],
               footer: {
-                text: 'Dawosti Autonomous Core • Elevating Nepali Fashion to the World',
+                text: 'Dawosti Guild Core • Elevating Nepali Fashion to the World',
               },
             },
           ],
