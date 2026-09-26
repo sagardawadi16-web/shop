@@ -30,12 +30,33 @@ const NEPALI_DIGITS: Record<string, string> = {
   '5': '५', '6': '६', '7': '७', '8': '८', '9': '९',
 };
 
+const getRootDomainCookie = (): string => {
+  if (typeof window === 'undefined') return '';
+  return window.location.hostname.includes('dawosti.com') ? '; domain=.dawosti.com' : '';
+};
+
 const detectLanguage = (): Language => {
   try {
-    const saved = localStorage.getItem('dawosti_lang_v3');
-    if (saved === 'en' || saved === 'np') return saved;
-    const browserLang = navigator.language?.toLowerCase() || '';
-    if (browserLang.includes('ne') || browserLang.includes('np')) return 'np';
+    if (typeof window !== 'undefined') {
+      // 1. URL Query Parameter ?lang=np or ?lang=en
+      const params = new URLSearchParams(window.location.search);
+      const urlLang = params.get('lang');
+      if (urlLang === 'en' || urlLang === 'np') return urlLang;
+
+      // 2. Cross-Subdomain Root Cookie (.dawosti.com)
+      const match = document.cookie.match(/dawosti_lang_v3=(en|np)/);
+      if (match && (match[1] === 'en' || match[1] === 'np')) {
+        return match[1] as Language;
+      }
+
+      // 3. LocalStorage
+      const saved = localStorage.getItem('dawosti_lang_v3');
+      if (saved === 'en' || saved === 'np') return saved;
+
+      // 4. Browser Locale
+      const browserLang = navigator.language?.toLowerCase() || '';
+      if (browserLang.includes('ne') || browserLang.includes('np')) return 'np';
+    }
   } catch {}
   return 'en';
 };
@@ -70,6 +91,17 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   isOrderTrackingOpen: false,
 
   initFirestoreSync: () => {
+    // Cross-tab and Cross-window live sync
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'dawosti_lang_v3' && (e.newValue === 'en' || e.newValue === 'np')) {
+        set({ language: e.newValue as Language });
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorageChange);
+    }
+
     const unsubscribe = listenSettings((data) => {
       set((s) => ({
         merchant: data.merchant ? { ...s.merchant, ...data.merchant } : s.merchant,
@@ -77,11 +109,21 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         siteContent: data.siteContent ? { ...s.siteContent, ...data.siteContent } : s.siteContent,
       }));
     });
-    return unsubscribe;
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', handleStorageChange);
+      }
+      unsubscribe();
+    };
   },
 
   setLanguage: (lang) => {
-    try { localStorage.setItem('dawosti_lang_v3', lang); } catch {}
+    try {
+      localStorage.setItem('dawosti_lang_v3', lang);
+      // Persist across dawosti.com and all subdomains (referral.dawosti.com, creator.dawosti.com)
+      document.cookie = `dawosti_lang_v3=${lang}${getRootDomainCookie()}; path=/; max-age=31536000; SameSite=Lax`;
+    } catch {}
     set({ language: lang });
   },
   toggleLanguage: () => {

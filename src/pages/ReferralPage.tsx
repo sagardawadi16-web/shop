@@ -13,7 +13,7 @@ import { toast } from '../components/common/Toast';
 
 export const ReferralPage: React.FC = () => {
   const { user, loginGoogle } = useAuthStore();
-  const { language } = useSettingsStore();
+  const { language, setLanguage, toggleLanguage } = useSettingsStore();
   const { activeReferralCode, registeredCreators, registerCreator, allAdvocates, submitPayout } = useReferralStore();
   const { orders } = useOrderStore();
 
@@ -217,10 +217,11 @@ export const ReferralPage: React.FC = () => {
   };
 
   const handleReturnToShop = () => {
+    const langParam = `lang=${language}`;
     if (window.location.hostname.includes('dawosti.com')) {
-      window.location.href = 'https://dawosti.com';
+      window.location.href = `https://dawosti.com?${langParam}`;
     } else {
-      window.location.href = '/';
+      window.location.href = `/?${langParam}`;
     }
   };
 
@@ -277,14 +278,38 @@ export const ReferralPage: React.FC = () => {
                 borderRadius: 6,
               }}
             >
-              Creator Portal
+              {language === 'np' ? 'सिर्जनाकर्ता पोर्टल' : 'Creator Portal'}
             </span>
           </div>
 
-          {/* Security Badge */}
-          <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#1B7F5E', fontWeight: 600 }}>
-            <Lock size={13} color="#1B7F5E" />
-            <span>256-bit TLS Edge Encrypted</span>
+          {/* Language Toggle & Security Badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              title={language === 'np' ? 'Switch to English' : 'नेपाली भाषामा हेर्नुहोस्'}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                background: '#FFF8F0',
+                border: '1.5px solid #EADCCE',
+                padding: '5px 12px',
+                borderRadius: 99,
+                color: '#8B3A3A',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: '0 1px 4px rgba(43,24,16,0.06)',
+              }}
+            >
+              <span>{language === 'np' ? '🇳🇵 नेपाली' : '🇬🇧 EN'}</span>
+            </button>
+            <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#1B7F5E', fontWeight: 600 }}>
+              <Lock size={13} color="#1B7F5E" />
+              <span>{language === 'np' ? '२५६-बिट सुरक्षित' : '256-bit TLS Edge Encrypted'}</span>
+            </div>
           </div>
         </div>
       </header>
@@ -319,7 +344,7 @@ export const ReferralPage: React.FC = () => {
             }}
           >
             <Sparkles size={14} color="#D4AF37" />
-            <span>DAWOSTI PARTNER & CREATOR PROGRAM</span>
+            <span>{language === 'np' ? 'डावोस्ती साझेदार तथा सिर्जनाकर्ता कार्यक्रम' : 'DAWOSTI PARTNER & CREATOR PROGRAM'}</span>
           </div>
 
           <h1
@@ -361,16 +386,16 @@ export const ReferralPage: React.FC = () => {
             }}
           >
             <div style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', padding: '16px 20px', borderRadius: 16, border: '1px solid rgba(255,255,255,0.15)' }}>
-              <div style={{ color: '#D4AF37', fontSize: 24, fontWeight: 800 }}>10% Net</div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>Cash Royalty per Order</div>
+              <div style={{ color: '#D4AF37', fontSize: 24, fontWeight: 800 }}>{language === 'np' ? '१०% नगद' : '10% Net'}</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>{language === 'np' ? 'प्रति अर्डर नगद रोयल्टी' : 'Cash Royalty per Order'}</div>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', padding: '16px 20px', borderRadius: 16, border: '1px solid rgba(255,255,255,0.15)' }}>
-              <div style={{ color: '#68D391', fontSize: 24, fontWeight: 800 }}>NPR 300 Off</div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>Instant Customer Discount</div>
+              <div style={{ color: '#68D391', fontSize: 24, fontWeight: 800 }}>{language === 'np' ? 'रु. ३०० छुट' : 'NPR 300 Off'}</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>{language === 'np' ? 'ग्राहकलाई तत्काल छुट' : 'Instant Customer Discount'}</div>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', padding: '16px 20px', borderRadius: 16, border: '1px solid rgba(255,255,255,0.15)' }}>
-              <div style={{ color: '#F7E7B4', fontSize: 24, fontWeight: 800 }}>NPR 10,000</div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>Wallet Payout Threshold</div>
+              <div style={{ color: '#F7E7B4', fontSize: 24, fontWeight: 800 }}>{language === 'np' ? 'रु. १०,०००' : 'NPR 10,000'}</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>{language === 'np' ? 'वालेट भुक्तानी सीमा' : 'Wallet Payout Threshold'}</div>
             </div>
           </div>
         </div>
@@ -401,7 +426,7 @@ export const ReferralPage: React.FC = () => {
             }}
           >
             <Wallet size={17} />
-            <span>eSewa & Khalti Setup</span>
+            <span>{language === 'np' ? 'ईसेवा र खल्ती खाता' : 'eSewa & Khalti Setup'}</span>
           </button>
           <button
             onClick={() => setActiveTab('analytics')}
@@ -424,7 +449,7 @@ export const ReferralPage: React.FC = () => {
             }}
           >
             <TrendingUp size={17} />
-            <span>📊 My Performance & Earnings</span>
+            <span>{language === 'np' ? '📊 मेरो कमाई तथा विवरण' : '📊 My Performance & Earnings'}</span>
           </button>
           <button
             onClick={() => setActiveTab('guide')}
@@ -447,7 +472,7 @@ export const ReferralPage: React.FC = () => {
             }}
           >
             <HelpCircle size={17} />
-            <span>Rules, Terms & WhatsApp Tracking</span>
+            <span>{language === 'np' ? 'नियम तथा दिशानिर्देश' : 'Rules, Terms & WhatsApp Tracking'}</span>
           </button>
         </div>
 
@@ -477,10 +502,14 @@ export const ReferralPage: React.FC = () => {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#1B7F5E', fontWeight: 700, fontSize: 16 }}>
                   <CheckCircle2 size={22} color="#1B7F5E" />
-                  <span>Payout Profile Activated & Edge-Secured!</span>
+                  <span>{language === 'np' ? 'वालेट विवरण सुरक्षित रूपमा सक्रिय गरियो!' : 'Payout Profile Activated & Edge-Secured!'}</span>
                 </div>
                 <p style={{ fontSize: 13.5, color: '#4A3B32', lineHeight: 1.5 }}>
-                  Your eSewa (<strong>{submittedData.esewaId}</strong>) and Khalti (<strong>{submittedData.khaltiNumber}</strong>) details are registered on our encrypted Cloudflare Edge cluster and logged directly to our merchant payout register.
+                  {language === 'np' ? (
+                    <>तपाईंको ईसेवा (<strong>{submittedData.esewaId}</strong>) र खल्ती (<strong>{submittedData.khaltiNumber}</strong>) विवरण सुरक्षित दर्ता भइसकेको छ। न्यूनतम रु. १०,००० पुगेपछि स्वतः भुक्तानी हुनेछ।</>
+                  ) : (
+                    <>Your eSewa (<strong>{submittedData.esewaId}</strong>) and Khalti (<strong>{submittedData.khaltiNumber}</strong>) details are registered on our encrypted Cloudflare Edge cluster and logged directly to our merchant payout register.</>
+                  )}
                 </p>
 
                 {/* Shareable Link Box */}
@@ -498,7 +527,9 @@ export const ReferralPage: React.FC = () => {
                   }}
                 >
                   <div style={{ overflow: 'hidden' }}>
-                    <div style={{ fontSize: 11, color: '#777', fontWeight: 600 }}>Your Personalized Affiliate URL:</div>
+                    <div style={{ fontSize: 11, color: '#777', fontWeight: 600 }}>
+                      {language === 'np' ? 'तपाईंको व्यक्तिगत सिफारिस लिङ्क:' : 'Your Personalized Affiliate URL:'}
+                    </div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#1B7F5E', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       {shareableUrl}
                     </div>
@@ -521,7 +552,7 @@ export const ReferralPage: React.FC = () => {
                     }}
                   >
                     {copiedLink ? <Check size={14} /> : <Copy size={14} />}
-                    <span>{copiedLink ? 'Copied!' : 'Copy Link'}</span>
+                    <span>{copiedLink ? (language === 'np' ? 'प्रतिलिपि गरियो!' : 'Copied!') : (language === 'np' ? 'लिङ्क प्रतिलिपि' : 'Copy Link')}</span>
                   </button>
                 </div>
               </div>
@@ -544,8 +575,14 @@ export const ReferralPage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: '#2B1810' }}>Already have a Google account?</div>
-                  <div style={{ fontSize: 12, color: '#6B564C', marginTop: 2 }}>Sign in to autofill your name, email, and view real-time commission tracking.</div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: '#2B1810' }}>
+                    {language === 'np' ? 'पहिले नै गुगल खाता छ?' : 'Already have a Google account?'}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#6B564C', marginTop: 2 }}>
+                    {language === 'np'
+                      ? 'आफ्नो नाम, इमेल स्वतः भर्न र प्रत्यक्ष कमिसन हेर्न गुगलबाट लगइन गर्नुहोस्।'
+                      : 'Sign in to autofill your name, email, and view real-time commission tracking.'}
+                  </div>
                 </div>
                 <button
                   type="button"
@@ -571,7 +608,7 @@ export const ReferralPage: React.FC = () => {
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                   </svg>
-                  <span>1-Tap Google Sign-In</span>
+                  <span>{language === 'np' ? 'गुगलबाट तुरुन्त लगइन' : '1-Tap Google Sign-In'}</span>
                 </button>
               </div>
             )}
@@ -592,14 +629,14 @@ export const ReferralPage: React.FC = () => {
                 {/* Full Name */}
                 <div>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#2B1810' }}>
-                    Creator / Influencer Full Name <span style={{ color: '#E53E3E' }}>*</span>
+                    {language === 'np' ? 'सिर्जनाकर्ताको पूरा नाम' : 'Creator / Influencer Full Name'} <span style={{ color: '#E53E3E' }}>*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={creatorName}
                     onChange={(e) => setCreatorName(e.target.value)}
-                    placeholder="e.g. Aayush Shrestha"
+                    placeholder={language === 'np' ? 'उदा: आयुष श्रेष्ठ' : 'e.g. Aayush Shrestha'}
                     style={{
                       width: '100%',
                       padding: '12px 14px',
@@ -614,7 +651,7 @@ export const ReferralPage: React.FC = () => {
                 {/* Email Address */}
                 <div>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#2B1810' }}>
-                    Email Address <span style={{ color: '#E53E3E' }}>*</span>
+                    {language === 'np' ? 'इमेल ठेगाना' : 'Email Address'} <span style={{ color: '#E53E3E' }}>*</span>
                   </label>
                   <input
                     type="email"
@@ -637,7 +674,7 @@ export const ReferralPage: React.FC = () => {
               {/* Referral Code Selection */}
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#2B1810' }}>
-                  Choose Your Custom Referral Code <span style={{ color: '#E53E3E' }}>*</span>
+                  {language === 'np' ? 'आफ्नो अनुकूलित सिफारिस कोड छान्नुहोस्' : 'Choose Your Custom Referral Code'} <span style={{ color: '#E53E3E' }}>*</span>
                 </label>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <div style={{ position: 'relative', flex: 1 }}>
@@ -662,7 +699,11 @@ export const ReferralPage: React.FC = () => {
                   </div>
                 </div>
                 <div style={{ fontSize: 11.5, color: '#6B564C', marginTop: 4 }}>
-                  Customers entering this code at checkout receive <strong>NPR 300 instant discount</strong>.
+                  {language === 'np' ? (
+                    <>चेकआउटमा यो कोड प्रयोग गर्दा ग्राहकले <strong>रु. ३०० तत्काल छुट</strong> पाउनेछन्।</>
+                  ) : (
+                    <>Customers entering this code at checkout receive <strong>NPR 300 instant discount</strong>.</>
+                  )}
                 </div>
               </div>
 
@@ -671,11 +712,13 @@ export const ReferralPage: React.FC = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                   <Wallet size={18} color="#1B7F5E" />
                   <span style={{ fontWeight: 800, fontSize: 15, color: '#1B7F5E', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    Nepali Payment Wallet Credentials
+                    {language === 'np' ? 'नेपाली भुक्तानी वालेट विवरण' : 'Nepali Payment Wallet Credentials'}
                   </span>
                 </div>
                 <div style={{ fontSize: 12.5, color: '#6B564C', marginBottom: 16 }}>
-                  Direct wallet transfers are executed upon reaching NPR 10,000 threshold. Input at least one wallet.
+                  {language === 'np'
+                    ? 'रु. १०,००० पुग्ने बित्तिकै सिधै ईसेवा वा खल्तीमा भुक्तानी पठाइन्छ। कम्तीमा एउटा वालेट विवरण राख्नुहोस्।'
+                    : 'Direct wallet transfers are executed upon reaching NPR 10,000 threshold. Input at least one wallet.'}
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
@@ -684,7 +727,7 @@ export const ReferralPage: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <div style={{ width: 22, height: 22, borderRadius: 6, background: '#60BB46', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11 }}>e</div>
                       <label style={{ fontSize: 13, fontWeight: 700, color: '#2B1810' }}>
-                        eSewa ID / Mobile Number
+                        {language === 'np' ? 'ईसेवा आइडी / मोबाइल नम्बर' : 'eSewa ID / Mobile Number'}
                       </label>
                     </div>
                     <input
@@ -703,7 +746,9 @@ export const ReferralPage: React.FC = () => {
                         background: '#FFFFFF',
                       }}
                     />
-                    <div style={{ fontSize: 11, color: '#6B564C', marginTop: 4 }}>10-digit registered eSewa number</div>
+                    <div style={{ fontSize: 11, color: '#6B564C', marginTop: 4 }}>
+                      {language === 'np' ? '१० अंकको दर्ता भएको ईसेवा नम्बर' : '10-digit registered eSewa number'}
+                    </div>
                   </div>
 
                   {/* Khalti Number */}
@@ -711,7 +756,7 @@ export const ReferralPage: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <div style={{ width: 22, height: 22, borderRadius: 6, background: '#5C2D91', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11 }}>K</div>
                       <label style={{ fontSize: 13, fontWeight: 700, color: '#2B1810' }}>
-                        Khalti Registered Mobile Number
+                        {language === 'np' ? 'खल्ती दर्ता भएको मोबाइल नम्बर' : 'Khalti Registered Mobile Number'}
                       </label>
                     </div>
                     <input
@@ -730,21 +775,23 @@ export const ReferralPage: React.FC = () => {
                         background: '#FFFFFF',
                       }}
                     />
-                    <div style={{ fontSize: 11, color: '#6B564C', marginTop: 4 }}>10-digit registered Khalti number</div>
+                    <div style={{ fontSize: 11, color: '#6B564C', marginTop: 4 }}>
+                      {language === 'np' ? '१० अंकको दर्ता भएको खल्ती नम्बर' : '10-digit registered Khalti number'}
+                    </div>
                   </div>
                 </div>
 
                 {/* Account Holder Name */}
                 <div style={{ marginTop: 18 }}>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#2B1810' }}>
-                    Wallet Account Holder Full Name <span style={{ color: '#E53E3E' }}>*</span>
+                    {language === 'np' ? 'वालेट खातावालाको पूरा नाम' : 'Wallet Account Holder Full Name'} <span style={{ color: '#E53E3E' }}>*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={accountHolderName}
                     onChange={(e) => setAccountHolderName(e.target.value)}
-                    placeholder="Must match name registered in your eSewa/Khalti KYC"
+                    placeholder={language === 'np' ? 'तपाईंको ईसेवा वा खल्ती केवाइसी (KYC) मा भएको नाम' : 'Must match name registered in your eSewa/Khalti KYC'}
                     style={{
                       width: '100%',
                       padding: '12px 14px',
@@ -759,7 +806,7 @@ export const ReferralPage: React.FC = () => {
                 {/* Social Handles */}
                 <div style={{ marginTop: 18 }}>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#2B1810' }}>
-                    Social Profile / Handle (Instagram, TikTok, YouTube)
+                    {language === 'np' ? 'सामाजिक सञ्जाल प्रोफाइल (इन्स्टाग्राम, टिकटक, युट्युब)' : 'Social Profile / Handle (Instagram, TikTok, YouTube)'}
                   </label>
                   <input
                     type="text"
@@ -803,14 +850,22 @@ export const ReferralPage: React.FC = () => {
                   }}
                 >
                   <ShieldCheck size={18} />
-                  <span>{isSubmitting ? 'Securing & Registering on Edge...' : 'Save & Authenticate eSewa / Khalti Payouts'}</span>
+                  <span>
+                    {isSubmitting
+                      ? (language === 'np' ? 'सुरक्षित गर्दै र दर्ता गर्दै...' : 'Securing & Registering on Edge...')
+                      : (language === 'np' ? 'eSewa / Khalti भुक्तानी सुरक्षित र प्रमाणीकरण गर्नुहोस्' : 'Save & Authenticate eSewa / Khalti Payouts')}
+                  </span>
                 </button>
               </div>
 
               {/* Security Footnote */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12, color: '#777', textAlign: 'center' }}>
                 <Lock size={12} color="#1B7F5E" />
-                <span>Encrypted on Cloudflare Edge with automated audit logging to merchant Google Sheets.</span>
+                <span>
+                  {language === 'np'
+                    ? 'क्लाउडफ्लेयर एजमा इन्क्रिप्टेड र मर्चेन्ट अडिट लग सुरक्षित गरिएको।'
+                    : 'Encrypted on Cloudflare Edge with automated audit logging to merchant Google Sheets.'}
+                </span>
               </div>
             </form>
           </div>
@@ -844,17 +899,21 @@ export const ReferralPage: React.FC = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <TrendingUp size={20} color="#1B7F5E" />
                   <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#2B1810' }}>
-                    My Live Referral Stats & Money Earned
+                    {language === 'np' ? 'मेरो लाइभ सिफारिस तथ्यांक र आम्दानी' : 'My Live Referral Stats & Money Earned'}
                   </h2>
                 </div>
                 <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#6B564C' }}>
-                  Real-time analytics for your custom affiliate link and community orders.
+                  {language === 'np'
+                    ? 'तपाईंको कस्टम सम्बद्ध लिङ्क र समुदायका अर्डरहरूको वास्तविक समय तथ्यांक।'
+                    : 'Real-time analytics for your custom affiliate link and community orders.'}
                 </p>
               </div>
 
               {/* Code selector */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#555' }}>Viewing Code:</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#555' }}>
+                  {language === 'np' ? 'हेरिएको कोड:' : 'Viewing Code:'}
+                </span>
                 <input
                   type="text"
                   value={analyticsCode}
@@ -877,7 +936,9 @@ export const ReferralPage: React.FC = () => {
 
             {/* Quick Chips to toggle known codes */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 12, color: '#888' }}>Quick Select:</span>
+              <span style={{ fontSize: 12, color: '#888' }}>
+                {language === 'np' ? 'द्रुत चयन:' : 'Quick Select:'}
+              </span>
               {['SAGAR-82', 'PRASHANT-10', 'ANUSHA-24', referralCode].filter(Boolean).map((code) => (
                 <button
                   key={code}
@@ -903,53 +964,55 @@ export const ReferralPage: React.FC = () => {
               {/* Clicks */}
               <div style={{ background: '#FAF2E9', padding: '16px 20px', borderRadius: 14, border: '1px solid #EADCCE' }}>
                 <div style={{ fontSize: 12, color: '#777', textTransform: 'uppercase', fontWeight: 700 }}>
-                  Link Clicks / Visitors
+                  {language === 'np' ? 'लिङ्क क्लिक / आगन्तुकहरू' : 'Link Clicks / Visitors'}
                 </div>
                 <div style={{ fontSize: 28, fontWeight: 900, color: '#2B1810', marginTop: 4 }}>
                   {totalClicksCount}
                 </div>
                 <div style={{ fontSize: 11.5, color: '#1B7F5E', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
                   <ArrowUpRight size={13} />
-                  <span>People came through your link</span>
+                  <span>
+                    {language === 'np' ? 'जना तपाईंको लिङ्कबाट आए' : 'People came through your link'}
+                  </span>
                 </div>
               </div>
 
               {/* Orders Placed */}
               <div style={{ background: '#FAF2E9', padding: '16px 20px', borderRadius: 14, border: '1px solid #EADCCE' }}>
                 <div style={{ fontSize: 12, color: '#777', textTransform: 'uppercase', fontWeight: 700 }}>
-                  Referred Orders Converted
+                  {language === 'np' ? 'सफल सिफारिस अर्डरहरू' : 'Referred Orders Converted'}
                 </div>
                 <div style={{ fontSize: 28, fontWeight: 900, color: '#1B7F5E', marginTop: 4 }}>
                   {matchedCreatorOrders.length}
                 </div>
                 <div style={{ fontSize: 11.5, color: '#666', marginTop: 4 }}>
-                  {currentMatchedAdvocate?.ordersDeliveredCount || matchedCreatorOrders.filter(o => o.status === 'delivered').length} Delivered
+                  {currentMatchedAdvocate?.ordersDeliveredCount || matchedCreatorOrders.filter(o => o.status === 'delivered').length} {language === 'np' ? 'डेलिभर भइसकेको' : 'Delivered'}
                 </div>
               </div>
 
               {/* Conversion Rate */}
               <div style={{ background: '#FAF2E9', padding: '16px 20px', borderRadius: 14, border: '1px solid #EADCCE' }}>
                 <div style={{ fontSize: 12, color: '#777', textTransform: 'uppercase', fontWeight: 700 }}>
-                  Conversion Rate
+                  {language === 'np' ? 'रूपान्तरण दर (Conversion Rate)' : 'Conversion Rate'}
                 </div>
                 <div style={{ fontSize: 28, fontWeight: 900, color: '#561F1F', marginTop: 4 }}>
                   {computedRate}%
                 </div>
                 <div style={{ fontSize: 11.5, color: '#1B7F5E', marginTop: 4 }}>
-                  Clicks converted to buying customers
+                  {language === 'np' ? 'क्लिकबाट सामान खरिद गर्ने ग्राहकहरू' : 'Clicks converted to buying customers'}
                 </div>
               </div>
 
               {/* Total Royalties Accrued (10%) */}
               <div style={{ background: '#F4FAF6', padding: '16px 20px', borderRadius: 14, border: '1.5px solid #C6E7D5' }}>
                 <div style={{ fontSize: 12, color: '#1B7F5E', textTransform: 'uppercase', fontWeight: 800 }}>
-                  Total 10% Royalties Earned
+                  {language === 'np' ? 'कुल १०% कमाएको रोयल्टी' : 'Total 10% Royalties Earned'}
                 </div>
                 <div style={{ fontSize: 28, fontWeight: 900, color: '#1B7F5E', marginTop: 4 }}>
                   NPR {totalCreatorEarned.toLocaleString()}
                 </div>
                 <div style={{ fontSize: 11.5, color: '#1B7F5E', marginTop: 4, fontWeight: 700 }}>
-                  10% cash on every verified order
+                  {language === 'np' ? 'प्रत्येक प्रमाणित अर्डरमा १०% नगद' : '10% cash on every verified order'}
                 </div>
               </div>
             </div>
@@ -973,11 +1036,13 @@ export const ReferralPage: React.FC = () => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <Wallet size={20} color={isThresholdReached ? '#1B7F5E' : '#D4AF37'} />
                     <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#2B1810' }}>
-                      NPR 10,000 Payout Milestone Progress
+                      {language === 'np' ? 'रु १०,००० भुक्तानी माइलस्टोन प्रगति' : 'NPR 10,000 Payout Milestone Progress'}
                     </h3>
                   </div>
                   <div style={{ fontSize: 13, color: '#6B564C', marginTop: 4 }}>
-                    Withdrawable Balance: <strong style={{ color: '#1B7F5E', fontSize: 15 }}>NPR {withdrawableCash.toLocaleString()}</strong> of NPR 10,000 threshold
+                    {language === 'np' ? 'झिक्न मिल्ने मौज्दात: ' : 'Withdrawable Balance: '}
+                    <strong style={{ color: '#1B7F5E', fontSize: 15 }}>NPR {withdrawableCash.toLocaleString()}</strong>
+                    {language === 'np' ? ' (रु १०,००० को लक्ष्य मध्ये)' : ' of NPR 10,000 threshold'}
                   </div>
                 </div>
 
@@ -997,11 +1062,15 @@ export const ReferralPage: React.FC = () => {
                       boxShadow: '0 4px 14px rgba(27,127,94,0.3)',
                     }}
                   >
-                    {isRequestingPayout ? 'Submitting to Queue...' : '🎉 Request Direct Wallet Payout'}
+                    {isRequestingPayout
+                      ? (language === 'np' ? 'प्रक्रियामा छ...' : 'Submitting to Queue...')
+                      : (language === 'np' ? '🎉 सिधै वालेटमा भुक्तानी अनुरोध गर्नुहोस्' : '🎉 Request Direct Wallet Payout')}
                   </button>
                 ) : (
                   <div style={{ fontSize: 12, fontWeight: 700, color: '#8B3A3A', background: '#FFEBEB', padding: '6px 12px', borderRadius: 6 }}>
-                    NPR {(10000 - withdrawableCash).toLocaleString()} remaining to unlock payout
+                    {language === 'np'
+                      ? `भुक्तानी खोल्न रु ${(10000 - withdrawableCash).toLocaleString()} बाँकी छ`
+                      : `NPR ${(10000 - withdrawableCash).toLocaleString()} remaining to unlock payout`}
                   </div>
                 )}
               </div>
@@ -1021,19 +1090,25 @@ export const ReferralPage: React.FC = () => {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: '#777' }}>
                 <span>NPR 0</span>
-                <span>{thresholdPercent}% Reached</span>
-                <span>NPR 10,000 Milestone</span>
+                <span>{thresholdPercent}% {language === 'np' ? 'पुग्यो' : 'Reached'}</span>
+                <span>{language === 'np' ? 'रु १०,००० लक्ष्य' : 'NPR 10,000 Milestone'}</span>
               </div>
             </div>
 
             {/* Recent Orders Feeds Attributed to this Code */}
             <div>
               <h3 style={{ margin: '0 0 12px 0', fontSize: 16, fontWeight: 800, color: '#2B1810' }}>
-                Recent Customers Who Used Your Code ({matchedCreatorOrders.length})
+                {language === 'np'
+                  ? `तपाईंको कोड प्रयोग गर्ने हालका ग्राहकहरू (${matchedCreatorOrders.length})`
+                  : `Recent Customers Who Used Your Code (${matchedCreatorOrders.length})`}
               </h3>
               {matchedCreatorOrders.length === 0 ? (
                 <div style={{ padding: '24px 16px', textAlign: 'center', color: '#777', background: '#FAF2E9', borderRadius: 12, fontSize: 13 }}>
-                  No orders placed yet using code <strong>{analyticsCode}</strong>. Share your affiliate link to earn 10% on every order!
+                  {language === 'np' ? (
+                    <><strong>{analyticsCode}</strong> कोड प्रयोग गरेर अहिलेसम्म कुनै अर्डर भएको छैन। प्रत्येक अर्डरमा १०% कमाउन आफ्नो लिङ्क सेयर गर्नुहोस्!</>
+                  ) : (
+                    <>No orders placed yet using code <strong>{analyticsCode}</strong>. Share your affiliate link to earn 10% on every order!</>
+                  )}
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1062,7 +1137,9 @@ export const ReferralPage: React.FC = () => {
                               #{order?.orderNumber ? order.orderNumber.slice(0, 5) : 'DAW-0'}***
                             </span>
                             <span style={{ fontSize: 11, color: '#666' }}>
-                              • Customer in {order?.shippingAddress?.city || 'Nepal'}
+                              {language === 'np'
+                                ? `• ग्राहक: ${order?.shippingAddress?.city || 'नेपाल'}`
+                                : `• Customer in ${order?.shippingAddress?.city || 'Nepal'}`}
                             </span>
                             <span
                               style={{
@@ -1075,7 +1152,9 @@ export const ReferralPage: React.FC = () => {
                                 color: order.status === 'delivered' ? '#1B7F5E' : '#856404',
                               }}
                             >
-                              {order.status === 'delivered' ? '✓ Credited' : order.status}
+                              {order.status === 'delivered'
+                                ? (language === 'np' ? '✓ भुक्तान योग्य' : '✓ Credited')
+                                : order.status}
                             </span>
                           </div>
                           <div style={{ fontSize: 12, color: '#555', marginTop: 4 }}>
@@ -1090,10 +1169,10 @@ export const ReferralPage: React.FC = () => {
 
                         <div style={{ textAlign: 'right' }}>
                           <div style={{ fontSize: 14, fontWeight: 900, color: '#1B7F5E' }}>
-                            +NPR {commission.toLocaleString()} (10% Royalty)
+                            +NPR {commission.toLocaleString()} ({language === 'np' ? '१०% रोयल्टी' : '10% Royalty'})
                           </div>
                           <div style={{ fontSize: 11, color: '#2B6CB0' }}>
-                            Customer Saved: NPR {discount.toLocaleString()}
+                            {language === 'np' ? 'ग्राहकले छुट पाए: ' : 'Customer Saved: '}NPR {discount.toLocaleString()}
                           </div>
                         </div>
                       </div>
@@ -1107,7 +1186,7 @@ export const ReferralPage: React.FC = () => {
             <div style={{ background: '#F8F4EE', padding: '16px 20px', borderRadius: 12, border: '1px solid #EADCCE', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#666', textTransform: 'uppercase' }}>
-                  Linked Payout Wallet
+                  {language === 'np' ? 'जोडिएको भुक्तानी वालेट' : 'Linked Payout Wallet'}
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: '#2B1810', marginTop: 2 }}>
                   eSewa: {currentMatchedAdvocate?.esewaId || esewaId || '9801234567'} • Khalti: {currentMatchedAdvocate?.khaltiNumber || khaltiNumber || '9801234567'}
@@ -1126,7 +1205,7 @@ export const ReferralPage: React.FC = () => {
                   cursor: 'pointer',
                 }}
               >
-                Update Wallet Numbers
+                {language === 'np' ? 'वालेट नम्बरहरू अपडेट गर्नुहोस्' : 'Update Wallet Numbers'}
               </button>
             </div>
           </div>
@@ -1146,32 +1225,48 @@ export const ReferralPage: React.FC = () => {
           >
             <div>
               <h2 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 26, fontWeight: 700, color: '#561F1F', marginBottom: 8 }}>
-                Dawosti Creator Guild Payout & Tracking Protocol
+                {language === 'np'
+                  ? 'दावोस्ती क्रिएटर गिल्ड भुक्तानी र ट्र्याकिङ नियमहरू'
+                  : 'Dawosti Creator Guild Payout & Tracking Protocol'}
               </h2>
               <p style={{ fontSize: 14, color: '#6B564C', lineHeight: 1.6 }}>
-                Our referral and affiliate architecture is designed to reward genuine Nepalese fashion curators and content creators with total transparency.
+                {language === 'np'
+                  ? 'हाम्रो सिफारिस र सम्बद्ध प्रणाली नेपाली फेसन पारखीहरू र कन्टेन्ट क्रिएटरहरूलाई पूर्ण पारदर्शिताका साथ पुरस्कृत गर्न डिजाइन गरिएको हो।'
+                  : 'Our referral and affiliate architecture is designed to reward genuine Nepalese fashion curators and content creators with total transparency.'}
               </p>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
               <div style={{ background: '#FAF2E9', padding: '18px', borderRadius: 14, border: '1px solid #EADCCE' }}>
-                <div style={{ fontWeight: 700, fontSize: 15, color: '#2B1810', marginBottom: 6 }}>1. Customer Discount</div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: '#2B1810', marginBottom: 6 }}>
+                  {language === 'np' ? '१. ग्राहक छुट' : '1. Customer Discount'}
+                </div>
                 <div style={{ fontSize: 13, color: '#555', lineHeight: 1.5 }}>
-                  Every customer purchasing through your code receives an instant NPR 300 discount deducted on their final order.
+                  {language === 'np'
+                    ? 'तपाईंको कोड मार्फत खरिद गर्ने प्रत्येक ग्राहकले उनीहरूको अन्तिम अर्डरमा तत्काल रु ३०० छुट पाउनेछन्।'
+                    : 'Every customer purchasing through your code receives an instant NPR 300 discount deducted on their final order.'}
                 </div>
               </div>
 
               <div style={{ background: '#FAF2E9', padding: '18px', borderRadius: 14, border: '1px solid #EADCCE' }}>
-                <div style={{ fontWeight: 700, fontSize: 15, color: '#2B1810', marginBottom: 6 }}>2. 10% Cash Royalty</div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: '#2B1810', marginBottom: 6 }}>
+                  {language === 'np' ? '२. १०% नगद रोयल्टी' : '2. 10% Cash Royalty'}
+                </div>
                 <div style={{ fontSize: 13, color: '#555', lineHeight: 1.5 }}>
-                  You earn 10% of the net merchandise value for every verified and successfully delivered boutique garment.
+                  {language === 'np'
+                    ? 'प्रत्येक प्रमाणित र सफलतापूर्वक डेलिभर भएको बुटिक पोशाकमा तपाईंले शुद्ध मूल्यको १०% कमाउनुहुनेछ।'
+                    : 'You earn 10% of the net merchandise value for every verified and successfully delivered boutique garment.'}
                 </div>
               </div>
 
               <div style={{ background: '#FAF2E9', padding: '18px', borderRadius: 14, border: '1px solid #EADCCE' }}>
-                <div style={{ fontWeight: 700, fontSize: 15, color: '#2B1810', marginBottom: 6 }}>3. NPR 10k Threshold</div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: '#2B1810', marginBottom: 6 }}>
+                  {language === 'np' ? '३. रु १०,००० भुक्तानी सीमा' : '3. NPR 10k Threshold'}
+                </div>
                 <div style={{ fontSize: 13, color: '#555', lineHeight: 1.5 }}>
-                  Payouts disburse automatically once accumulated commissions hit NPR 10,000, transferred directly to your designated eSewa or Khalti account.
+                  {language === 'np'
+                    ? 'जम्मा भएको कमिसन रु १०,००० पुगेपछि भुक्तानी स्वतः प्रक्रियामा जान्छ, र सिधै तपाईंको eSewa वा Khalti खातामा पठाइन्छ।'
+                    : 'Payouts disburse automatically once accumulated commissions hit NPR 10,000, transferred directly to your designated eSewa or Khalti account.'}
                 </div>
               </div>
             </div>
@@ -1179,12 +1274,30 @@ export const ReferralPage: React.FC = () => {
             <div style={{ background: '#FFF8F0', border: '1.5px solid #D4AF37', borderRadius: 14, padding: '18px 22px' }}>
               <div style={{ fontWeight: 700, fontSize: 14, color: '#561F1F', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <AlertCircle size={16} color="#561F1F" />
-                <span>Anti-Fraud & WhatsApp Attribution Safeguards</span>
+                <span>
+                  {language === 'np'
+                    ? 'धोखाधडी रोकथाम र ह्वाट्सएप एट्रिब्युसन सुरक्षा'
+                    : 'Anti-Fraud & WhatsApp Attribution Safeguards'}
+                </span>
               </div>
               <ul style={{ fontSize: 13, color: '#555', lineHeight: 1.6, paddingLeft: 20 }}>
-                <li>Self-referrals (buying for oneself with one’s own code) are disqualified.</li>
-                <li>Attribution is permanently locked when the customer clicks your link or enters your code at checkout.</li>
-                <li>WhatsApp concierge orders transmit <code>[Ref: YOURCODE]</code> directly in the verified dispatch receipt.</li>
+                <li>
+                  {language === 'np'
+                    ? 'आफ्नै कोड प्रयोग गरेर आफ्नै लागि खरिद गर्दा (Self-referral) कमिसन मान्य हुने छैन।'
+                    : 'Self-referrals (buying for oneself with one’s own code) are disqualified.'}
+                </li>
+                <li>
+                  {language === 'np'
+                    ? 'ग्राहकले तपाईंको लिङ्क क्लिक गर्दा वा चेकआउटमा कोड प्रविष्ट गर्दा सिफारिस स्थायी रूपमा लक हुन्छ।'
+                    : 'Attribution is permanently locked when the customer clicks your link or enters your code at checkout.'}
+                </li>
+                <li>
+                  {language === 'np' ? (
+                    <>ह्वाट्सएप कन्सिएर्ज अर्डरहरूमा प्रमाणित रसिदमा सिधै <code>[Ref: YOURCODE]</code> समावेश गरिन्छ।</>
+                  ) : (
+                    <>WhatsApp concierge orders transmit <code>[Ref: YOURCODE]</code> directly in the verified dispatch receipt.</>
+                  )}
+                </li>
               </ul>
             </div>
           </div>
@@ -1200,7 +1313,9 @@ export const ReferralPage: React.FC = () => {
             <span>•</span>
             <a href="https://referral.dawosti.com" style={{ color: '#1B7F5E', textDecoration: 'none', fontWeight: 600 }}>referral.dawosti.com</a>
             <span>•</span>
-            <a href="https://wa.me/9779708251494" target="_blank" rel="noreferrer" style={{ color: '#1B7F5E', textDecoration: 'none', fontWeight: 600 }}>WhatsApp Concierge</a>
+            <a href="https://wa.me/9779708251494" target="_blank" rel="noreferrer" style={{ color: '#1B7F5E', textDecoration: 'none', fontWeight: 600 }}>
+              {language === 'np' ? 'ह्वाट्सएप कन्सिएर्ज' : 'WhatsApp Concierge'}
+            </a>
           </div>
         </div>
       </footer>

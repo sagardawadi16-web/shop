@@ -276,7 +276,8 @@ export const useReferralStore = create<ReferralState>((set, get) => ({
     if (typeof window !== 'undefined') {
       const host = window.location.hostname;
       if (host.endsWith('dawosti.com') && !host.startsWith('referral.') && !host.startsWith('creator.')) {
-        window.location.href = 'https://referral.dawosti.com';
+        const savedLang = localStorage.getItem('dawosti_lang') || 'en';
+        window.location.href = `https://referral.dawosti.com?lang=${savedLang}`;
         return;
       }
     }
