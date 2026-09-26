@@ -67,6 +67,16 @@ const detectInitialPageView = (): PageView => {
       const host = window.location.hostname || '';
       const path = window.location.pathname || '';
       const hash = window.location.hash || '';
+
+      // Check for /admin dedicated URL or #admin hash
+      if (
+        path === '/admin' ||
+        path.startsWith('/admin/') ||
+        hash === '#admin'
+      ) {
+        return 'admin';
+      }
+
       if (
         host.startsWith('referral.') ||
         host.startsWith('creator.') ||
@@ -189,7 +199,22 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     publishSettings({ theme: DEFAULT_THEME });
   },
 
-  setPageView: (view) => set({ pageView: view }),
+  setPageView: (view) => {
+    if (typeof window !== 'undefined') {
+      try {
+        if (view === 'admin') {
+          if (window.location.pathname !== '/admin') {
+            window.history.pushState({ __dawosti: true, page: 'admin' }, '', '/admin');
+          }
+        } else if (view === 'home') {
+          if (window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin')) {
+            window.history.pushState({ __dawosti: true, page: 'home' }, '', '/');
+          }
+        }
+      } catch {}
+    }
+    set({ pageView: view });
+  },
   setIsOrderTrackingOpen: (v) => set({ isOrderTrackingOpen: v }),
 
   formatPrice: (amount) => {

@@ -541,7 +541,7 @@ export const OrderTrackingModal: React.FC = () => {
               {/* WhatsApp Support CTA */}
               <a
                 href={`https://wa.me/9779808251494?text=${encodeURIComponent(
-                  `Namaste Sagar! I am tracking order #${trackedOrder.orderNumber} for ${trackedOrder.shippingAddress.fullName}. Could you please give me a delivery update?`
+                  `Namaste Dawosti Support! I am tracking order #${trackedOrder.orderNumber} for ${trackedOrder.shippingAddress.fullName}. Could you please give me a delivery update?`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"

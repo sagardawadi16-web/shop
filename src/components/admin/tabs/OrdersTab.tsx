@@ -173,7 +173,7 @@ ${itemsList}
           <div style={{ fontSize: 11, color: '#777', textTransform: 'uppercase', fontWeight: 600 }}>Total Store Orders</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: '#2B1810' }}>{orders.length}</div>
           <div style={{ fontSize: 11, color: '#1B7F5E', fontWeight: 700, marginTop: 2 }}>
-            {realOrders.length} Real • {seedOrders.length} Showcase
+            Live Customer Orders
           </div>
         </div>
 
@@ -291,33 +291,12 @@ ${itemsList}
         </div>
       </div>
 
-      {/* Wipe All Showcase Demo Orders Banner */}
-      {seedOrders.length > 0 && (
-        <div style={{ background: '#FFF3CD', border: '1px solid #FFEEBA', padding: '12px 16px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-          <div style={{ fontSize: 13, color: '#856404' }}>
-            <strong>Notice:</strong> These are {seedOrders.length} pre-loaded showcase demo orders used for initial layout testing.
-          </div>
-          <button
-            onClick={async () => {
-              if (window.confirm('Permanently purge all showcase demo orders from this store? Real customer orders will NOT be affected.')) {
-                await wipeAllDemoOrders();
-                toast('Successfully purged all showcase demo orders.', 'success');
-              }
-            }}
-            className="btn btn-outline"
-            style={{ padding: '6px 14px', fontSize: 12, borderColor: '#B02A37', color: '#B02A37', background: 'white', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontWeight: 700 }}
-          >
-            <Trash2 size={14} /> Wipe All Showcase Demo Orders
-          </button>
-        </div>
-      )}
-
       {/* Orders List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {filteredOrders.length === 0 ? (
           <div style={{ padding: 40, textAlign: 'center', color: '#777', background: '#FFF8F0', borderRadius: 8, border: '1px solid #EADCCE' }}>
             <ShieldCheck size={36} color="#8B3A3A" style={{ margin: '0 auto 12px', opacity: 0.5 }} />
-            <h4 style={{ margin: '0 0 6px', color: '#2B1810', fontSize: 16 }}>No orders found for this filter</h4>
+            <h4 style={{ margin: '0 0 6px', color: '#2B1810', fontSize: 16 }}>No customer orders found</h4>
             <p style={{ margin: 0, fontSize: 13, color: '#666' }}>
               {searchQuery ? `No orders matched search query "${searchQuery}"` : 'Real customer orders placed on dawosti.com will automatically appear here in real time.'}
             </p>
@@ -350,7 +329,7 @@ ${itemsList}
 
             const cleanPhone = (order.shippingAddress?.phone || '').replace(/[^0-9]/g, '');
             const waMsg = encodeURIComponent(
-              `Namaste ${order.shippingAddress?.fullName || 'Customer'}! This is Sagar from Dawosti Boutique regarding your order #${order.orderNumber}. We are preparing your parcel for dispatch.`
+              `Namaste ${order.shippingAddress?.fullName || 'Customer'}! This is Dawosti Boutique Operations regarding your order #${order.orderNumber}. We are preparing your parcel for dispatch.`
             );
 
             return (
@@ -1030,7 +1009,7 @@ ${itemsList}
                 lineHeight: 1.5,
               }}
             >
-              <div><strong>ग्राहक:</strong> {orderToDelete.customerName || orderToDelete.shippingAddress?.fullName || 'N/A'} ({orderToDelete.shippingAddress?.phone || 'No phone'})</div>
+              <div><strong>ग्राहक:</strong> {(orderToDelete as any).customerName || orderToDelete.customerLoginName || orderToDelete.shippingAddress?.fullName || 'N/A'} ({orderToDelete.shippingAddress?.phone || 'No phone'})</div>
               <div><strong>रकम:</strong> NPR {(orderToDelete.totalAmount || 0).toLocaleString()} • {orderToDelete.items?.length || 0} items</div>
             </div>
 

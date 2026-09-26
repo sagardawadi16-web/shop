@@ -1048,7 +1048,7 @@ export const ReferralPage: React.FC = () => {
               {Array.from(
                 new Set([(allAdvocates || []).map((a) => a.code), referralCode, activeReferralCode].flat())
               )
-                .filter(Boolean)
+                .filter((c): c is string => Boolean(c))
                 .map((code) => (
                 <button
                   key={code}

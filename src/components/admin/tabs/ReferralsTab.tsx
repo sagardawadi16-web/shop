@@ -157,7 +157,7 @@ export const ReferralsTab: React.FC = () => {
         paidAt: new Date().toISOString(),
         auditedAt: new Date().toISOString(),
         transactionRef: txn,
-        auditNotes: `Audited and paid by Sagar. Verified delivery of qualifying orders. Ref: ${txn}`,
+        auditNotes: `Audited and paid by Dawosti Merchant. Verified delivery of qualifying orders. Ref: ${txn}`,
       });
       toast(`Payout of NPR ${requestedAmount.toLocaleString()} successfully recorded.`);
     } finally {
@@ -392,7 +392,7 @@ export const ReferralsTab: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
               <ShieldCheck size={18} color="#1B7F5E" />
               <h4 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#2B1810' }}>
-                Sagar's Exact Profit Formula for Referral Channel
+                Dawosti Unit Economics & Profit Formula for Referral Channel
               </h4>
             </div>
             <div

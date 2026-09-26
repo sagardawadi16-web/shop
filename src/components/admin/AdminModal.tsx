@@ -16,8 +16,10 @@ import {
   Scissors,
   Building2,
   Package,
+  ArrowLeft,
 } from 'lucide-react';
 import { useAdminStore, AdminTab, isTabAllowedForRole } from '../../stores/adminStore';
+import { useSettingsStore } from '../../stores/settingsStore';
 import { ProfitSimulatorTab } from './tabs/ProfitSimulatorTab';
 import { OrdersTab } from './tabs/OrdersTab';
 import { ReferralsTab } from './tabs/ReferralsTab';
@@ -27,7 +29,11 @@ import { RetailersTab } from './tabs/RetailersTab';
 import { CatalogTab } from './tabs/CatalogTab';
 import { AdminRole } from '../../types';
 
-export const AdminModal: React.FC = () => {
+interface AdminModalProps {
+  isPageView?: boolean;
+}
+
+export const AdminModal: React.FC<AdminModalProps> = ({ isPageView = false }) => {
   const {
     isAdminModalOpen,
     closeAdmin,
@@ -41,6 +47,7 @@ export const AdminModal: React.FC = () => {
     loginGoogle,
     logout,
   } = useAdminStore();
+  const { setPageView } = useSettingsStore();
 
   const [devEmailInput, setDevEmailInput] = useState('');
   const [showDevLogin, setShowDevLogin] = useState(false);
@@ -48,13 +55,16 @@ export const AdminModal: React.FC = () => {
   // Escape key closes modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isAdminModalOpen) closeAdmin();
+      if (e.key === 'Escape' && (isAdminModalOpen || isPageView)) {
+        closeAdmin();
+        setPageView('home');
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isAdminModalOpen, closeAdmin]);
+  }, [isAdminModalOpen, isPageView, closeAdmin, setPageView]);
 
-  if (!isAdminModalOpen) return null;
+  if (!isAdminModalOpen && !isPageView) return null;
 
   const renderRoleBadge = (role: AdminRole | null) => {
     if (!role) return null;
@@ -158,31 +168,52 @@ export const AdminModal: React.FC = () => {
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(43, 24, 16, 0.75)',
-        backdropFilter: 'blur(5px)',
-        zIndex: 100,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-      }}
+      style={
+        isPageView
+          ? {
+              minHeight: '100vh',
+              backgroundColor: '#FAF2E9',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: 0,
+            }
+          : {
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(43, 24, 16, 0.75)',
+              backdropFilter: 'blur(5px)',
+              zIndex: 100,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 16,
+            }
+      }
     >
       <div
-        style={{
-          width: '100%',
-          maxWidth: 1060,
-          maxHeight: '92vh',
-          backgroundColor: '#FFF8F0',
-          borderRadius: 12,
-          boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
-          border: '2px solid #D4AF37',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}
+        style={
+          isPageView
+            ? {
+                width: '100%',
+                flex: 1,
+                backgroundColor: '#FFF8F0',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+              }
+            : {
+                width: '100%',
+                maxWidth: 1060,
+                maxHeight: '92vh',
+                backgroundColor: '#FFF8F0',
+                borderRadius: 12,
+                boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+                border: '2px solid #D4AF37',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+              }
+        }
       >
         {/* Top Bar */}
         <div
@@ -194,21 +225,50 @@ export const AdminModal: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'space-between',
             borderBottom: '1px solid #D4AF37',
+            gap: 12,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ width: 8, height: 8, transform: 'rotate(45deg)', backgroundColor: '#D4AF37' }} />
-            <h2
-              style={{
-                margin: 0,
-                fontSize: 16,
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              onClick={() => {
+                closeAdmin();
+                setPageView('home');
               }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 12px',
+                borderRadius: 99,
+                background: 'rgba(255, 255, 255, 0.12)',
+                border: '1px solid rgba(212, 175, 55, 0.4)',
+                color: '#FFF8F0',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                whiteSpace: 'nowrap',
+              }}
+              title="Return to Dawosti Boutique Home"
             >
-              DAWOSTI Boutique Management Console
-            </h2>
+              <ArrowLeft size={14} />
+              <span>← Boutique</span>
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ width: 8, height: 8, transform: 'rotate(45deg)', backgroundColor: '#D4AF37' }} />
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: 15,
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                DAWOSTI Boutique Management Console
+              </h2>
+            </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -231,8 +291,12 @@ export const AdminModal: React.FC = () => {
               </div>
             )}
             <button
-              onClick={closeAdmin}
+              onClick={() => {
+                closeAdmin();
+                setPageView('home');
+              }}
               style={{ background: 'none', border: 'none', color: '#FFF8F0', cursor: 'pointer', padding: 4 }}
+              title="Close Console"
             >
               <X size={20} />
             </button>
@@ -335,7 +399,7 @@ export const AdminModal: React.FC = () => {
                     type="email"
                     value={devEmailInput}
                     onChange={(e) => setDevEmailInput(e.target.value)}
-                    placeholder="e.g. sagardawadi16@gmail.com"
+                    placeholder="e.g. admin@dawosti.com"
                     style={{
                       padding: '6px 10px',
                       borderRadius: 6,
@@ -377,11 +441,35 @@ export const AdminModal: React.FC = () => {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    👑 Sagar (Owner)
+                    👑 Store Owner
                   </button>
                 </div>
               )}
             </div>
+
+            <button
+              onClick={() => {
+                closeAdmin();
+                setPageView('home');
+              }}
+              style={{
+                marginTop: 4,
+                padding: '9px 20px',
+                background: 'transparent',
+                color: '#6B564C',
+                border: '1px solid #D4C5B9',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <ArrowLeft size={15} />
+              <span>← Return to Boutique</span>
+            </button>
           </div>
         ) : !isAuthorizedAdmin ? (
           /* Auth Gate: Logged In, but NOT on Whitelist (Strict 403 Lockout) */
@@ -414,31 +502,54 @@ export const AdminModal: React.FC = () => {
                 403 Access Denied: Unauthorized Account
               </h3>
               <p style={{ margin: 0, fontSize: 13, color: '#666', maxWidth: 450, lineHeight: 1.6 }}>
-                Account <strong>{currentUser.email}</strong> is not assigned an active Staff or Owner role.
-                Contact Sagar Dawadi to be granted access.
+                Account <strong>{currentUser.email}</strong> is not assigned an active Staff, Clerk, or Owner role.
+                Please contact Store Administrator to grant staff access.
               </p>
             </div>
 
-            <button
-              onClick={logout}
-              style={{
-                marginTop: 8,
-                padding: '10px 22px',
-                backgroundColor: '#2B1810',
-                color: '#FFF',
-                border: 'none',
-                borderRadius: 6,
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <LogOut size={15} />
-              <span>Switch / Sign Out Account</span>
-            </button>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 8 }}>
+              <button
+                onClick={logout}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#2B1810',
+                  color: '#FFF',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <LogOut size={15} />
+                <span>Switch / Sign Out Account</span>
+              </button>
+              <button
+                onClick={() => {
+                  closeAdmin();
+                  setPageView('home');
+                }}
+                style={{
+                  padding: '10px 20px',
+                  background: 'transparent',
+                  color: '#6B564C',
+                  border: '1px solid #D4C5B9',
+                  borderRadius: 6,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <ArrowLeft size={15} />
+                <span>← Return to Boutique</span>
+              </button>
+            </div>
           </div>
         ) : (
           /* Authorized Admin View */

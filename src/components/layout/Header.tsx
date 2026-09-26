@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Search, ShoppingBag, Menu, X, Globe, PackageCheck, Sparkles, Building2, Award
+  Search, ShoppingBag, Menu, X, Globe, PackageCheck, Sparkles, Building2, Award, Crown
 } from 'lucide-react';
 import { DawostiLogo } from '../common/DawostiLogo';
 import { UserAuthButton } from './UserAuthButton';
@@ -9,6 +9,8 @@ import { useProductStore } from '../../stores/productStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useRetailerStore } from '../../stores/retailerStore';
 import { useReferralStore } from '../../stores/referralStore';
+import { useAdminStore } from '../../stores/adminStore';
+import { useAuthStore } from '../../stores/authStore';
 import { CATEGORIES } from '../../mockData';
 
 export const Header: React.FC = () => {
@@ -17,6 +19,11 @@ export const Header: React.FC = () => {
   const { language, toggleLanguage, pageView, setPageView, setIsOrderTrackingOpen } = useSettingsStore();
   const { openWholesaleModal } = useRetailerStore();
   const { openCreatorPortal } = useReferralStore();
+  const { isAuthorizedAdmin, openAdmin, currentRole } = useAdminStore();
+  const { user: authUser } = useAuthStore();
+
+  const isAuthorized = isAuthorizedAdmin || Boolean(authUser?.role);
+  const activeRole = currentRole || authUser?.role;
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -396,8 +403,77 @@ export const Header: React.FC = () => {
             <span>{language === 'np' ? 'अर्डर ट्र्याक' : 'Track Order'}</span>
           </button>
 
+          {/* Admin / Clerk Console Button (Visible ONLY to Owner, Admin, Manager, and Staff / Clerk) */}
+          {isAuthorized && (
+            <button
+              onClick={() => {
+                openAdmin();
+                setPageView('admin');
+              }}
+              className="hide-mobile"
+              title={`Dawosti Management Console (${activeRole?.toUpperCase() || 'AUTHORIZED'})`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '6px 12px',
+                borderRadius: 99,
+                background: 'linear-gradient(135deg, #561F1F 0%, #3B1414 100%)',
+                border: '1.5px solid #D4AF37',
+                color: '#FFF8F0',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(86, 31, 31, 0.25)',
+                transition: 'all 0.2s',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(212, 175, 55, 0.35)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(86, 31, 31, 0.25)';
+              }}
+            >
+              <Crown size={14} color="#D4AF37" />
+              <span>{activeRole === 'staff' ? 'Clerk' : 'Admin'}</span>
+            </button>
+          )}
+
           {/* Customer Google Auth Button */}
           <UserAuthButton />
+
+          {/* Mobile Admin Icon for quick phone access */}
+          {isAuthorized && (
+            <button
+              onClick={() => {
+                openAdmin();
+                setPageView('admin');
+              }}
+              className="mobile-only-btn"
+              title={`Admin Console (${activeRole?.toUpperCase()})`}
+              style={{
+                background: '#561F1F',
+                border: '1.5px solid #D4AF37',
+                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                padding: 0,
+                cursor: 'pointer',
+                color: '#D4AF37',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 6px rgba(86, 31, 31, 0.2)',
+                flexShrink: 0,
+              }}
+              aria-label="Admin Console"
+            >
+              <Crown size={16} />
+            </button>
+          )}
 
           {/* Cart Drawer Trigger */}
           <button
@@ -595,6 +671,41 @@ export const Header: React.FC = () => {
             >
               {/* Google Account Sign-In / Profile */}
               <UserAuthButton isMobile />
+
+              {/* Executive Admin Link in Mobile Drawer (Visible ONLY to Owner, Admin, Manager, and Staff / Clerk) */}
+              {isAuthorized && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    openAdmin();
+                    setPageView('admin');
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 16px',
+                    borderRadius: 12,
+                    background: 'linear-gradient(135deg, #561F1F 0%, #3B1414 100%)',
+                    border: '1.5px solid #D4AF37',
+                    color: '#FFF8F0',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(86, 31, 31, 0.25)',
+                    textAlign: 'left',
+                    width: '100%',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <Crown size={18} color="#D4AF37" />
+                    <span>{activeRole === 'staff' ? 'Clerk / Staff Console' : 'Executive Management Console'}</span>
+                  </div>
+                  <span style={{ fontSize: 10, background: '#D4AF37', color: '#2B1810', padding: '2px 6px', borderRadius: 4, fontWeight: 800 }}>
+                    {activeRole?.toUpperCase() || 'ADMIN'}
+                  </span>
+                </button>
+              )}
 
               {/* Track Order CTA in mobile drawer */}
               <button

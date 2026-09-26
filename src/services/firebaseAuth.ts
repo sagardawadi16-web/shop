@@ -66,14 +66,14 @@ export const signInWithGoogle = async (preferredEmail?: string): Promise<User | 
       const email = (preferredEmail || 'sagardawadi16@gmail.com').trim().toLowerCase();
       const role = getUserRole(email);
       const isOwner = role === 'owner' || MASTER_OWNER_EMAILS.includes(email);
-      const name = isOwner ? 'Sagar Dawadi' : email.split('@')[0];
+      const name = isOwner ? 'Store Owner' : email.split('@')[0];
 
       const fallbackUser: User = {
-        uid: isOwner ? 'dawosti_owner_sagardawadi' : `google_user_${Date.now()}`,
+        uid: isOwner ? 'dawosti_owner_account' : `google_user_${Date.now()}`,
         displayName: name,
         email: email,
         photoURL: isOwner
-          ? 'https://ui-avatars.com/api/?name=Sagar+Dawadi&background=8B3A3A&color=fff'
+          ? 'https://ui-avatars.com/api/?name=Store+Owner&background=8B3A3A&color=fff'
           : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1B7F5E&color=fff`,
         emailVerified: true,
         isAnonymous: false,

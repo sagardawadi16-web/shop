@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useProductStore } from '../stores/productStore';
 import { useCartStore } from '../stores/cartStore';
+import { useAdminStore } from '../stores/adminStore';
 import { toast } from '../components/common/Toast';
 
 /**
@@ -11,6 +12,7 @@ import { toast } from '../components/common/Toast';
  * taps the phone's native hardware back button or swipe-to-back gesture.
  * 
  * Automatically captures back events and handles:
+ * 0. Admin View / Modal -> closes admin, returns smoothly to boutique home
  * 1. Product Detail Modal -> closes modal, stays on home
  * 2. Cart Drawer -> closes cart, stays on home
  * 3. Checkout Page -> returns to home
@@ -21,6 +23,7 @@ export const useMobileHistory = () => {
   const { pageView, setPageView } = useSettingsStore();
   const { activeDetailProduct, setActiveDetailProduct } = useProductStore();
   const { isOpen: isCartOpen, setIsOpen: setCartOpen } = useCartStore();
+  const { isAdminModalOpen, closeAdmin } = useAdminStore();
 
   const lastBackPressTime = useRef<number>(0);
   const isNavigatingByPopState = useRef<boolean>(false);
@@ -28,8 +31,14 @@ export const useMobileHistory = () => {
   // Initialize history entry on mount so mobile back doesn't immediately leave site
   useEffect(() => {
     try {
-      window.history.replaceState({ __dawosti: true, page: 'home', depth: 0 }, '', window.location.pathname);
-      window.history.pushState({ __dawosti: true, page: 'home', depth: 1 }, '', window.location.pathname);
+      const isInitialAdmin = window.location.pathname === '/admin' || window.location.hash === '#admin';
+      if (isInitialAdmin) {
+        window.history.replaceState({ __dawosti: true, page: 'home', depth: 0 }, '', '/');
+        window.history.pushState({ __dawosti: true, page: 'admin', depth: 1 }, '', '/admin');
+      } else {
+        window.history.replaceState({ __dawosti: true, page: 'home', depth: 0 }, '', window.location.pathname);
+        window.history.pushState({ __dawosti: true, page: 'home', depth: 1 }, '', window.location.pathname);
+      }
     } catch (e) {
       console.warn('[History] Init error:', e);
     }
@@ -82,7 +91,7 @@ export const useMobileHistory = () => {
     }
   }, [isCartOpen, pageView]);
 
-  // Sync PageView (checkout / order-confirmation) with history
+  // Sync PageView (checkout / order-confirmation / admin) with history
   useEffect(() => {
     if (isNavigatingByPopState.current) return;
 
@@ -94,9 +103,16 @@ export const useMobileHistory = () => {
       if (window.location.hash !== '#order-confirmed') {
         window.history.pushState({ __dawosti: true, page: 'order-confirmation' }, '', '#order-confirmed');
       }
+    } else if (pageView === 'admin') {
+      if (window.location.pathname !== '/admin') {
+        window.history.pushState({ __dawosti: true, page: 'admin' }, '', '/admin');
+      }
     } else if (pageView === 'home') {
-      if (window.location.hash === '#checkout' || window.location.hash === '#order-confirmed') {
+      if (window.location.hash === '#checkout' || window.location.hash === '#order-confirmed' || window.location.hash === '#admin') {
         window.history.replaceState({ __dawosti: true, page: 'home' }, '', window.location.pathname);
+      }
+      if (window.location.pathname === '/admin') {
+        window.history.replaceState({ __dawosti: true, page: 'home' }, '', '/');
       }
     }
   }, [pageView]);
@@ -107,6 +123,18 @@ export const useMobileHistory = () => {
       isNavigatingByPopState.current = true;
 
       try {
+        // 0. If currently in Admin view or AdminModal is open: smoothly close and return to boutique home
+        const currentView = useSettingsStore.getState().pageView;
+        const isAdminOpen = useAdminStore.getState().isAdminModalOpen;
+        if (currentView === 'admin' || isAdminOpen) {
+          closeAdmin();
+          setPageView('home');
+          if (window.location.pathname === '/admin') {
+            window.history.replaceState({ __dawosti: true, page: 'home' }, '', '/');
+          }
+          return;
+        }
+
         // 1. If product detail modal is open, close it
         if (useProductStore.getState().activeDetailProduct) {
           setActiveDetailProduct(null);
@@ -120,7 +148,6 @@ export const useMobileHistory = () => {
         }
 
         // 3. If on checkout or order confirmation, return smoothly to home view
-        const currentView = useSettingsStore.getState().pageView;
         if (currentView === 'checkout' || currentView === 'order-confirmation') {
           setPageView('home');
           return;
@@ -150,5 +177,5 @@ export const useMobileHistory = () => {
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [setActiveDetailProduct, setCartOpen, setPageView]);
+  }, [setActiveDetailProduct, setCartOpen, setPageView, closeAdmin]);
 };

@@ -79,16 +79,20 @@ export default function App() {
     checkSubdomain();
     window.addEventListener('hashchange', checkSubdomain);
 
-    // Check for stealth #admin route in URL
-    const checkHash = () => {
-      if (window.location.hash === '#admin') {
+    // Check for dedicated /admin route or #admin in URL
+    const checkAdminRoute = () => {
+      const path = window.location.pathname;
+      const hash = window.location.hash;
+      if (path === '/admin' || path.startsWith('/admin') || hash === '#admin') {
+        setPageView('admin');
         openAdmin();
       }
     };
-    checkHash();
-    window.addEventListener('hashchange', checkHash);
+    checkAdminRoute();
+    window.addEventListener('hashchange', checkAdminRoute);
+    window.addEventListener('popstate', checkAdminRoute);
 
-    // Stealth keyboard shortcut for Sagar: Ctrl+Shift+A or Cmd+Shift+A
+    // Stealth keyboard shortcut for Admin: Ctrl+Shift+A or Cmd+Shift+A
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
         e.preventDefault();
@@ -105,7 +109,8 @@ export default function App() {
       if (typeof unsub4 === 'function') unsub4();
       if (typeof unsub5 === 'function') unsub5();
       if (typeof unsub6 === 'function') unsub6();
-      window.removeEventListener('hashchange', checkHash);
+      window.removeEventListener('hashchange', checkAdminRoute);
+      window.removeEventListener('popstate', checkAdminRoute);
       window.removeEventListener('hashchange', checkSubdomain);
       window.removeEventListener('keydown', handleKeyDown);
     };
@@ -168,8 +173,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Global header — hidden on order confirmation and dedicated referral subdomain */}
-      {pageView !== 'order-confirmation' && pageView !== 'referral' && <Header />}
+      {/* Global header — hidden on order confirmation, dedicated referral, and dedicated admin page */}
+      {pageView !== 'order-confirmation' && pageView !== 'referral' && pageView !== 'admin' && <Header />}
 
       {/* Page views */}
       {pageView === 'home' && <HomePage />}
@@ -201,6 +206,11 @@ export default function App() {
           <ReferralPage />
         </Suspense>
       )}
+      {pageView === 'admin' && (
+        <Suspense fallback={<div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#561F1F', fontWeight: 700 }}>Loading Boutique Admin Console...</div>}>
+          <AdminModal isPageView />
+        </Suspense>
+      )}
 
       {/* Global footer — shown on home page */}
       {pageView === 'home' && <Footer />}
@@ -212,7 +222,7 @@ export default function App() {
       <Suspense fallback={null}>
         <RetailerInquiryModal />
         <CreatorPortalModal />
-        <AdminModal />
+        {pageView !== 'admin' && <AdminModal />}
         <OrderTrackingModal />
       </Suspense>
 

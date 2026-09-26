@@ -55,7 +55,7 @@ export const RetailerInquiryModal: React.FC = () => {
 
   const getWhatsAppDeepLink = () => {
     const text = encodeURIComponent(
-      `Namaste Sagar! I submitted a Retailer / Stockist inquiry for "${storeName}" (${city}, ${country}). We are interested in stocking Dawosti collections. Let's discuss wholesale terms!`
+      `Namaste Dawosti Team! I submitted a Retailer / Stockist inquiry for "${storeName}" (${city}, ${country}). We are interested in stocking Dawosti collections. Let's discuss wholesale terms!`
     );
     return `https://wa.me/${merchant.whatsappNumber || '9779808251494'}?text=${text}`;
   };
@@ -316,7 +316,7 @@ export const RetailerInquiryModal: React.FC = () => {
                     required
                     value={contactPerson}
                     onChange={(e) => setContactPerson(e.target.value)}
-                    placeholder="e.g. Sagar Shrestha (Store Director)"
+                    placeholder="e.g. Aarav Sharma (Store Director)"
                     style={{
                       width: '100%',
                       padding: '10px 14px',

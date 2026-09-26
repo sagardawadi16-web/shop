@@ -7,7 +7,7 @@ export type ProductSize = 'XS' | 'S' | 'M' | 'L' | 'XL' | 'Free Size';
 export type SortOption = 'featured' | 'price-low' | 'price-high' | 'newest' | 'rating';
 export type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
 export type PaymentMethod = 'cod' | 'esewa' | 'khalti' | 'fonepay';
-export type PageView = 'home' | 'checkout' | 'order-confirmation' | 'referral';
+export type PageView = 'home' | 'checkout' | 'order-confirmation' | 'referral' | 'admin';
 
 export interface BilingualText {
   en: string;
@@ -228,7 +228,7 @@ export interface RetailerInquiry {
 
 export interface ReferralAdvocate {
   id: string;
-  code: string; // e.g. 'SAGAR-82'
+  code: string; // e.g. 'CREATOR-82'
   fullName: string;
   phone: string;
   email?: string;

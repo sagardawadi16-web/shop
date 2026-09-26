@@ -87,7 +87,7 @@ export const RetailersTab: React.FC = () => {
     const cleanPhone = (inquiry.whatsappNumber || inquiry.phone || '').replace(/[^0-9]/g, '');
     const phoneWithCountry = cleanPhone.startsWith('977') ? cleanPhone : `977${cleanPhone}`;
     const msg = encodeURIComponent(
-      `Namaste ${inquiry.contactPerson}! 🙏\nThis is Sagar Dawodi from Dawosti Boutique Kathmandu.\nWe received your retail wholesale partnership inquiry for *${inquiry.storeName}* (${inquiry.city}). We are pleased to offer our Kathmandu handloom collections at stockist pricing.`
+      `Namaste ${inquiry.contactPerson}! 🙏\nThis is Dawosti Boutique Management Kathmandu.\nWe received your retail wholesale partnership inquiry for *${inquiry.storeName}* (${inquiry.city}). We are pleased to offer our Kathmandu handloom collections at stockist pricing.`
     );
     window.open(`https://wa.me/${phoneWithCountry}?text=${msg}`, '_blank');
   };

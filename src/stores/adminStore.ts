@@ -12,6 +12,7 @@ import {
   MASTER_OWNER_EMAILS,
 } from '../services/firestoreWhitelist';
 import { toast } from '../components/common/Toast';
+import { useSettingsStore } from './settingsStore';
 
 export type AdminTab = 'profit' | 'orders' | 'referrals' | 'retailers' | 'whitelist' | 'payment-qr' | 'catalog';
 
@@ -65,18 +66,20 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       set({ isAdminModalOpen: true });
     }
 
-    if (typeof window !== 'undefined' && window.location.hash !== '#admin') {
-      try {
-        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#admin`);
-      } catch {}
+    // Sync settingsStore pageView and URL
+    if (useSettingsStore.getState().pageView !== 'admin') {
+      useSettingsStore.getState().setPageView('admin');
     }
   },
 
   closeAdmin: () => {
     set({ isAdminModalOpen: false });
-    if (typeof window !== 'undefined' && window.location.hash === '#admin') {
+    if (useSettingsStore.getState().pageView === 'admin') {
+      useSettingsStore.getState().setPageView('home');
+    }
+    if (typeof window !== 'undefined' && (window.location.hash === '#admin' || window.location.pathname === '/admin')) {
       try {
-        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+        window.history.replaceState(null, '', '/');
       } catch {}
     }
   },
@@ -181,7 +184,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         set({
           isAuthorizedAdmin: false,
           currentRole: null,
-          authError: `Access Denied: Account '${email}' is not on the Dawosti Admin Whitelist. Contact Sagar to grant permission.`,
+          authError: `Access Denied: Account '${email}' is not on the Dawosti Admin Whitelist. Contact Store Administrator to grant permission.`,
           isAuthLoading: false,
         });
         return false;
