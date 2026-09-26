@@ -11,6 +11,7 @@ import {
   getLocalWhitelist,
   MASTER_OWNER_EMAILS,
 } from '../services/firestoreWhitelist';
+import { toast } from '../components/common/Toast';
 
 export type AdminTab = 'profit' | 'orders' | 'referrals' | 'retailers' | 'whitelist' | 'payment-qr' | 'catalog';
 
@@ -41,7 +42,7 @@ export const isTabAllowedForRole = (tab: AdminTab, role: AdminRole | null): bool
   if (!role) return false;
   if (role === 'owner' || role === 'super_admin') return true;
   if (role === 'manager') return tab !== 'whitelist';
-  if (role === 'staff') return tab === 'orders' || tab === 'referrals' || tab === 'payment-qr' || tab === 'retailers';
+  if (role === 'staff') return tab === 'orders' || tab === 'referrals' || tab === 'payment-qr' || tab === 'retailers' || tab === 'catalog';
   return false;
 };
 
@@ -260,7 +261,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     const cleanEmail = email.trim().toLowerCase();
     // Cannot alter permanent master owners
     if (MASTER_OWNER_EMAILS.some((m) => m.toLowerCase() === cleanEmail)) {
-      alert('Master Owners always retain Owner role.');
+      toast('Master Owners always retain Owner role.', 'error');
       return;
     }
 
@@ -290,7 +291,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     const clean = emailOrId.trim().toLowerCase();
     // Prevent removing master owners
     if (MASTER_OWNER_EMAILS.some((m) => m.toLowerCase() === clean)) {
-      alert('Cannot remove Master Owner email.');
+      toast('Cannot remove Master Owner email.', 'error');
       return;
     }
 

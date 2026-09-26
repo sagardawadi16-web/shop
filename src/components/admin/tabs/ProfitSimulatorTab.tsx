@@ -5,6 +5,7 @@ import { calculateProfit, DEFAULT_SHIPPING_ESTIMATE } from '../../../services/pr
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { deleteAllDemoProducts } from '../../../services/firestoreProducts';
 import { deleteAllSeedOrders } from '../../../services/firestoreOrders';
+import { toast } from '../../common/Toast';
 
 export const ProfitSimulatorTab: React.FC = () => {
   const { products, updateProduct } = useProductStore();
@@ -15,18 +16,17 @@ export const ProfitSimulatorTab: React.FC = () => {
   const [wipeMsg, setWipeMsg] = useState('');
 
   const handleWipeDemoData = async () => {
-    if (!window.confirm('This will permanently delete all demo products (daw-001 to daw-008) and seed orders from Firestore. Are you sure?')) return;
+    if (!window.confirm('This will permanently delete all seed showcase orders from Firestore and local cache. Real customer orders and catalog products are 100% preserved. Are you sure?')) return;
     setWipeState('running');
-    setWipeMsg('Deleting from Firestore...');
+    setWipeMsg('Deleting seed orders from Firestore...');
     try {
-      const [deletedProducts, deletedOrders] = await Promise.all([
-        deleteAllDemoProducts(),
-        deleteAllSeedOrders(),
-      ]);
-      // Also clear localStorage order cache
-      try { localStorage.removeItem('dawosti_local_orders_v2'); } catch {}
+      const deletedOrders = await deleteAllSeedOrders();
+      try {
+        localStorage.setItem('dawosti_purged_demo_orders', 'true');
+        localStorage.removeItem('dawosti_local_orders_v2');
+      } catch {}
       setWipeState('done');
-      setWipeMsg(`✅ Done! Removed ${deletedProducts} demo product(s) and ${deletedOrders} seed order(s) from Firestore. Refresh the page to see changes.`);
+      setWipeMsg(`✅ Done! Purged ${deletedOrders} showcase seed order(s). Refresh the page to see changes.`);
     } catch (err) {
       setWipeState('error');
       setWipeMsg('❌ Failed to delete some items. Check console for details.');
@@ -35,7 +35,7 @@ export const ProfitSimulatorTab: React.FC = () => {
 
   // Active simulator parameters
   const [selectedProductId, setSelectedProductId] = useState<string>(products[0]?.id || '');
-  const selectedProduct = products.find((p) => p.id === selectedProductId) || products[0];
+  const selectedProduct = products.find((p) => p.id === selectedProductId) || products[0] || null;
 
   const [sellingPrice, setSellingPrice] = useState<number>(selectedProduct?.price || 3500);
   const [buyingPrice, setBuyingPrice] = useState<number>(selectedProduct?.costPrice || 1400);
@@ -69,7 +69,7 @@ export const ProfitSimulatorTab: React.FC = () => {
       costPrice: buyingPrice,
       referralFee,
     });
-    alert(`Updated ${selectedProduct.title.en}: Buying Price = NPR ${buyingPrice}, Referral Fee = NPR ${referralFee}`);
+    toast(`Updated ${selectedProduct.title.en}: Buying Price = NPR ${buyingPrice}, Referral Fee = NPR ${referralFee}`);
   };
 
   return (

@@ -59,14 +59,32 @@ export const HomePage: React.FC = () => {
           </p>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
-              onClick={() => { setSelectedCategory('all'); productsRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
+              onClick={() => {
+                setSelectedCategory('all');
+                const catalogEl = document.getElementById('product-catalog');
+                if (catalogEl) {
+                  const headerEl = document.getElementById('main-header');
+                  const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 90;
+                  const targetY = catalogEl.getBoundingClientRect().top + window.pageYOffset - headerHeight - 12;
+                  window.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
+                }
+              }}
               className="btn btn-gold"
               style={{ fontSize: 14, padding: '10px 24px' }}
             >
               Shop Collection
             </button>
             <button
-              onClick={() => { setSelectedCategory('cat-festive'); productsRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
+              onClick={() => {
+                setSelectedCategory('cat-festive');
+                const catalogEl = document.getElementById('product-catalog');
+                if (catalogEl) {
+                  const headerEl = document.getElementById('main-header');
+                  const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 90;
+                  const targetY = catalogEl.getBoundingClientRect().top + window.pageYOffset - headerHeight - 12;
+                  window.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
+                }
+              }}
               className="btn btn-outline" style={{ borderColor: 'rgba(255,255,255,0.4)', color: 'white', fontSize: 14, padding: '10px 24px' }}
             >
               🪔 Festive Picks
@@ -79,7 +97,7 @@ export const HomePage: React.FC = () => {
       {theme.showGuildSection && <GuildCategoryShowcase />}
 
       {/* Products section */}
-      <section id="product-catalog" ref={productsRef} style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 16px 60px' }}>
+      <section id="product-catalog" ref={productsRef} style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 16px 60px', scrollMarginTop: 110 }}>
         {/* Controls */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
           <div>

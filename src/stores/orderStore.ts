@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { Order, OrderStatus, CartItem, ShippingAddress, PaymentMethod, OrderVerificationStatus, OrderVerification } from '../types';
-import { listenOrders, saveOrder, updateOrder, deleteOrder } from '../services/firestoreOrders';
+import { Order, OrderStatus, CartItem, ShippingAddress, PaymentMethod, OrderVerificationStatus, OrderVerification, DropshipSupplier } from '../types';
+import { listenOrders, saveOrder, updateOrder, deleteOrder, deleteAllSeedOrders } from '../services/firestoreOrders';
 import { creditAdvocateOrder } from '../services/firestoreReferrals';
 import { useReferralStore } from './referralStore';
 
@@ -29,6 +29,8 @@ interface OrderState {
   acknowledgeOrder: (orderId: string) => void;
   verifyOrder: (orderId: string, status: OrderVerificationStatus, notes?: string, method?: OrderVerification['method']) => void;
   deleteOrder: (orderId: string) => void;
+  assignSupplier: (orderId: string, supplier: DropshipSupplier) => void;
+  wipeAllDemoOrders: () => Promise<number>;
   clearAllOrders: () => void;
   setLatestOrder: (order: Order | null) => void;
   trackByNumber: (search: string) => Order | null;
@@ -58,11 +60,24 @@ const saveLatestOrder = (order: Order | null) => {
   } catch {}
 };
 
+const isDemoPurged = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  try {
+    return localStorage.getItem('dawosti_purged_demo_orders') === 'true';
+  } catch {
+    return false;
+  }
+};
+
 const loadLocalOrders = (): Order[] => {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const parsed: Order[] = raw ? JSON.parse(raw) : [];
+    if (isDemoPurged()) {
+      return parsed.filter((o) => !o.id.startsWith('seed_order_') && !o.id.startsWith('demo_'));
+    }
+    return parsed;
   } catch {
     return [];
   }
@@ -71,17 +86,24 @@ const loadLocalOrders = (): Order[] => {
 const saveLocalOrders = (orders: Order[]) => {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(orders));
+    const toSave = isDemoPurged()
+      ? orders.filter((o) => !o.id.startsWith('seed_order_') && !o.id.startsWith('demo_'))
+      : orders;
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toSave));
   } catch {}
 };
 
 const mergeOrdersLists = (...lists: Order[][]): Order[] => {
   const map = new Map<string, Order>();
+  const purged = isDemoPurged();
 
   // Merge all lists — later arrays override earlier entries
   lists.forEach((list) => {
     (list || []).forEach((o) => {
       if (o && o.id) {
+        if (purged && (o.id.startsWith('seed_order_') || o.id.startsWith('demo_'))) {
+          return;
+        }
         map.set(o.id, o);
       }
     });
@@ -357,6 +379,37 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     if (target) deleteOrder(target.id);
   },
 
+  assignSupplier: (orderId, supplier) => {
+    const target = get().orders.find((o) => o.id === orderId || o.orderNumber === orderId);
+    if (!target) return;
+
+    const updates: Partial<Order> = {
+      assignedSupplier: supplier,
+      acknowledgedByAdmin: true,
+    };
+
+    const updated = get().orders.map((o) =>
+      o.id === orderId || o.orderNumber === orderId ? { ...o, ...updates } : o
+    );
+    set({ orders: updated });
+    saveLocalOrders(updated);
+    updateOrder(target.id, updates);
+  },
+
+  wipeAllDemoOrders: async () => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('dawosti_purged_demo_orders', 'true');
+      } catch {}
+    }
+    const realOrders = get().orders.filter((o) => !o.id.startsWith('seed_order_') && !o.id.startsWith('demo_'));
+    const unackCount = realOrders.filter((o) => !o.acknowledgedByAdmin).length;
+    set({ orders: realOrders, unacknowledgedCount: unackCount });
+    saveLocalOrders(realOrders);
+    const deletedCount = await deleteAllSeedOrders();
+    return deletedCount;
+  },
+
   clearAllOrders: () => {
     set({ orders: [], unacknowledgedCount: 0 });
     saveLocalOrders([]);
@@ -373,9 +426,9 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     return (
       get().orders.find(
         (o) =>
-          o.orderNumber.toLowerCase() === q ||
-          o.id.toLowerCase() === q ||
-          o.shippingAddress.phone.includes(q)
+          o.orderNumber?.toLowerCase() === q ||
+          o.id?.toLowerCase() === q ||
+          Boolean(o.shippingAddress?.phone?.includes(q))
       ) || null
     );
   },

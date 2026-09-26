@@ -65,19 +65,16 @@ export const seedProductsIfEmpty = async (initialProducts: Product[]): Promise<v
   }
 };
 
-/** Delete all known demo / mock products from Firestore (daw-001 to daw-008). */
+/** Delete only temporary mock products if marked as isDemo (protects real catalog products). */
 export const deleteAllDemoProducts = async (): Promise<number> => {
-  const DEMO_IDS = [
-    'daw-001', 'daw-002', 'daw-003', 'daw-004',
-    'daw-005', 'daw-006', 'daw-007', 'daw-008',
-  ];
   let deleted = 0;
   const batch = writeBatch(db);
-  // Also scan the collection for any remaining demo-style IDs
   try {
     const snap = await getDocs(collection(db, COL));
     snap.docs.forEach((d) => {
-      if (DEMO_IDS.includes(d.id) || d.id.startsWith('daw-0')) {
+      const data = d.data();
+      // Only delete if explicitly marked as a temporary demo, NEVER delete real catalog products daw-001 to daw-008
+      if (data.isDemo === true || d.id.startsWith('demo-test-')) {
         batch.delete(doc(db, COL, d.id));
         deleted++;
       }

@@ -139,11 +139,24 @@ export const ReferralPage: React.FC = () => {
     ? `${hostOrigin}?ref=${encodeURIComponent(effectiveCode.trim().toUpperCase())}`
     : hostOrigin;
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareableUrl);
-    setCopiedLink(true);
-    toast('Referral link copied to clipboard!');
-    setTimeout(() => setCopiedLink(false), 2500);
+  const handleCopyLink = async () => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareableUrl);
+      } else {
+        const input = document.createElement('textarea');
+        input.value = shareableUrl;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+      }
+      setCopiedLink(true);
+      toast('Referral link copied to clipboard!');
+      setTimeout(() => setCopiedLink(false), 2500);
+    } catch {
+      toast('Could not copy link automatically. Please copy the URL from the bar.', 'info');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

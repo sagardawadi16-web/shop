@@ -20,8 +20,6 @@ export const Header: React.FC = () => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [hideCategory, setHideCategory] = useState(false);
-  const hideCategoryRef = useRef(false);
 
   // Lock background scroll and handle Escape/back when mobile menu is open
   useEffect(() => {
@@ -50,76 +48,26 @@ export const Header: React.FC = () => {
     };
   }, [mobileMenuOpen]);
 
-  // Smoothly collapse category sub-nav on sustained downward scroll, reveal on upward scroll
-  useEffect(() => {
-    let lastScrollY = window.scrollY;
-    let accumulatedDelta = 0;
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScrollY = Math.max(0, window.scrollY);
-          const delta = currentScrollY - lastScrollY;
-
-          // Always reveal when near the top of the page
-          if (currentScrollY <= 50) {
-            if (hideCategoryRef.current) {
-              hideCategoryRef.current = false;
-              setHideCategory(false);
-            }
-            accumulatedDelta = 0;
-            lastScrollY = currentScrollY;
-            ticking = false;
-            return;
-          }
-
-          // Reset accumulator on direction change to prevent micro-jitter/rubber-banding
-          if ((delta > 0 && accumulatedDelta < 0) || (delta < 0 && accumulatedDelta > 0)) {
-            accumulatedDelta = 0;
-          }
-          accumulatedDelta += delta;
-
-          // Sustained downward scroll: hide categories seamlessly
-          if (accumulatedDelta > 40 && currentScrollY > 80) {
-            if (!hideCategoryRef.current) {
-              hideCategoryRef.current = true;
-              setHideCategory(true);
-            }
-          }
-          // Sustained upward scroll: reveal categories
-          else if (accumulatedDelta < -30) {
-            if (hideCategoryRef.current) {
-              hideCategoryRef.current = false;
-              setHideCategory(false);
-            }
-          }
-
-          lastScrollY = currentScrollY;
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   const handleCategoryClick = (catId: string) => {
     setSelectedCategory(catId);
     if (pageView !== 'home') {
       setPageView('home');
     }
     setMobileMenuOpen(false);
-    setTimeout(() => {
+
+    // Smooth scroll directly to catalog with precise sticky header offset
+    requestAnimationFrame(() => {
       const catalogEl = document.getElementById('product-catalog');
       if (catalogEl) {
-        catalogEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        window.scrollTo({ top: 380, behavior: 'smooth' });
+        const headerEl = document.getElementById('main-header');
+        const headerHeight = headerEl ? headerEl.getBoundingClientRect().height : 90;
+        const targetY = catalogEl.getBoundingClientRect().top + window.pageYOffset - headerHeight - 12;
+        window.scrollTo({
+          top: Math.max(0, targetY),
+          behavior: 'smooth',
+        });
       }
-    }, 60);
+    });
   };
 
   const handleLogoClick = () => {
@@ -423,18 +371,12 @@ export const Header: React.FC = () => {
         </div>
       )}
 
-      {/* Bottom Sub-Nav: Categories Bar (Smoothly collapses when scrolling down) */}
+      {/* Bottom Sub-Nav: Categories Bar (Stable, zero-jitter architecture) */}
       <nav
         style={{
           borderTop: '1px solid #EADCCE',
-          borderTopColor: hideCategory ? 'transparent' : '#EADCCE',
           backgroundColor: '#FFFFFF',
-          maxHeight: hideCategory ? 0 : 48,
-          opacity: hideCategory ? 0 : 1,
           overflow: 'hidden',
-          transition: 'max-height 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, border-color 0.25s ease',
-          pointerEvents: hideCategory ? 'none' : 'auto',
-          willChange: 'max-height, opacity',
         }}
       >
         <div

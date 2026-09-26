@@ -104,10 +104,12 @@ export const useProductStore = create<ProductState>((set, get) => ({
   initFirestoreSync: () => {
     const unsubscribe = listenProducts((remoteProducts) => {
       const { selectedCategory, searchQuery, priceRange, selectedSize, sortBy, inStockOnly } = get();
+      const activeProducts = remoteProducts && remoteProducts.length > 0 ? remoteProducts : MOCK_PRODUCTS;
       set({
-        products: remoteProducts,
+        products: activeProducts,
         isLoaded: true,
-        filteredProducts: applyFilters(remoteProducts, selectedCategory, searchQuery, priceRange, selectedSize, sortBy, inStockOnly),
+        isProductGridLoading: false,
+        filteredProducts: applyFilters(activeProducts, selectedCategory, searchQuery, priceRange, selectedSize, sortBy, inStockOnly),
       });
     });
 

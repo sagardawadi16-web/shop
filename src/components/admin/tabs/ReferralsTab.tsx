@@ -9,6 +9,7 @@ import { useOrderStore } from '../../../stores/orderStore';
 import { useProductStore } from '../../../stores/productStore';
 import { updatePayoutStatus } from '../../../services/firestoreReferrals';
 import { Order, OrderStatus } from '../../../types';
+import { toast } from '../../common/Toast';
 
 export const ReferralsTab: React.FC = () => {
   const { allAdvocates, allPayoutRequests } = useReferralStore();
@@ -141,7 +142,7 @@ export const ReferralsTab: React.FC = () => {
   const handleApprovePayout = async (requestId: string, requestedAmount: number, advocateName: string) => {
     const txn = (txnInput[requestId] || '').trim();
     if (!txn) {
-      alert('Please enter the eSewa / Bank Transaction Reference number before marking as paid.');
+      toast('Please enter the eSewa / Bank Transaction Reference number before marking as paid.', 'error');
       return;
     }
 
@@ -158,7 +159,7 @@ export const ReferralsTab: React.FC = () => {
         transactionRef: txn,
         auditNotes: `Audited and paid by Sagar. Verified delivery of qualifying orders. Ref: ${txn}`,
       });
-      alert(`Payout of NPR ${requestedAmount.toLocaleString()} successfully recorded.`);
+      toast(`Payout of NPR ${requestedAmount.toLocaleString()} successfully recorded.`);
     } finally {
       setProcessingId(null);
     }
@@ -192,8 +193,8 @@ export const ReferralsTab: React.FC = () => {
       referredOrdersCount: referralOrders.length,
       advocatesCount: allAdvocates.length,
     };
-    navigator.clipboard.writeText(JSON.stringify(report, null, 2));
-    alert('Financial & Attribution Summary copied to clipboard!');
+    navigator.clipboard.writeText(JSON.stringify(report, null, 2)).catch(() => {});
+    toast('Financial & Attribution Summary copied to clipboard!');
   };
 
   return (

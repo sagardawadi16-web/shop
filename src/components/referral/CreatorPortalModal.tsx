@@ -3,6 +3,7 @@ import { X, Copy, Check, MessageCircle, DollarSign, Award, TrendingUp, ShieldChe
 import { useReferralStore, PAYOUT_MINIMUM_THRESHOLD } from '../../stores/referralStore';
 import { useAuthStore } from '../../stores/authStore';
 import { TermsOfServiceModal } from './TermsOfServiceModal';
+import { toast } from '../common/Toast';
 
 export const CreatorPortalModal: React.FC = () => {
   const {
@@ -64,7 +65,7 @@ export const CreatorPortalModal: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !phone.trim()) {
-      alert('Please fill in your name and phone number.');
+      toast('Please fill in your name and phone number.', 'error');
       return;
     }
     setIsRegistering(true);
@@ -83,7 +84,7 @@ export const CreatorPortalModal: React.FC = () => {
   const handleRequestPayout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!paymentDetails.trim()) {
-      alert('Please enter your eSewa ID or Bank account details.');
+      toast('Please enter your eSewa ID or Bank account details.', 'error');
       return;
     }
     setIsSubmittingPayout(true);

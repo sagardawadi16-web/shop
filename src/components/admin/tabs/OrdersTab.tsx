@@ -13,19 +13,117 @@ import {
   PackageCheck,
   Sparkles,
   Filter,
+  Building2,
+  Copy,
+  Send,
+  FileText,
+  Check,
+  ExternalLink,
 } from 'lucide-react';
 import { useOrderStore } from '../../../stores/orderStore';
 import { useProductStore } from '../../../stores/productStore';
 import { calculateProfit } from '../../../services/profitCalculator';
+import { DropshipSupplier, Order } from '../../../types';
+import { toast } from '../../common/Toast';
 
-type FilterTab = 'all' | 'unverified' | 'real_user' | 'verified_genuine' | 'flagged_fake' | 'wholesale' | 'seed';
+const PRESET_SUPPLIERS: DropshipSupplier[] = [
+  { id: 'sup-ktm-atelier', name: 'Kathmandu Central Atelier', phone: '9801234567', location: 'New Road, Kathmandu' },
+  { id: 'sup-patan-weavers', name: 'Patan Handloom Weavers', phone: '9812345678', location: 'Mangal Bazar, Lalitpur' },
+  { id: 'sup-bhaktapur-dhaka', name: 'Bhaktapur Heritage Guild', phone: '9841234567', location: 'Durbar Square, Bhaktapur' },
+  { id: 'sup-pokhara-silk', name: 'Pokhara Silk & Pashmina Works', phone: '9856012345', location: 'Lakeside, Pokhara' },
+];
+
+type FilterTab = 'all' | 'unverified' | 'real_user' | 'verified_genuine' | 'flagged_fake' | 'wholesale';
 
 export const OrdersTab: React.FC = () => {
-  const { orders, verifyOrder, updateOrderStatus, deleteOrder } = useOrderStore();
+  const { orders, verifyOrder, updateOrderStatus, deleteOrder, assignSupplier, wipeAllDemoOrders } = useOrderStore();
   const { products } = useProductStore();
 
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [customSupplierForms, setCustomSupplierForms] = useState<Record<string, { name: string; phone: string; location: string }>>({});
+  const [activeDropdownOrder, setActiveDropdownOrder] = useState<string | null>(null);
+  const [copiedOrderId, setCopiedOrderId] = useState<string | null>(null);
+
+  const buildDispatchSlipText = (order: Order, supplier: DropshipSupplier, buyCost: number) => {
+    const customerName = order.shippingAddress?.fullName || 'Customer';
+    const customerPhone = order.shippingAddress?.phone || 'N/A';
+    const fullAddress = `${order.shippingAddress?.addressLine || ''}, ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.province || ''}`.trim();
+
+    const paymentInstruction =
+      order.paymentMethod === 'cod'
+        ? `CASH ON DELIVERY (COD)\n👉 PLEASE COLLECT: NPR ${(order.totalAmount || 0).toLocaleString()} from customer upon delivery.`
+        : `PREPAID ONLINE / QR\n👉 DO NOT COLLECT ANY CASH (Customer already paid NPR ${(order.totalAmount || 0).toLocaleString()} to Dawosti).`;
+
+    const itemsList = (order.items || [])
+      .map((item, idx) => {
+        const title = item.product?.title?.en || item.product?.title?.np || 'Garment';
+        const size = item.selectedSize || 'Free Size';
+        const qty = item.quantity || 1;
+        return `${idx + 1}. *${title}*\n   • Size: ${size} | Qty: ${qty} | SKU: ${item.product?.id || 'N/A'}`;
+      })
+      .join('\n');
+
+    return `📦 *DAWOSTI SUPPLIER BUY ORDER & DISPATCH SLIP*
+*Order Ref:* #${order.orderNumber}
+*Date:* ${new Date(order.createdAt).toLocaleDateString('en-GB')}
+*Assigned Supplier:* ${supplier.name} (${supplier.location})
+
+📍 *CUSTOMER DELIVERY LOCATION:*
+• *Recipient Name:* ${customerName}
+• *Mobile Number:* ${customerPhone}
+• *Exact Address:* ${fullAddress}
+${order.notes ? `• *Customer Note:* ${order.notes}\n` : ''}
+👗 *GARMENTS TO DISPATCH:*
+${itemsList}
+
+💰 *PAYMENT & COLLECTION INSTRUCTIONS:*
+• *Payment Mode:* ${paymentInstruction}
+• *Supplier Agreed Cost:* NPR ${buyCost.toLocaleString()} (Direct Dawosti Settlement)
+
+⚠️ *DISPATCH PROTOCOL:*
+1. Inspect stitching, buttons, and finish.
+2. Pack in Dawosti craft packaging.
+3. Affix recipient shipping label above.
+4. Notify Dawosti once handed over to delivery courier.`;
+  };
+
+  const handleCopySlip = (order: Order, supplier: DropshipSupplier, buyCost: number) => {
+    const text = buildDispatchSlipText(order, supplier, buyCost);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(
+        () => {
+          setCopiedOrderId(order.id);
+          toast('Supplier dispatch slip copied to clipboard!', 'success');
+          setTimeout(() => setCopiedOrderId(null), 3000);
+        },
+        () => {
+          const textArea = document.createElement('textarea');
+          textArea.value = text;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          setCopiedOrderId(order.id);
+          toast('Supplier dispatch slip copied to clipboard!', 'success');
+          setTimeout(() => setCopiedOrderId(null), 3000);
+        }
+      );
+    }
+  };
+
+  const handleSendSupplierWhatsApp = (order: Order, supplier: DropshipSupplier, buyCost: number) => {
+    const cleanPhone = (supplier.phone || '').replace(/[^0-9]/g, '');
+    const text = buildDispatchSlipText(order, supplier, buyCost);
+    const waUrl = `https://wa.me/977${cleanPhone}?text=${encodeURIComponent(text)}`;
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+    assignSupplier(order.id, {
+      ...supplier,
+      status: 'dispatched',
+      assignedAt: new Date().toISOString(),
+    });
+    toast(`Dispatch slip routed to ${supplier.name} via WhatsApp!`, 'success');
+  };
 
   // Counts
   const realOrders = orders.filter((o) => !o.id.startsWith('seed_order_'));
@@ -49,8 +147,6 @@ export const OrdersTab: React.FC = () => {
       if (order.verification?.status !== 'flagged_fake' && order.verification?.status !== 'suspicious') return false;
     } else if (activeFilter === 'wholesale') {
       if (!order.isWholesaleLead) return false;
-    } else if (activeFilter === 'seed') {
-      if (!order.id.startsWith('seed_order_')) return false;
     }
 
     // 2. Search Query
@@ -169,7 +265,6 @@ export const OrdersTab: React.FC = () => {
             { id: 'verified_genuine', label: `✅ Verified Genuine (${verifiedOrders.length})` },
             { id: 'flagged_fake', label: `🚩 Flagged Fake / Suspicious (${flaggedOrders.length})` },
             { id: 'wholesale', label: `👑 Wholesale Leads (${wholesaleOrders.length})` },
-            { id: 'seed', label: `📜 Showcase Demo (${seedOrders.length})` },
           ].map((tab) => {
             const isActive = activeFilter === tab.id;
             return (
@@ -195,6 +290,27 @@ export const OrdersTab: React.FC = () => {
         </div>
       </div>
 
+      {/* Wipe All Showcase Demo Orders Banner */}
+      {activeFilter === 'seed' && seedOrders.length > 0 && (
+        <div style={{ background: '#FFF3CD', border: '1px solid #FFEEBA', padding: '12px 16px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
+          <div style={{ fontSize: 13, color: '#856404' }}>
+            <strong>Notice:</strong> These are {seedOrders.length} pre-loaded showcase demo orders used for initial layout testing.
+          </div>
+          <button
+            onClick={async () => {
+              if (window.confirm('Permanently purge all showcase demo orders from this store? Real customer orders will NOT be affected.')) {
+                await wipeAllDemoOrders();
+                alert('Successfully purged all showcase demo orders.');
+              }
+            }}
+            className="btn btn-outline"
+            style={{ padding: '6px 14px', fontSize: 12, borderColor: '#B02A37', color: '#B02A37', background: 'white', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontWeight: 700 }}
+          >
+            <Trash2 size={14} /> Wipe All Showcase Demo Orders
+          </button>
+        </div>
+      )}
+
       {/* Orders List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {filteredOrders.length === 0 ? (
@@ -216,7 +332,8 @@ export const OrdersTab: React.FC = () => {
             let orderBuyingCost = 0;
             let orderTargetReferralFee = order.referredByCode ? Math.round(order.totalAmount * 0.1) : 0;
 
-            for (const item of order.items) {
+            for (const item of (order.items || [])) {
+              if (!item) continue;
               const matchedProd = products.find((p) => p.id === item.product?.id);
               const unitCost = matchedProd?.costPrice || (item.product?.price ? Math.round(item.product.price * 0.42) : 1000);
               orderBuyingCost += unitCost * (item.quantity || 1);

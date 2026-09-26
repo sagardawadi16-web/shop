@@ -39,7 +39,8 @@ export const WhitelistTab: React.FC = () => {
     e.preventDefault();
     const clean = emailInput.trim().toLowerCase();
     if (!clean || !clean.includes('@')) {
-      alert('Please enter a valid Gmail address.');
+      setToastMessage('Please enter a valid Gmail address.');
+      setTimeout(() => setToastMessage(null), 3500);
       return;
     }
 
@@ -51,7 +52,8 @@ export const WhitelistTab: React.FC = () => {
       setToastMessage(`Assigned ${roleInput.toUpperCase()} role to: ${clean}`);
       setTimeout(() => setToastMessage(null), 4000);
     } catch (err: any) {
-      alert(`Failed to add: ${err?.message || err}`);
+      setToastMessage(`Failed to add: ${err?.message || err}`);
+      setTimeout(() => setToastMessage(null), 4000);
     } finally {
       setIsSubmitting(false);
     }
@@ -63,7 +65,8 @@ export const WhitelistTab: React.FC = () => {
       setToastMessage(`Updated ${email} to ${newRole.toUpperCase()}`);
       setTimeout(() => setToastMessage(null), 3500);
     } catch (err: any) {
-      alert(`Failed to update role: ${err?.message || err}`);
+      setToastMessage(`Failed to update role: ${err?.message || err}`);
+      setTimeout(() => setToastMessage(null), 4000);
     }
   };
 

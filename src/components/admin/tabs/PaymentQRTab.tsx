@@ -16,6 +16,7 @@ import {
   Check,
 } from 'lucide-react';
 import { useSettingsStore } from '../../../stores/settingsStore';
+import { toast } from '../../common/Toast';
 
 // Helper to downscale and compress images client-side before storing as data URI
 const compressImageToDataUri = (file: File, maxDim = 600, quality = 0.85): Promise<string> => {
@@ -107,7 +108,7 @@ export const PaymentQRTab: React.FC = () => {
       setSaveSuccess(false);
     } catch (err) {
       console.error('Failed to process image:', err);
-      alert('Failed to process image. Please try another file.');
+      toast('Failed to process image. Please try another file.', 'error');
     }
     // reset input
     if (e.target) e.target.value = '';
@@ -143,7 +144,7 @@ export const PaymentQRTab: React.FC = () => {
       setTimeout(() => setSaveSuccess(false), 4000);
     } catch (err) {
       console.error('Error saving QR code:', err);
-      alert('Could not save QR settings.');
+      toast('Could not save QR settings.', 'error');
     } finally {
       setIsSaving(false);
     }

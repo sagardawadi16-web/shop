@@ -117,6 +117,17 @@ export interface Order {
   costPriceTotal?: number;
   shippingCostActual?: number;
   netProfitCalculated?: number;
+  assignedSupplier?: DropshipSupplier;
+}
+
+export interface DropshipSupplier {
+  id?: string;
+  name: string;
+  phone: string;
+  location: string;
+  assignedAt?: string;
+  status?: 'assigned' | 'dispatched' | 'completed';
+  notes?: string;
 }
 
 export type AdminRole = 'owner' | 'super_admin' | 'manager' | 'staff';

@@ -202,13 +202,6 @@ export const CheckoutPage: React.FC = () => {
         console.warn('Edge order logging note:', err);
       }
 
-      // Auto-dispatch customer details to WhatsApp 9808251494
-      try {
-        window.open(targetWhatsappUrl, '_blank');
-      } catch (e) {
-        console.warn('Popup blocked, customer will confirm on next screen:', e);
-      }
-
       clearCart();
       setLatestOrder(order);
       setPageView('order-confirmation');

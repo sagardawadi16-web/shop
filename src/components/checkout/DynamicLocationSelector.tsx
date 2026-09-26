@@ -22,6 +22,7 @@ import {
   matchMunicipality,
 } from '../../data/nepalLocations';
 import { ShippingAddress } from '../../types';
+import { toast } from '../common/Toast';
 
 interface DynamicLocationSelectorProps {
   value: ShippingAddress;
@@ -228,10 +229,11 @@ export const DynamicLocationSelector: React.FC<DynamicLocationSelectorProps> = (
   // Main Current Location Trigger
   const handleRequestCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert(
+      toast(
         language === 'np'
           ? 'तपाईंको ब्राउजरमा GPS लोकेसन सुविधा उपलब्ध छैन।'
-          : 'Geolocation is not supported by your browser.'
+          : 'Geolocation is not supported by your browser.',
+        'error'
       );
       return;
     }
@@ -268,7 +270,7 @@ export const DynamicLocationSelector: React.FC<DynamicLocationSelectorProps> = (
               ? 'लोकेसन अनुमति अस्वीकृत गरियो। कृपया ब्राउजर सेटिङबाट Location Access ON गर्नुहोस्।'
               : 'Location permission denied. Please allow location access in your browser settings.';
         }
-        alert(msg);
+        toast(msg, 'error');
       },
       {
         enableHighAccuracy: true,
